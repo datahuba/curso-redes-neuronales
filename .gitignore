@@ -1,0 +1,7 @@
+# Material local y solo para el docente (no publicar)
+material/
+soluciones_docente*.py
+GUIA_CLASE_M1_M2.md
+__pycache__/
+.ipynb_checkpoints/
+*.pyc
