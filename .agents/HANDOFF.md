@@ -33,3 +33,13 @@
 - Compartir las diapositivas (menú Compartir) si los alumnos deben verlas.
 - Elegir licencia para el contenido propio del repo.
 - ¿Recortar `GUIA_CLASE_M1_M2.md` a los 4 temas de la clase 1?
+
+## Actualización (2026-11-02): PDFs, PowerPoint y plan de la clase 3
+- `entregables/`: Clase1/Clase2 _Guia.pdf, _Diapositivas.pptx y .pdf (19 y 21 diapositivas). Se regeneran con
+  `python tools/build_decks.py` + `powershell -File tools/export_pdf.ps1` (usa PowerPoint) y
+  `python tools/md_to_pdf.py <md> <pdf>` (markdown-it + Chrome; fórmulas con KaTeX).
+- Guía clase 1 reordenada: instalar programas (Anaconda, Git, VS Code) y luego todo en Anaconda PowerShell
+  (conda → git clone → `pip install -r requirements.txt`). Las diapositivas siguen ese mismo orden.
+- `docs/PLAN_CLASE3.md`: propuesta de partir el módulo 3 en clases 3 y 4. El libro tiene un error de cuentas en el
+  ejemplo de varias salidas (H correcto = [−4.7, 6.3]).
+- Nada de esto está commiteado ni pusheado: pendiente de confirmación de Kevin.
