@@ -189,14 +189,14 @@ def polyline(s, pts, color, width=2.5, dash=False):
     return shp
 
 
-def title(s, t, eyebrow=None, dark=None):
+def title(s, t, eyebrow=None, dark=None, size=34):
     dark = s._dark if dark is None else dark
     y = 0.62
     if eyebrow:
         text(s, LM, 0.38, CW, 0.4, eyebrow.upper(), 14, AMBER if dark else BLUE, True)
         y = 0.75
     rect(s, LM - 0.28, y + 0.14, 0.09, 0.6, ORANGE if not dark else AMBER, rounded=False)
-    text(s, LM, y, CW, 0.9, t, 34, CREAM if dark else INK, True)
+    text(s, LM, y, CW, 0.9, t, size, CREAM if dark else INK, True)
 
 
 def card(s, x, y, w, h, head, body, accent=ORANGE, size=18, head_size=22, fill=CARD, kicker=None):
@@ -911,9 +911,593 @@ def entrenar(X, y, eta=0.1, epocas=100):
     return d
 
 
+# ---------------------------------------------------------------- gráficas
+def plotbox(s, x0, y0, w, h, xr, yr, fill=CARD, m=0.3, xlabel=None, ylabel=None):
+    """Dibuja un marco con ejes y devuelve g(a, b) -> pulgadas."""
+    rect(s, x0, y0, w, h, fill, BORDER, radius=0.03)
+
+    def g(a, b):
+        return (x0 + m + (a - xr[0]) / (xr[1] - xr[0]) * (w - 2 * m),
+                y0 + h - m - (b - yr[0]) / (yr[1] - yr[0]) * (h - 2 * m))
+    ya = 0 if yr[0] <= 0 <= yr[1] else yr[0]
+    xa = 0 if xr[0] <= 0 <= xr[1] else xr[0]
+    polyline(s, [g(xr[0], ya), g(xr[1], ya)], MUTED, 1.2)
+    polyline(s, [g(xa, yr[0]), g(xa, yr[1])], MUTED, 1.2)
+    if xlabel:
+        px, py = g(xr[1], ya)
+        text(s, px - 2.6, py + 0.02, 2.6, 0.3, xlabel, 11, GRAY, align=PP_ALIGN.RIGHT)
+    if ylabel:
+        px, py = g(xa, yr[1])
+        text(s, px + 0.05, py - 0.05, 1.5, 0.3, ylabel, 11, GRAY)
+    return g
+
+
+def curve(s, g, fn, xr, yr, color, width=3.0, n=80, dash=False):
+    seg = []
+    for k in range(n + 1):
+        a = xr[0] + (xr[1] - xr[0]) * k / n
+        b = fn(a)
+        if yr[0] - 1e-9 <= b <= yr[1] + 1e-9:
+            seg.append(g(a, b))
+        elif len(seg) > 1:
+            polyline(s, seg, color, width, dash)
+            seg = []
+        else:
+            seg = []
+    if len(seg) > 1:
+        polyline(s, seg, color, width, dash)
+
+
+def dot(s, g, a, b, color, r=0.09):
+    x, y = g(a, b)
+    shape(s, MSO_SHAPE.OVAL, x - r, y - r, 2 * r, 2 * r, color)
+
+
+def sig(h):
+    return 1 / (1 + math.exp(-h))
+
+
+def agenda(d, rows, highlight=None):
+    s = d.slide(notes="Duración aprox. 2 h 30 min con 10 min de descanso.")
+    title(s, "Agenda de hoy")
+    rh = min(0.46, 4.75 / (len(rows) + 1))
+    table(s, LM, 1.8, CW, [["Tiempo", "Tema"]] + rows, 18 if rh >= 0.45 else 16, [1.8, 10.03], rh, highlight=highlight)
+
+
+def objetivos(d, objs, notes="Lee los objetivos; al cierre pide que digan cuáles cumplieron."):
+    s = d.slide(notes=notes)
+    title(s, "Al terminar la clase podrás…")
+    n = len(objs)
+    wcard = (CW - 0.15 * (n - 1)) / n
+    for k, (h, b) in enumerate(objs):
+        x = LM + k * (wcard + 0.15)
+        rect(s, x, 2.0, wcard, 3.9, CARD, BORDER, radius=0.05)
+        shape(s, MSO_SHAPE.OVAL, x + 0.22, 2.3, 0.7, 0.7, ORANGE, str(k + 1), 22)
+        text(s, x + 0.2, 3.2, wcard - 0.35, 0.95, h, 20, INK, True)
+        text(s, x + 0.2, 4.15, wcard - 0.35, 1.7, b, 16, GRAY)
+
+
+def practica(d, nb, meta, todos, check, pistas="", notes="", extra=None, size=17):
+    s = d.slide(True, notes=notes)
+    title(s, f"Práctica · {nb}", meta, size=34 if len(nb) < 34 else 28)
+    text(s, LM, 1.9, 6.0, 2.0, [Runs([C(t + "   ", AMBER), (b, {})]) for t, b in todos], size, SOFT, space=10)
+    if pistas:
+        text(s, LM, 3.95, 6.0, 1.3, pistas, 15, MUTED)
+    code(s, 7.0, 1.9, 5.58, 3.0, check, 15)
+    if extra:
+        text(s, LM, 5.5, CW, 1.0, extra, 17, MUTED)
+    return s
+
+
+def descanso(d, siguiente):
+    s = d.slide(True, footer=False)
+    text(s, LM, 2.7, CW, 1.2, "Descanso · 10 min", 54, CREAM, True, align=PP_ALIGN.CENTER)
+    text(s, LM, 3.9, CW, 0.6, f"Después: {siguiente}", 22, AMBER, align=PP_ALIGN.CENTER)
+
+
+def cierre(d, take, highlight, tarea, leer, notes):
+    s = d.slide(True, notes=notes)
+    title(s, "Para llevar")
+    for k, t in enumerate(take):
+        y = 1.95 + k * 0.85
+        shape(s, MSO_SHAPE.OVAL, LM, y, 0.6, 0.6, AMBER, str(k + 1), 18, NAVY)
+        text(s, LM + 0.85, y - 0.03, 11, 0.65, t, 21, CREAM, anchor=MSO_ANCHOR.MIDDLE)
+    rect(s, LM, 4.6, CW, 0.85, RGBColor(0x22, 0x34, 0x5C), radius=0.08)
+    text(s, LM + 0.3, 4.6, CW - 0.6, 0.85, highlight, 21, AMBER, True, anchor=MSO_ANCHOR.MIDDLE)
+    text(s, LM, 5.65, CW, 1.0, [Runs([C("Tarea: ", CREAM), (tarea, {})]), Runs([C("Leer: ", CREAM), (leer, {})])],
+         18, SOFT, space=4)
+
+
+# ================================================================ CLASE 3
+def clase3():
+    d = Deck("Introducción a las Redes Neuronales  ·  Clase 3")
+    cover(d, "CLASE 3  ·  MÓDULO 3 (PARTE 1)", "Red neuronal simple:", "activación y gradiente",
+          "Neurona moderna, funciones de activación y descenso por gradiente",
+          "Hoy cambiamos el escalón por funciones suaves y aprendemos la herramienta para entrenar: el descenso por gradiente.")
+    agenda(d, [["0:00", "Repaso de la Clase 2"], ["0:10", "Del escalón a la neurona moderna"], ["0:25", "¿Qué es una derivada?"],
+               ["0:35", "Funciones de activación"], ["0:55", "Ejemplo a mano"], ["1:00", "Práctica: neurona con sigmoide"],
+               ["1:20", "Descanso"], ["1:30", "Descenso por gradiente"], ["1:55", "Ejercicios en papel"],
+               ["2:05", "Práctica: descenso por gradiente"], ["2:25", "Cierre y tarea"]], highlight=[7])
+    objetivos(d, [("Distinguir", "la neurona moderna del perceptrón: activación continua."),
+                  ("Calcular", "las activaciones lineal, sigmoide, tanh y ReLU."),
+                  ("Explicar", "qué es una derivada: la pendiente."),
+                  ("Aplicar", "el descenso por gradiente y elegir η."),
+                  ("Programar", "una neurona y el descenso en Python.")])
+
+    # 4 repaso
+    s = d.slide(notes="Pregunta antes de revelar cada tarjeta.")
+    title(s, "Repaso de la Clase 2")
+    rep = [("¿Cómo calcula?", "h = Σ wᵢxᵢ + b y luego el escalón: 1 si h ≥ 0."),
+           ("¿Cómo aprende?", "W ← W + η(y − ŷ)X: corrige con el error."), ("¿Qué no pudo?", "XOR: no es linealmente separable.")]
+    for k, (h, b) in enumerate(rep):
+        card(s, LM + k * 3.98, 1.95, 3.8, 2.6, h, b, BLUE, size=19, head_size=24)
+    text(s, LM, 5.0, CW, 1.0, "Hoy: cambiar el escalón por algo suave y aprender a bajar montañas.", 24, ORANGE, True)
+
+    # 5 escalón
+    s = d.slide(notes="Analogía: buscar las llaves con alguien que solo dice sí o no, contra alguien que dice frío, tibio, "
+                      "caliente. Una función suave da pistas.")
+    title(s, "¿Qué tiene de malo el escalón?", "Del escalón a la neurona moderna")
+    g = plotbox(s, LM, 1.95, 5.2, 3.9, (-4, 4), (-0.2, 1.25), xlabel="h", ylabel="ŷ")
+    polyline(s, [g(-4, 0), g(0, 0), g(0, 1), g(4, 1)], ORANGE, 4)
+    text(s, LM, 5.9, 5.2, 0.4, "Escalón: salta de 0 a 1 en h = 0", 15, GRAY, align=PP_ALIGN.CENTER)
+    text(s, 6.4, 1.95, 6.18, 3.0, bullets([Runs([B("Todo o nada: "), ("h = −0.01 y h = −100 dan lo mismo.", {})]),
+                                          Runs([B("Plano: "), ("mover un poco un peso casi nunca cambia la salida.", {})]),
+                                          Runs([B("Salto: "), ("en h = 0 no hay pendiente definida.", {})])]), 19, GRAY, space=12)
+    rect(s, 6.4, 4.75, 6.18, 1.4, NAVY, radius=0.06)
+    text(s, 6.65, 4.75, 5.7, 1.4, "Buscar llaves con “sí / no” es difícil; con “frío… tibio… caliente” es fácil.",
+         18, CREAM, True, anchor=MSO_ANCHOR.MIDDLE)
+
+    # 6 neurona moderna
+    s = d.slide(notes="Widrow y Hoff, 1960: ADALINE. Mismos dos pasos; la activación es continua y derivable. Se entrena "
+                      "con la regla delta, que viene del descenso por gradiente.")
+    title(s, "La neurona artificial moderna")
+    card(s, LM, 1.95, 5.6, 2.1, "Widrow y Hoff, 1960", "ADALINE: ADAptive LInear NEuron.", BLUE, size=19, head_size=23)
+    card(s, LM, 4.25, 5.6, 2.2, "Los mismos dos pasos",
+         [("h = Σ wᵢxᵢ + b", {"font": MONO, "color": INK}), Runs([("ŷ = f(h)  con f ", {"font": MONO, "color": INK}),
+                                                                  ("continua y derivable", {"bold": True, "color": ORANGE})])],
+         ORANGE, size=19, head_size=23)
+    g = plotbox(s, 6.6, 1.95, 5.98, 4.5, (-6, 6), (-0.15, 1.2), xlabel="h")
+    polyline(s, [g(-6, 0), g(0, 0), g(0, 1), g(6, 1)], MUTED, 2.5, dash=True)
+    curve(s, g, sig, (-6, 6), (-0.15, 1.2), BLUE, 4)
+    text(s, 6.9, 2.05, 5.5, 0.6, Runs([C("━ sigmoide (suave)   ", BLUE), C("┅ escalón", MUTED)]), 15, GRAY)
+
+    # 7 derivada
+    s = d.slide(notes="No hace falta cálculo: la derivada es la pendiente. Dibuja tangentes en x = -3, 0, 3. Signo: hacia "
+                      "dónde sube. Tamaño: qué tan empinada.")
+    title(s, "¿Qué es una derivada?")
+    g = plotbox(s, LM, 1.9, 6.2, 4.6, (-4, 4), (-1.5, 16), xlabel="x", ylabel="f(x) = x²")
+    curve(s, g, lambda a: a * a, (-4, 4), (-1.5, 16), BLUE, 3.5)
+    for x0, c in [(-3, ORANGE), (0, NAVY), (3, ORANGE)]:
+        curve(s, g, lambda a, x0=x0: x0 * x0 + 2 * x0 * (a - x0), (x0 - 1.1, x0 + 1.1), (-1.5, 16), c, 2.5)
+        dot(s, g, x0, x0 * x0, c, 0.1)
+    text(s, 7.25, 1.9, 5.33, 1.6, Runs([B("Derivada = pendiente "), ("de la curva en un punto: cuánto sube si avanzas un "
+                                                                     "poquito a la derecha.", {})]), 19, GRAY)
+    table(s, 7.25, 3.55, 5.33, [["x", "−3", "0", "1", "3"], ["f′(x) = 2x", "−6", "0", "2", "6"]], 18,
+          [1.73, 0.9, 0.9, 0.9, 0.9], 0.55, align=[None] + [PP_ALIGN.CENTER] * 4)
+    text(s, 7.25, 4.85, 5.33, 1.6, [Runs([B("Signo: "), ("hacia dónde sube.", {})]),
+                                    Runs([B("Tamaño: "), ("qué tan empinada está.", {})])], 18, GRAY, space=8)
+
+    # 8 activaciones
+    s = d.slide(notes="e ≈ 2.718. Lineal para regresión; sigmoide para probabilidades; tanh centrada en 0; ReLU la más usada "
+                      "en redes profundas.")
+    title(s, "Funciones de activación")
+    acts = [("Lineal", lambda a: a, (-3, 3), "f(h) = h", "cualquier número"),
+            ("Sigmoide", sig, (-0.2, 1.2), "1 / (1 + e⁻ʰ)", "entre 0 y 1"),
+            ("tanh", math.tanh, (-1.2, 1.2), "(eʰ − e⁻ʰ)/(eʰ + e⁻ʰ)", "entre −1 y 1"),
+            ("ReLU", lambda a: max(0.0, a), (-0.5, 3), "máx(0, h)", "0 o positivo")]
+    for k, (nm, fn, yr, fx, rg) in enumerate(acts):
+        x = LM + k * 2.98
+        g = plotbox(s, x, 1.85, 2.83, 2.6, (-3, 3), yr, m=0.22)
+        curve(s, g, fn, (-3, 3), yr, ORANGE if k % 2 else BLUE, 3.5)
+        text(s, x, 4.55, 2.83, 0.45, nm, 20, INK, True)
+        text(s, x, 5.0, 2.83, 0.45, fx, 14, INK, font=MONO)
+        text(s, x, 5.45, 2.83, 0.45, rg, 15, GRAY)
+    text(s, LM, 6.05, CW, 0.5, "e ≈ 2.718 (como π ≈ 3.14).  e⁻ʰ = “e elevado a menos h”.", 15, GRAY)
+
+    # 9 tabla valores
+    s = d.slide(notes="Calcula 2 o 3 casillas con calculadora. Que noten: la sigmoide nunca llega a 0 ni a 1; vale 0.5 en "
+                      "h = 0; tanh es la sigmoide estirada entre -1 y 1.")
+    title(s, "Tabla de valores")
+    table(s, LM, 1.9, CW, [["h", "lineal", "sigmoide", "tanh", "ReLU"], ["−3", "−3", "0.0474", "−0.9951", "0"],
+                           ["−1", "−1", "0.2689", "−0.7616", "0"], ["0", "0", "0.5", "0", "0"],
+                           ["1", "1", "0.7311", "0.7616", "1"], ["3", "3", "0.9526", "0.9951", "3"]],
+          20, [1.6, 2.5, 2.6, 2.6, 2.53], 0.6, highlight=[3], align=[PP_ALIGN.CENTER] * 5)
+    text(s, LM, 5.75, CW, 0.7, "La sigmoide nunca llega a 0 ni a 1, y vale exactamente 0.5 cuando h = 0.", 19, ORANGE, True)
+
+    # 10 sigmoide detalle
+    s = d.slide(notes="Saturación: en los extremos la pendiente es casi 0 y aprende lento. Derivada sigma(1-sigma), máxima "
+                      "0.25 en h = 0. Si todo fuera lineal, la cadena seguiría siendo una recta.")
+    title(s, "La sigmoide en detalle")
+    g = plotbox(s, LM, 1.9, 6.2, 4.5, (-6, 6), (-0.05, 1.1), xlabel="h")
+    curve(s, g, sig, (-6, 6), (-0.05, 1.1), BLUE, 4)
+    curve(s, g, lambda a: sig(a) * (1 - sig(a)), (-6, 6), (-0.05, 1.1), ORANGE, 4)
+    text(s, LM + 0.4, 1.95, 5.5, 0.4, Runs([C("━ σ(h)   ", BLUE), C("━ σ′(h)", ORANGE)]), 15, GRAY)
+    text(s, LM + 0.25, 5.95, 5.9, 0.4, "Saturación: en los extremos la pendiente ≈ 0", 14, GRAY)
+    rect(s, 7.25, 1.9, 5.33, 1.3, NAVY, radius=0.06)
+    text(s, 7.25, 1.9, 5.33, 1.3, "σ′(h) = σ(h) · (1 − σ(h))", 24, CREAM, True, MONO, align=PP_ALIGN.CENTER,
+         anchor=MSO_ANCHOR.MIDDLE)
+    text(s, 7.25, 3.45, 5.33, 3.0, [Runs([B("Máxima en h = 0: "), ("σ′(0) = 0.25.", {})]),
+                                    Runs([B("Saturación: "), ("con h muy grande o muy negativo aprende lento.", {})]),
+                                    Runs([B("No lineal: "), ("si todo fuera lineal, la red entera seguiría siendo una recta.",
+                                                             {})])], 18, GRAY, space=12)
+
+    # 11 ejemplo a mano
+    s = d.slide(notes="Mismo ejemplo que verifica el notebook 1_04. Con el escalón la salida sería solo 0.")
+    title(s, "Ejemplo a mano")
+    text(s, LM, 1.85, CW, 0.5, "X = [0.7, −0.3]  ·  W = [0.1, 0.8]  ·  b = −0.1", 20, GRAY, font=MONO)
+    table(s, LM, 2.5, CW, [["Paso", "Cálculo"], ["1. Combinación lineal", "h = 0.07 − 0.24 − 0.1 = −0.27"],
+                           ["2. Sigmoide", "e^0.27 ≈ 1.3100  →  σ(−0.27) = 1 / 2.3100 ≈ 0.4329"],
+                           ["3. Con tanh", "tanh(−0.27) ≈ −0.2636"], ["Con el escalón", "h < 0  →  ŷ = 0 (sin más información)"]],
+          19, [3.4, 8.43], 0.62, highlight=[2])
+    text(s, LM, 5.85, CW, 0.6, "La sigmoide dice algo más rico: “0.43, casi en la frontera”.", 20, ORANGE, True)
+
+    practica(d, "1_04_red_neuronal_simple", "notebooks · 20 min · 3 puntos",
+             [("TODO 1 pt", "sigmoide(h) con np.exp(-h)"), ("TODO 1 pt", "Neurona: combinacion_lineal y forward"),
+              ("TODO 1 pt", "tanh y comparación con la sigmoide")],
+             "# comprobaciones\nOutput: 0.4329        # sigmoide\ntanh(-0.27) = -0.2636\n\n# error típico: np.exp(h)\n# sin el signo menos -> 0.5671",
+             "Pistas: np.dot(self.W, X) hace la suma de productos; dentro de la clase usa self.W y self.b.",
+             "Mismo ejemplo de la diapositiva 11.", extra="Sin Python: abre el notebook en Google Colab.")
+    descanso(d, "el descenso por gradiente")
+
+    # 14 montaña
+    s = d.slide(notes="En redes, la función será el error y la variable los pesos. Analogía: bajar de noche sintiendo la "
+                      "pendiente con los pies.")
+    title(s, "Descenso por gradiente", "Bajar la montaña a oscuras")
+    g = plotbox(s, LM, 1.9, 6.6, 4.5, (-1, 7), (-0.5, 6))
+    f = lambda a: 0.18 * (a - 3.2) ** 2 + 0.6 * math.sin(a * 1.3) + 0.8  # noqa: E731
+    curve(s, g, f, (-0.8, 6.8), (-0.5, 6), NAVY, 4)
+    for a in [5.9, 5.1, 4.3]:
+        dot(s, g, a, f(a), ORANGE, 0.12)
+    x1, y1 = g(5.9, f(5.9) + 0.6)
+    x2, y2 = g(4.4, f(4.4) + 0.6)
+    arrow(s, x1, y1, x2, y2, ORANGE, 3)
+    text(s, 7.7, 1.9, 4.88, 1.5, Runs([B("Objetivo: "), ("encontrar el x que hace f(x) lo más pequeña posible.", {})]),
+         19, GRAY)
+    text(s, 7.7, 3.3, 4.88, 1.5, Runs([B("En redes: "), ("f es el error y x son los pesos.", {})]), 19, GRAY)
+    rect(s, 7.7, 4.55, 4.88, 1.85, NAVY, radius=0.06)
+    text(s, 7.95, 4.55, 4.4, 1.85, "De noche, sin linterna: sientes con los pies hacia dónde baja y das un paso.",
+         18, CREAM, True, anchor=MSO_ANCHOR.MIDDLE)
+
+    # 15 regla
+    s = d.slide(notes="La derivada apunta hacia donde sube; queremos bajar, por eso el signo menos. Algoritmo: inicial, "
+                      "pendiente, actualizar, repetir.")
+    title(s, "La regla del descenso")
+    rect(s, LM, 1.85, CW, 1.2, NAVY, radius=0.06)
+    text(s, LM, 1.85, CW, 1.2, "x  ←  x − η · f′(x)", 36, CREAM, True, MONO, align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.MIDDLE)
+    table(s, LM, 3.3, 6.2, [["Símbolo", "Significa"], ["x", "Dónde estás parado"], ["f′(x)", "La pendiente: hacia dónde sube"],
+                            ["η (eta)", "Tasa de aprendizaje: tamaño del paso"]], 17, [1.6, 4.6], 0.55)
+    card(s, 7.25, 3.3, 5.33, 3.1, "¿Por qué el signo menos?",
+         ["La derivada apunta hacia donde la función sube.", Runs([("Queremos bajar: vamos en ", {}),
+                                                                   ("contra de la pendiente.", {"bold": True})])],
+         ORANGE, size=18, head_size=22)
+
+    # 16 ejemplo x²
+    s = d.slide(notes="Desde x = -2: -2 - 0.1*(-4) = -1.6; f baja de 4 a 2.56. Desde 5: los pasos se acortan solos porque la "
+                      "pendiente disminuye.")
+    title(s, "Ejemplo: f(x) = x², η = 0.1")
+    g = plotbox(s, LM, 1.85, 5.6, 4.6, (-1, 5.6), (-1.5, 27), xlabel="x")
+    curve(s, g, lambda a: a * a, (-1, 5.3), (-1.5, 27), BLUE, 3.5)
+    pts = [5, 4, 3.2, 2.56, 2.048, 1.6384]
+    for a, b_ in zip(pts, pts[1:]):
+        polyline(s, [g(a, a * a), g(b_, b_ * b_)], ORANGE, 2)
+    for a in pts:
+        dot(s, g, a, a * a, ORANGE, 0.1)
+    table(s, 6.65, 1.85, 5.93, [["x", "f′(x) = 2x", "x − 0.1·f′(x)"], ["5", "10", "4"], ["4", "8", "3.2"],
+                                ["3.2", "6.4", "2.56"], ["2.56", "5.12", "2.048"], ["2.048", "4.096", "1.6384"]],
+          18, [1.6, 2.0, 2.33], 0.52, align=[PP_ALIGN.CENTER] * 3)
+    text(s, 6.65, 5.15, 5.93, 1.3, "Los pasos se acortan solos al acercarse al fondo: la pendiente es más pequeña ahí.",
+         17, ORANGE, True)
+
+    # 17 tasa de aprendizaje
+    s = d.slide(notes="0.01 lento; 0.1 bien; 0.5 llega de un salto solo en este problema; 0.9 oscila; 1.1 diverge. η es un "
+                      "hiperparámetro: lo elegimos nosotros.")
+    title(s, "La tasa de aprendizaje η")
+    for k, (eta, lab, col) in enumerate([(0.01, "η = 0.01 · muy lento", BLUE), (0.1, "η = 0.1 · bien", BLUE),
+                                         (0.9, "η = 0.9 · oscila", ORANGE), (1.1, "η = 1.1 · diverge", ORANGE)]):
+        x = LM + k * 2.98
+        g = plotbox(s, x, 1.85, 2.83, 2.5, (-9, 9), (-3, 80), m=0.18)
+        curve(s, g, lambda a: a * a, (-9, 9), (-3, 80), MUTED, 2)
+        xs_ = [5.0]
+        for _ in range(3):
+            xs_.append(xs_[-1] - eta * 2 * xs_[-1])
+        for a, b_ in zip(xs_, xs_[1:]):
+            polyline(s, [g(a, a * a), g(b_, b_ * b_)], col, 1.8)
+        for a in xs_:
+            dot(s, g, a, a * a, col, 0.07)
+        text(s, x, 4.4, 2.83, 0.45, lab, 16, INK, True, align=PP_ALIGN.CENTER)
+    table(s, LM, 5.0, CW, [["η", "0.01", "0.1", "0.5", "0.9", "1.1"],
+                           ["Desde x = 5, cinco pasos", "4.52", "1.64", "0 (de un salto)", "−1.64 (oscila)", "−12.44 (diverge)"]],
+          16, [3.03, 1.4, 1.4, 2.0, 2.0, 2.0], 0.5, align=[None] + [PP_ALIGN.CENTER] * 5)
+    text(s, LM, 6.15, CW, 0.5, "η es un hiperparámetro: lo elegimos nosotros. Ni muy pequeño ni muy grande.", 16, GRAY, True)
+
+    # 18 ejercicios
+    s = d.slide(notes="1) 1.5 y 0.75. 2) 10, 5.6, 2.96, 1.376, 0.4256, -0.1446, -0.4868 (tiende a -1). 3) 0.5 y 0.25.")
+    title(s, "Ejercicios en papel · 10 min")
+    ex = [("1", ["f(x) = x²", "x₀ = 3 · η = 0.25"], "Calcula dos pasos."),
+          ("2", ["f(x) = 2x + x²", "x₀ = 10 · η = 0.2", "Pista: f′(x) = 2 + 2x"], "Calcula 6 valores."),
+          ("3", ["Sigmoide en h = 0"], "¿Cuánto vale σ(0)? ¿Y σ′(0)?")]
+    for k, (n, a, b) in enumerate(ex):
+        x = LM + k * 3.98
+        rect(s, x, 1.95, 3.8, 4.4, CARD, BORDER, radius=0.05)
+        shape(s, MSO_SHAPE.OVAL, x + 0.3, 2.25, 0.8, 0.8, ORANGE, n, 26)
+        text(s, x + 0.3, 3.3, 3.25, 1.6, a, 19, INK)
+        text(s, x + 0.3, 4.95, 3.25, 1.3, b, 18, ORANGE, True)
+
+    practica(d, "1_05_descenso_por_gradiente_1D", "notebooks · 15 min · 2 puntos  ·  + docs/practica_03.py",
+             [("TODO 1 pt", "gradient_descent_update: la regla del descenso"),
+              ("TODO 1 pt", "ciclo while hasta error < 1e-3; contar iteraciones")],
+             "# historial esperado\n[5, 4.0, 3.2, 2.56, 2.048, 1.6384]\n\n# iteraciones con 1e-3:\n# |x_nuevo - x| -> 32   f(x) -> 23",
+             "Pistas: la derivada ya existe como df(x). Para detenerse, usa while y un contador.",
+             "0.01 lento; 0.1 bien; 1.1 diverge.", extra="Demo: python docs/practica_03.py --graficar   (activaciones y cinco valores de η)")
+
+    cierre(d, ["Neurona moderna: activación suave y derivable.", "Derivada = pendiente: dice hacia dónde sube.",
+               "Descenso: x ← x − η·f′(x), con η ni muy grande ni muy pequeña."],
+           "Próxima clase: bajar por el error de la red moviendo los pesos.",
+           "notebooks 1_04 y 1_05 (5 pts)", "libro, “Descenso por gradiente” (aprendizaje)",
+           "Quiz de salida: activación continua; sigmoide 0 a 1, tanh -1 a 1; derivada = pendiente; signo menos para bajar; "
+           "η grande oscila o diverge.")
+    return d
+
+
+# ================================================================ CLASE 4
+def clase4():
+    d = Deck("Introducción a las Redes Neuronales  ·  Clase 4")
+    cover(d, "CLASE 4  ·  MÓDULO 3 (PARTE 2)", "Entrenar una", "neurona",
+          "Regla delta, entrenamiento completo, ADALINE y redes de varias salidas",
+          "Hoy usamos el descenso por gradiente de la clase 3 para entrenar los pesos de una neurona.")
+    agenda(d, [["0:00", "Repaso de la Clase 3"], ["0:10", "Medir el error"], ["0:25", "La regla delta"],
+               ["0:50", "Práctica: un paso del descenso"], ["1:10", "Descanso"], ["1:20", "Entrenamiento completo e inicialización"],
+               ["1:35", "Práctica: entrenar una neurona"], ["2:00", "ADALINE"], ["2:08", "Red con varias salidas"],
+               ["2:20", "Quiz y cierre"]], highlight=[5])
+    objetivos(d, [("Medir", "el error de una red con el MSE."), ("Aplicar", "un paso de la regla delta a mano."),
+                  ("Entrenar", "una neurona completa y medir su exactitud."),
+                  ("Inicializar", "los pesos al azar con Xavier."), ("Calcular", "una capa con varias salidas.")])
+
+    # 4 repaso
+    s = d.slide(notes="Pregunta antes de revelar. Hoy en vez de x² bajamos por el error, moviendo los pesos.")
+    title(s, "Repaso de la Clase 3")
+    rep = [("¿Sigmoide?", "Convierte h en un número entre 0 y 1, suave."), ("¿Derivada?", "La pendiente: hacia dónde sube."),
+           ("¿Descenso?", "x ← x − η·f′(x)")]
+    for k, (h, b) in enumerate(rep):
+        card(s, LM + k * 3.98, 1.95, 3.8, 2.6, h, b, BLUE, size=19, head_size=24)
+    text(s, LM, 5.0, CW, 1.0, "Hoy: bajar por el error de la red moviendo los pesos. Eso es entrenar.", 24, ORANGE, True)
+
+    # 5 medir error
+    s = d.slide(notes="Al cuadrado para que + y - no se cancelen y para castigar más los errores grandes. Error, pérdida y "
+                      "costo son sinónimos.")
+    title(s, "Medir el error", "Pérdida · loss · función de costo")
+    table(s, LM, 1.9, 6.6, [["Medida", "Fórmula"], ["Error residual", "e = y − ŷ"], ["SSE", "Σ (y − ŷ)²"],
+                            ["MSE (promedio)", "(1/m) Σ (y − ŷ)²"]], 19, [2.6, 4.0], 0.6)
+    text(s, LM, 4.5, 6.6, 1.9, [Runs([B("¿Por qué al cuadrado? "), ("+1 y −1 no se cancelan, y los errores grandes pesan "
+                                                                   "más.", {})])], 18, GRAY)
+    card(s, 7.6, 1.9, 4.98, 4.45, "Ejemplo",
+         [("y = [1, 0, 1]", {"font": MONO, "color": INK}), ("ŷ = [0.8, 0.3, 0.6]", {"font": MONO, "color": INK}),
+          "errores²: 0.04, 0.09, 0.16", Runs([B("SSE = 0.29")]), Runs([("MSE = 0.29 / 3 ≈ ", {}),
+                                                                      ("0.0967", {"bold": True, "color": ORANGE})])],
+         ORANGE, size=18, head_size=22)
+
+    # 6 montaña del error
+    s = d.slide(notes="Si dibujamos el error contra un peso sale un valle. Entrenar = bajar ese valle: es la clase 3 con w en "
+                      "lugar de x.")
+    title(s, "La pérdida es una montaña")
+    g = plotbox(s, LM, 1.9, 6.6, 4.5, (-1, 5), (-0.3, 5), xlabel="peso w", ylabel="error E")
+    curve(s, g, lambda a: 0.45 * (a - 2.2) ** 2 + 0.3, (-1, 5), (-0.3, 5), BLUE, 4)
+    for a in [4.6, 3.8, 3.1, 2.6]:
+        dot(s, g, a, 0.45 * (a - 2.2) ** 2 + 0.3, ORANGE, 0.11)
+    dot(s, g, 2.2, 0.3, NAVY, 0.12)
+    text(s, LM + 3.6, 2.0, 2.9, 0.35, Runs([C("● ", NAVY), ("pesos óptimos   ", {}), C("● ", ORANGE), ("pasos", {})]),
+         13, GRAY, align=PP_ALIGN.RIGHT)
+    rect(s, 7.6, 1.9, 4.98, 2.0, NAVY, radius=0.06)
+    text(s, 7.85, 1.9, 4.5, 2.0, "Entrenar = bajar al valle del error moviendo los pesos.", 22, CREAM, True,
+         anchor=MSO_ANCHOR.MIDDLE)
+    text(s, 7.6, 4.2, 4.98, 2.2, ["Es lo mismo de la clase 3:", Runs([("x  →  ", {}), B("peso w")]),
+                                  Runs([("f(x)  →  ", {}), B("error E")])], 19, GRAY, space=8)
+
+    # 7 cadena
+    s = d.slide(notes="Efecto dominó: cambiar w cambia h, que cambia ŷ, que cambia E. Se multiplican las derivadas de cada "
+                      "eslabón: regla de la cadena. Los dos signos menos se cancelan.")
+    title(s, "¿Cuánto cambia el error si muevo un peso?")
+    chain = [("wᵢ", NAVY), ("h", BLUE), ("ŷ = f(h)", BLUE), ("E = ½(y − ŷ)²", ORANGE)]
+    for k, (lab, col) in enumerate(chain):
+        x = LM + k * 3.05
+        shape(s, MSO_SHAPE.ROUNDED_RECTANGLE, x, 1.95, 2.55, 0.95, col, lab, 19)
+        if k < 3:
+            arrow(s, x + 2.55, 2.42, x + 3.05, 2.42, GRAY, 2.5)
+    for k, lab in enumerate(["xᵢ", "f′(h)", "−(y − ŷ)"]):
+        text(s, LM + k * 3.05 + 1.9, 3.0, 1.9, 0.45, lab, 17, ORANGE, True, MONO, align=PP_ALIGN.CENTER)
+    text(s, LM, 3.55, CW, 0.5, "Regla de la cadena: se multiplican los efectos de cada eslabón", 16, GRAY,
+         align=PP_ALIGN.CENTER)
+    rect(s, LM, 4.25, CW, 0.95, CARD, BORDER, radius=0.06)
+    text(s, LM, 4.25, CW, 0.95, "∂E/∂wᵢ = −(y − ŷ) · f′(h) · xᵢ", 26, INK, True, MONO, align=PP_ALIGN.CENTER,
+         anchor=MSO_ANCHOR.MIDDLE)
+    rect(s, LM, 5.4, CW, 0.95, NAVY, radius=0.06)
+    text(s, LM, 5.4, CW, 0.95, "w ← w − η·∂E/∂w   ⇒   wᵢ ← wᵢ + η (y − ŷ) f′(h) xᵢ", 22, CREAM, True, MONO,
+         align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.MIDDLE)
+
+    # 8 regla delta
+    s = d.slide(notes="Delta se lee delta; por eso regla delta (Widrow y Hoff). Con sigmoide f'(h) = ŷ(1 - ŷ).")
+    title(s, "La regla delta en tres pasos")
+    steps = [("1 · Término de error", "δ = (y − ŷ) · f′(h)", "Cuánto y hacia dónde corregir"),
+             ("2 · Incremento", "Δwᵢ = η · δ · xᵢ", "Δb = η · δ"),
+             ("3 · Actualización", "wᵢ ← wᵢ + Δwᵢ", "b ← b + Δb")]
+    for k, (h, f_, b) in enumerate(steps):
+        x = LM + k * 3.98
+        shape(s, MSO_SHAPE.CHEVRON if k else MSO_SHAPE.PENTAGON, x, 1.95, 4.0, 0.9, ORANGE if k == 0 else NAVY, h, 18)
+        rect(s, x, 3.05, 3.8, 2.3, CARD, BORDER, radius=0.05)
+        text(s, x + 0.2, 3.25, 3.4, 0.8, f_, 20, INK, True, MONO)
+        text(s, x + 0.2, 4.2, 3.4, 1.0, b, 17, GRAY, font=MONO if k else SANS)
+    text(s, LM, 5.7, CW, 0.7, Runs([("Con la sigmoide:  ", {}), ("f′(h) = ŷ · (1 − ŷ)", {"font": MONO, "bold": True,
+                                                                                         "color": ORANGE})]), 20, GRAY)
+
+    # 9 ejemplo
+    s = d.slide(notes="Mismos números del notebook 1_06. La pérdida 1/2(y - ŷ)² baja de 0.0905 a 0.0404.")
+    title(s, "Ejemplo: un paso de la regla delta")
+    text(s, LM, 1.8, CW, 0.5, "x = [1, 1] · y = 1 · w = [0.1, 0.2] · b = 0 · η = 2 · sigmoide", 18, GRAY, font=MONO)
+    table(s, LM, 2.4, CW, [["Paso", "Cálculo"], ["Predicción", "h = 0.3  →  ŷ = σ(0.3) ≈ 0.5744"],
+                           ["Derivada", "f′(h) = 0.5744 · 0.4256 ≈ 0.2445"], ["Término de error", "δ = (1 − 0.5744) · 0.2445 ≈ 0.1040"],
+                           ["Incremento", "Δw = 2 · 0.1040 · [1, 1] ≈ [0.2081, 0.2081]  ·  Δb ≈ 0.2081"],
+                           ["Actualización", "w ≈ [0.3081, 0.4081]  ·  b ≈ 0.2081"],
+                           ["Comprobar", "ŷ ≈ 0.7159  ·  pérdida 0.0905 → 0.0404  ✓"]], 18, [2.9, 8.93], 0.55, highlight=[6])
+
+    # 10 comparación
+    s = d.slide(notes="Se parecen mucho; la regla delta añade f'(h), que sale de derivar.")
+    title(s, "Perceptrón vs. regla delta")
+    table(s, LM, 1.95, CW, [["", "Perceptrón (Clase 2)", "Regla delta (hoy)"], ["Activación", "Escalón", "Continua (sigmoide, lineal…)"],
+                            ["Corrección", "η · (y − ŷ) · x", [("η · (y − ŷ) · ", {}), ("f′(h)", {"bold": True, "color": ORANGE}), (" · x", {})]],
+                            ["De dónde sale", "Intuición de Rosenblatt", "Descenso por gradiente"],
+                            ["El error indica", "Solo si acertó", "Qué tan lejos estuvo"]], 19, [2.9, 4.46, 4.47], 0.7)
+    text(s, LM, 5.75, CW, 0.6, "¡Casi la misma fórmula! La diferencia es la pendiente de la activación.", 20, ORANGE, True)
+
+    practica(d, "1_06_descenso_unpaso", "notebooks · 20 min · 3 puntos",
+             [("TODO 1 pt", "error_term: δ = (y − ŷ)·f′(h)"), ("TODO 1 pt", "incremento: η·δ·X"),
+              ("TODO 1 pt", "actualizacion: sumar a W y b")],
+             "# comprobaciones\nSalida: 0.5744\nTérmino de error: 0.1040\nIncremento: [0.2081 0.2081]\nPesos actualizados: [0.3081 0.4081]",
+             "Pistas: h con neurona.combinacion_lineal(x), ŷ con neurona.forward(x), f′ con sigmoid_prime(h).",
+             "Mismos números de la diapositiva 9.", extra="Al final: vuelve a predecir. Debe dar ≈ 0.7159, más cerca de y = 1.")
+    descanso(d, "entrenar con todos los datos")
+
+    # 13 algoritmo
+    s = d.slide(notes="Descenso por lotes: una actualización por época con el promedio de los incrementos.")
+    title(s, "El algoritmo completo")
+    pasos = [("1", "Inicializar los pesos al azar (Xavier)."),
+             ("2", "Para cada época: incrementos acumulados = 0."),
+             ("3", "Para cada ejemplo: ŷ, δ y sumar δ·x al acumulado."),
+             ("4", "Actualizar: w += η · acumulado / n_ejemplos."),
+             ("5", "Medir el error (MSE) y repetir."),
+             ("6", "Al final: exactitud con datos de prueba.")]
+    for k, (n, t) in enumerate(pasos):
+        y = 1.9 + k * 0.75
+        shape(s, MSO_SHAPE.OVAL, LM, y, 0.55, 0.55, ORANGE if k in (2, 3) else BLUE, n, 17)
+        text(s, LM + 0.8, y - 0.04, 7.0, 0.6, t, 19, INK, anchor=MSO_ANCHOR.MIDDLE)
+    card(s, 8.55, 1.9, 4.03, 4.3, "Vocabulario", [Runs([B("Época: "), ("una pasada por todos los datos.", {})]),
+                                                 Runs([B("Por lotes: "), ("una actualización por época con el promedio.", {})]),
+                                                 Runs([B("Prueba: "), ("datos que no se usaron para entrenar.", {})])],
+         BLUE, size=17, head_size=22)
+
+    # 14 inicialización
+    s = d.slide(notes="Ceros: todas las salidas iguales, hay que romper la simetría. Grandes: la sigmoide se satura. Xavier: "
+                      "uniforme entre -1/raíz(n) y 1/raíz(n). n = 6 da ±0.408.")
+    title(s, "Inicialización de los pesos")
+    card(s, LM, 1.95, 3.8, 2.6, "¿Por qué no en cero?", "Todas las salidas serían iguales: hay que romper la simetría.",
+         ORANGE, size=17, head_size=21)
+    card(s, LM + 3.98, 1.95, 3.8, 2.6, "¿Por qué pequeños?", "Con pesos grandes la sigmoide se satura y aprende lento.",
+         ORANGE, size=17, head_size=21)
+    card(s, LM + 7.96, 1.95, 3.87, 2.6, "Xavier", [("w ~ U(−1/√n, +1/√n)", {"font": MONO, "color": INK}),
+                                                   "n = número de entradas"], BLUE, size=17, head_size=21)
+    rect(s, LM, 4.85, CW, 1.4, NAVY, radius=0.06)
+    text(s, LM + 0.3, 4.85, CW - 0.6, 1.4, Runs([("Ejemplo: con n = 6 entradas, cada peso se elige al azar entre ", {}),
+                                                 ("−0.408 y +0.408", {"bold": True, "color": AMBER})]), 21, CREAM,
+         anchor=MSO_ANCHOR.MIDDLE)
+
+    # 15 datos
+    s = d.slide(notes="data_prep.py escala y separa 90% entrenamiento (360) y 10% prueba (40). La red dice admitido si ŷ > 0.5.")
+    title(s, "Los datos de la práctica: admisiones")
+    table(s, LM, 1.9, 7.0, [["Columna", "Qué es"], ["gre", "Puntaje del examen GRE (escalado)"], ["gpa", "Promedio (escalado)"],
+                            ["rank_1 … rank_4", "Prestigio de la universidad de origen (0/1)"],
+                            ["admit", "Salida: 1 admitido, 0 no"]], 17, [2.4, 4.6], 0.58)
+    text(s, LM, 5.0, 7.0, 1.4, ["400 alumnos · 6 entradas", "90 % entrenamiento (360) · 10 % prueba (40)"], 17, GRAY, space=6)
+    card(s, 8.1, 1.9, 4.48, 4.45, "Exactitud", [("aciertos / predicciones", {"font": MONO, "color": INK}),
+                                                 Runs([("La red dice “admitido” si ", {}), B("ŷ > 0.5"), (".", {})]),
+                                                 Runs([("Meta del notebook: ", {}), ("más de 0.74", {"bold": True, "color": ORANGE})])],
+         BLUE, size=18, head_size=22)
+
+    s = practica(d, "1_07_descenso_por_gradiente", "notebooks · 25 min · 3 puntos",
+                 [("TODO 1 pt", "pesos con Xavier (np.random.uniform)"), ("TODO 1 pt", "completar el ciclo de entrenamiento"),
+                  ("1 pt", "épocas hasta exactitud > 0.74")],
+                 "# referencia (semilla 42, learnrate 0.5)\n# épocas  pérdida  exactitud\n#   10     0.225    0.60\n#  100     0.205    0.775\n# 1000     0.197    0.725",
+                 "Pista: sigue los pasos 3 y 4 del algoritmo (diapositiva 13).",
+                 "Con 1000 épocas la exactitud baja: primera probada de sobreajuste.", size=17)
+    rect(s, LM, 5.2, CW, 1.25, RGBColor(0x22, 0x34, 0x5C), radius=0.06)
+    text(s, LM + 0.3, 5.2, CW - 0.6, 1.25, Runs([("Usa ", {}), ("weights += …", {"font": MONO, "bold": True, "color": AMBER}),
+                                                 (" y no weights = weights + …: la neurona comparte el arreglo; si creas uno "
+                                                  "nuevo, la pérdida no baja.", {})]), 17, CREAM, anchor=MSO_ANCHOR.MIDDLE)
+
+    # 17 ADALINE
+    s = d.slide(notes="Activación lineal: regresión. f'(h) = 1. En 1_08 los datos no están escalados: la recta se ve bien pero "
+                      "no es la óptima; escalando se llega a 9450·años + 24848.")
+    title(s, "ADALINE: regresión con una neurona")
+    try:
+        import numpy as np
+        dat = np.genfromtxt(os.path.join(os.path.dirname(__file__), "..", "notebooks", "files", "Salary_dataset.csv"),
+                            delimiter=",", skip_header=1)
+        xs_, ys_ = dat[:, 1], dat[:, 2] / 1000
+    except Exception:          # sin datos, la gráfica queda solo con la recta
+        xs_, ys_ = [], []
+    g = plotbox(s, LM, 1.9, 6.4, 4.5, (0, 11.5), (0, 135), xlabel="años de experiencia", ylabel="salario (miles)")
+    for a, b_ in zip(xs_, ys_):
+        dot(s, g, a, b_, BLUE, 0.07)
+    curve(s, g, lambda a: 9.45 * a + 24.848, (0.5, 11.2), (0, 135), ORANGE, 3.5)
+    text(s, 7.4, 1.9, 5.18, 2.0, [Runs([B("Activación lineal: "), ("ŷ = w·x + b", {"font": MONO})]),
+                                  Runs([B("Derivada: "), ("f′(h) = 1", {"font": MONO})]),
+                                  Runs([B("Regla: "), ("w ← w + η(y − ŷ)x", {"font": MONO})])], 18, GRAY, space=8)
+    rect(s, 7.4, 4.0, 5.18, 2.4, NAVY, radius=0.06)
+    text(s, 7.65, 4.1, 4.7, 2.2, [("salario ≈ 9 450 · años + 24 848", {"bold": True, "color": AMBER}),
+                                  "5 años → ≈ 72 098",
+                                  ("Lección: escalar los datos acelera mucho el entrenamiento.", {"color": SOFT})], 17, CREAM,
+         space=8)
+
+    # 18 varias salidas
+    s = d.slide(notes="Capa completamente conectada: cada entrada con cada salida. W es m x n, un sesgo por salida. La "
+                      "activación se aplica elemento por elemento.")
+    title(s, "Red de una capa con varias salidas")
+    ins, outs = [(1.4, 2.6), (1.4, 4.8)], [(5.4, 2.6), (5.4, 4.8)]
+    for i, (x, y) in enumerate(ins):
+        for j, (x2, y2) in enumerate(outs):
+            arrow(s, x + 0.4, y, x2 - 0.45, y2, GRAY, 2)
+    for i, (x, y) in enumerate(ins):
+        shape(s, MSO_SHAPE.OVAL, x - 0.4, y - 0.4, 0.8, 0.8, BLUE, f"x{'₁₂'[i]}", 20)
+    for j, (x, y) in enumerate(outs):
+        shape(s, MSO_SHAPE.OVAL, x - 0.45, y - 0.45, 0.9, 0.9, NAVY, f"ŷ{'₁₂'[j]}", 20)
+    for lab, (x, y) in [("w₁₁", (3.0, 2.25)), ("w₂₂", (3.0, 4.95)), ("w₁₂", (2.35, 3.15)), ("w₂₁", (2.35, 3.85))]:
+        text(s, x, y, 0.8, 0.4, lab, 15, ORANGE, True)
+    text(s, LM, 5.75, 6.0, 0.6, "Cada entrada se conecta con cada salida: “completamente conectada”.", 15, GRAY)
+    rect(s, 7.0, 1.95, 5.58, 1.3, NAVY, radius=0.06)
+    text(s, 7.0, 1.95, 5.58, 1.3, "H = X·W + B     Ŷ = f(H)", 26, CREAM, True, MONO, align=PP_ALIGN.CENTER,
+         anchor=MSO_ANCHOR.MIDDLE)
+    text(s, 7.0, 3.5, 5.58, 2.9, [Runs([B("W: "), ("matriz de m entradas × n salidas.", {})]),
+                                  Runs([B("B: "), ("un sesgo por salida.", {})]),
+                                  Runs([B("f: "), ("se aplica a cada elemento de H.", {})]),
+                                  Runs([B("Parámetros: "), ("(m + 1) · n", {"font": MONO})])], 18, GRAY, space=10)
+
+    # 19 ejemplo varias salidas
+    s = d.slide(notes="El libro trae H = [-7.7, 6.3] y ŷ = [4.52e-4, 0.981]; las cuentas correctas son -4.7 y 6.3. Úsalo como "
+                      "reto: encuentren el error del libro.")
+    title(s, "Ejemplo: 2 entradas, 2 salidas")
+    text(s, LM, 1.8, CW, 0.5, "X = [8, 4] · W = [[−0.1, 0.6], [−0.8, 0.3]] · B = [−0.7, 0.3] · sigmoide", 17, GRAY, font=MONO)
+    table(s, LM, 2.4, CW, [["Salida", "Combinación lineal", "Sigmoide"],
+                           ["ŷ₁", "8·(−0.1) + 4·(−0.8) − 0.7 = −4.7", "σ(−4.7) ≈ 0.0090"],
+                           ["ŷ₂", "8·0.6 + 4·0.3 + 0.3 = 6.3", "σ(6.3) ≈ 0.9982"]], 19, [1.4, 6.4, 4.03], 0.65)
+    text(s, LM, 4.55, 6.0, 0.6, Runs([B("Parámetros: "), ("(2 + 1) · 2 = 6", {"font": MONO})]), 19, GRAY)
+    rect(s, LM, 5.2, CW, 1.2, PALEORANGE, radius=0.06)
+    text(s, LM + 0.3, 5.2, CW - 0.6, 1.2, Runs([("Reto: ", {"bold": True, "color": ORANGE}),
+                                                ("el libro dice H = [−7.7, 6.3]. ¿Dónde está el error?", {})]), 19, INK,
+         anchor=MSO_ANCHOR.MIDDLE)
+
+    # 20 quiz
+    s = d.slide(notes="Respuestas: 1) para que no se cancelen y castigar los grandes. 2) término de error, incremento, "
+                      "actualización. 3) f'(h). 4) romper la simetría. 5) (3+1)·2 = 8.")
+    s.background.fill.fore_color.rgb = ORANGE
+    s._dark = True
+    s._footer = WHITE
+    title(s, "Quiz · 5 minutos")
+    qs = ["¿Por qué el error se eleva al cuadrado?", "¿Cuáles son los tres pasos de la regla delta?",
+          "¿Qué añade la regla delta respecto a la del perceptrón?", "¿Por qué no se inicializan los pesos en cero?",
+          "¿Cuántos parámetros tiene una capa con 3 entradas y 2 salidas?"]
+    text(s, LM, 1.95, CW, 4.6, [Runs([(f"{k + 1}.  ", {"bold": True, "color": NAVY}), (q, {})]) for k, q in enumerate(qs)],
+         24, WHITE, space=16)
+
+    cierre(d, ["Entrenar = bajar por el error moviendo los pesos.", "Regla delta: δ = (y − ŷ)·f′(h),  Δw = η·δ·x.",
+               "Una sola capa sigue sin resolver XOR."],
+           "Próximo módulo: redes multicapa y retropropagación.",
+           "notebooks 1_06 y 1_07 (6 pts)", "libro, “Redes neuronales multicapa”",
+           "Demo final: python docs/practica_04.py --graficar. OR se aprende; XOR se queda en 0.25.")
+    return d
+
+
 if __name__ == "__main__":
     out = sys.argv[1] if len(sys.argv) > 1 else "entregables"
     os.makedirs(out, exist_ok=True)
-    for name, fn in [("Clase1_Diapositivas", clase1), ("Clase2_Diapositivas", clase2)]:
+    for name, fn in [("Clase1_Diapositivas", clase1), ("Clase2_Diapositivas", clase2),
+                     ("Clase3_Diapositivas", clase3), ("Clase4_Diapositivas", clase4)]:
         path = os.path.join(out, name + ".pptx")
         print(path, fn().save(path), "diapositivas")

@@ -43,3 +43,12 @@
 - `docs/PLAN_CLASE3.md`: propuesta de partir el módulo 3 en clases 3 y 4. El libro tiene un error de cuentas en el
   ejemplo de varias salidas (H correcto = [−4.7, 6.3]).
 - Nada de esto está commiteado ni pusheado: pendiente de confirmación de Kevin.
+
+## Actualización (2026-11-02, tarde): clases 3 y 4
+- Módulo 3 dividido en Clase 3 (neurona moderna, activaciones, derivada, descenso 1D; notebooks 1_04, 1_05) y Clase 4
+  (MSE, regla delta, entrenamiento completo, Xavier, ADALINE, varias salidas; notebooks 1_06, 1_07, 1_08).
+- Nuevos: docs/GUIA_PASO_A_PASO_CLASE3.md y CLASE4.md, docs/practica_03.py y practica_04.py (con asserts),
+  entregables/Clase3_* y Clase4_* (guía PDF, diapositivas PDF y PPTX), notebooks/output/.gitkeep (1_05 guarda ahí).
+- Clave local (no publicar, en .gitignore): soluciones_docente_m3.py. 1_07: ~100 épocas → exactitud 0.775; 1000 → 0.725.
+- Ojo en 1_07: `weights += ...` (en el lugar); con `weights = weights + ...` la neurona no ve el cambio.
+- PLAN_CLASE3.md eliminado (reemplazado por las guías). Siguiente: módulo 4, redes multicapa y retropropagación (1_09–1_11).
