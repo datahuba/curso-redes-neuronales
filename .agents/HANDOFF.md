@@ -63,3 +63,10 @@
 - Hallazgos: 1_11 imprime la pérdida con solo el último ejemplo (bug del original); 22 con lr 0.03 el descenso simple
   diverge y momentum converge; 3_2 entrena bien solo con normalizar+centrar+vectorizar+momentum (ECM 31600→29, kernel≈Sobel).
 - El Python del sistema (3.13 de la Store) perdió sus paquetes una vez; se reinstalaron con pip.
+
+## Actualización (2026-11-10, tarde): clases 5, 6 y 7 → curso completo
+- Clase 5 (multicapa + retropropagación, notebooks 1_09–1_11), Clase 6 (optimizadores, 21–23), Clase 7 (convolución, 3_1–3_2):
+  docs/GUIA_PASO_A_PASO_CLASE5..7.md, docs/practica_05..07.py (con asserts), entregables/Clase5..7_* (guía PDF, diapositivas PDF+PPTX, 21 c/u).
+- practica_05: red 2-3-1 resuelve XOR (semilla 1). practica_06 reproduce exactos los números de 21/22/23 sin nni.
+  practica_07: el descenso recupera Sobel exacto en ruido CENTRADO (sin centrar diverge).
+- El curso queda completo: clases 1–7 cubren los 17 notebooks.

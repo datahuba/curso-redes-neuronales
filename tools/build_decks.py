@@ -1494,10 +1494,642 @@ def clase4():
     return d
 
 
+# ---------------------------------------------------------------- helpers clases 5–7
+def repaso(d, titulo, tarjetas, hoy, notes="Pregunta antes de revelar cada tarjeta."):
+    s = d.slide(notes=notes)
+    title(s, titulo)
+    for k, (h, b) in enumerate(tarjetas):
+        card(s, LM + k * 3.98, 1.95, 3.8, 2.6, h, b, BLUE, size=19, head_size=21)
+    text(s, LM, 5.0, CW, 1.0, hoy, 24, ORANGE, True)
+
+
+def quiz(d, qs, notes):
+    s = d.slide(notes=notes)
+    s.background.fill.fore_color.rgb = ORANGE
+    s._dark = True
+    s._footer = WHITE
+    title(s, "Quiz · 5 minutos")
+    text(s, LM, 1.95, CW, 4.6, [Runs([(f"{k + 1}.  ", {"bold": True, "color": NAVY}), (q, {})]) for k, q in enumerate(qs)],
+         22, WHITE, space=14)
+
+
+def red(s, x0, y0, w, h, capas, nombres, color_capas=(BLUE, NAVY, ORANGE), r=0.28, linea=MUTED):
+    """Dibuja una red completamente conectada. Devuelve las posiciones de los nodos por capa."""
+    pos = []
+    for c, n in enumerate(capas):
+        x = x0 + c * (w / (len(capas) - 1))
+        ys = [y0 + h / 2 + (k - (n - 1) / 2) * min(0.85, h / max(n, 1)) for k in range(n)]
+        pos.append([(x, y) for y in ys])
+    for c in range(len(capas) - 1):
+        for (xa, ya) in pos[c]:
+            for (xb, yb) in pos[c + 1]:
+                arrow(s, xa + r, ya, xb - r, yb, linea, 1.3, head=False)
+    for c, capa in enumerate(pos):
+        col = color_capas[min(c, len(color_capas) - 1)]
+        for (x, y) in capa:
+            shape(s, MSO_SHAPE.OVAL, x - r, y - r, 2 * r, 2 * r, col)
+        text(s, capa[0][0] - 1.0, y0 + h + 0.05, 2.0, 0.4, nombres[c], 15, INK, True, align=PP_ALIGN.CENTER)
+    return pos
+
+
+def grid(s, x0, y0, cell, M, size=16, fill=CARD, hl=None, hl_color=ORANGE, shade=False):
+    """Dibuja una matriz de números como cuadrícula; hl = (fila0, col0, fila1, col1) se resalta."""
+    for i, fila in enumerate(M):
+        for j, v in enumerate(fila):
+            f = fill
+            if shade:
+                g = int(255 - min(255, max(0, float(v))) * 0.75) if isinstance(v, (int, float)) else 245
+                f = RGBColor(g, g, g)
+            c = INK if not shade or (isinstance(v, (int, float)) and v < 150) else CREAM
+            shp = shape(s, MSO_SHAPE.RECTANGLE, x0 + j * cell, y0 + i * cell, cell, cell, f, str(v), size, c, False,
+                        line=BORDER, lw=1)
+    if hl:
+        r0, c0, r1, c1 = hl
+        b = s.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(x0 + c0 * cell), Inches(y0 + r0 * cell),
+                               Inches((c1 - c0 + 1) * cell), Inches((r1 - r0 + 1) * cell))
+        b.fill.background()
+        b.line.color.rgb = hl_color
+        b.line.width = Pt(4)
+        b.shadow.inherit = False
+
+
+# ================================================================ CLASE 5
+def clase5():
+    d = Deck("Introducción a las Redes Neuronales  ·  Clase 5")
+    cover(d, "CLASE 5  ·  MÓDULO 4", "Redes multicapa y", "retropropagación",
+          "Capas ocultas, pase hacia adelante, retropropagación… ¡y XOR resuelto!",
+          "Hoy resolvemos el problema que quedó pendiente desde la clase 2: XOR.")
+    agenda(d, [["0:00", "Repaso de la Clase 4"], ["0:10", "¿Por qué capas ocultas?"],
+               ["0:25", "Pesos como matrices y pase hacia adelante"], ["0:45", "Práctica: 1_09"], ["1:05", "Descanso"],
+               ["1:15", "Retropropagación"], ["1:45", "Práctica: 1_10"], ["2:00", "Entrenar la red completa y resolver XOR"],
+               ["2:20", "Quiz y cierre"]], highlight=[5])
+    objetivos(d, [("Explicar", "por qué una capa oculta resuelve XOR."), ("Calcular", "el pase hacia adelante con matrices."),
+                  ("Aplicar", "un paso de retropropagación a mano."), ("Entrenar", "una red multicapa en Python.")])
+    repaso(d, "Repaso de la Clase 4", [("¿Regla delta?", "Término de error, incremento y actualización."),
+                                       ("¿Varias salidas?", "H = X·W + B: una matriz de pesos."),
+                                       ("¿Qué quedó pendiente?", "XOR: una neurona solo traza una recta.")],
+           "Hoy: juntar neuronas en capas para resolver XOR.")
+
+    # 5 dos rectas
+    s = d.slide(notes="Recta A deja abajo solo (0,0) (como OR); recta B deja arriba solo (1,1) (como AND). Los unos quedan "
+                      "entre las dos rectas. Dos neuronas ocultas trazan las rectas y la salida las combina.")
+    title(s, "XOR con dos rectas", "¿Por qué capas ocultas?")
+    x0, y0, size = LM, 1.85, 4.4
+    rect(s, x0, y0, size, size, CARD, BORDER, radius=0.03)
+    m = 0.6
+    g = lambda a, b: (x0 + m + a * (size - 2 * m), y0 + size - m - b * (size - 2 * m))  # noqa: E731
+    polyline(s, [g(-0.15, 0.65), g(0.65, -0.15)], BLUE, 3.5)
+    polyline(s, [g(0.35, 1.15), g(1.15, 0.35)], ORANGE, 3.5)
+    for (a, b_), cls in [((0, 0), 0), ((0, 1), 1), ((1, 0), 1), ((1, 1), 0)]:
+        px, py = g(a, b_)
+        if cls:
+            shape(s, MSO_SHAPE.RECTANGLE, px - 0.17, py - 0.17, 0.34, 0.34, ORANGE)
+        else:
+            shape(s, MSO_SHAPE.OVAL, px - 0.17, py - 0.17, 0.34, 0.34, BLUE)
+    text(s, x0, y0 + size + 0.05, size, 0.4, Runs([C("━ recta A   ", BLUE), C("━ recta B", ORANGE)]), 15, GRAY,
+         align=PP_ALIGN.CENTER)
+    text(s, 5.6, 1.9, 6.98, 4.6, [Runs([B("Neurona oculta 1: "), ("recta A (deja abajo solo el (0, 0)).", {})]),
+                                  Runs([B("Neurona oculta 2: "), ("recta B (deja arriba solo el (1, 1)).", {})]),
+                                  Runs([B("Neurona de salida: "), ("“arriba de A y debajo de B”.", {})]),
+                                  ("Cada neurona oculta traza una recta; la salida las combina en una franja.",
+                                   {"bold": True, "color": ORANGE})], 19, GRAY, space=14)
+
+    # 6 arquitectura
+    s = d.slide(notes="Capa de entrada (no calcula), oculta (no vemos su salida), salida. Perceptrón multicapa = MLP. Con "
+                      "muchas capas ocultas: aprendizaje profundo.")
+    title(s, "Perceptrón multicapa (MLP)")
+    red(s, 1.5, 2.0, 5.0, 3.6, [4, 3, 2], ["Entrada (4)", "Oculta (3)", "Salida (2)"])
+    text(s, 8.0, 2.0, 4.58, 4.4, [Runs([B("Entrada: "), ("los datos; no calcula nada.", {})]),
+                                  Runs([B("Oculta: "), ("su salida no se ve desde afuera.", {})]),
+                                  Runs([B("Salida: "), ("la predicción.", {})]),
+                                  ("Muchas capas ocultas = aprendizaje profundo.", {"bold": True, "color": ORANGE})],
+         19, GRAY, space=14)
+
+    # 7 matrices
+    s = d.slide(notes="Filas = entradas, columnas = neuronas de la capa siguiente. Regla de tamaños: el número del medio "
+                      "debe coincidir.")
+    title(s, "Los pesos son matrices")
+    table(s, LM, 1.95, 6.6, [["Matriz", "Conecta", "Tamaño"], ["W₁", "entrada (4) → oculta (3)", "4 × 3"],
+                             ["W₂", "oculta (3) → salida (2)", "3 × 2"], ["B₁", "un sesgo por neurona oculta", "1 × 3"],
+                             ["B₂", "un sesgo por neurona de salida", "1 × 2"]], 18, [1.3, 3.8, 1.5], 0.62)
+    rect(s, 7.6, 1.95, 4.98, 2.0, NAVY, radius=0.06)
+    text(s, 7.6, 1.95, 4.98, 2.0, ["(a × b) · (b × c) = (a × c)", ("el número del medio debe coincidir", {"size": 16,
+                                                                                                        "bold": False,
+                                                                                                        "color": SOFT})],
+         22, CREAM, True, MONO, align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.MIDDLE)
+    text(s, 7.6, 4.2, 4.98, 2.2, ["Ejemplo:", ("(1 × 4) · (4 × 3) = (1 × 3)", {"font": MONO, "bold": True, "color": INK}),
+                                  "una fila de 3 números: las 3 neuronas ocultas."], 18, GRAY, space=8)
+
+    # 8 pase adelante
+    s = d.slide(notes="Es la clase 4 dos veces. La salida de una capa es la entrada de la siguiente.")
+    title(s, "Pase hacia adelante")
+    for k, (lab, f1, f2, sz) in enumerate([("Capa oculta", "H₁ = X·W₁ + B₁", "A₁ = σ(H₁)", "1 × 3"),
+                                           ("Capa de salida", "H₂ = A₁·W₂ + B₂", "Ŷ = σ(H₂)", "1 × 2")]):
+        x = LM + k * 6.0
+        card(s, x, 1.95, 5.8, 3.0, lab, [(f1, {"font": MONO, "color": INK, "size": 24}), (f2, {"font": MONO, "color": INK,
+                                                                                            "size": 24}),
+                                         ("tamaño: " + sz, {"color": GRAY})], BLUE if k == 0 else ORANGE, size=18)
+    arrow(s, LM + 5.8, 3.45, LM + 6.0, 3.45, GRAY, 3)
+    text(s, LM, 5.3, CW, 1.0, "La salida de una capa (A₁) es la entrada de la siguiente.", 22, ORANGE, True)
+
+    # 9 parámetros
+    s = d.slide(notes="Por capa: (entradas + 1) por neuronas. 4-3-2: 15 + 8 = 23.")
+    title(s, "Contar parámetros")
+    table(s, LM, 1.95, 7.0, [["Capa", "Pesos", "Sesgos", "Total"], ["4 → 3", "4·3 = 12", "3", "15"], ["3 → 2", "3·2 = 6", "2", "8"],
+                             [[("Red 4 → 3 → 2", {"bold": True})], "18", "5", [("23", {"bold": True, "color": ORANGE})]]],
+          20, [2.5, 1.9, 1.3, 1.3], 0.7, align=[None] + [PP_ALIGN.CENTER] * 3, highlight=[3])
+    rect(s, 8.1, 1.95, 4.48, 3.0, NAVY, radius=0.06)
+    text(s, 8.35, 1.95, 4.0, 3.0, ["Regla por capa:", ("(entradas + 1) × neuronas", {"font": MONO, "color": AMBER})], 22,
+         CREAM, True, anchor=MSO_ANCHOR.MIDDLE, space=10)
+
+    practica(d, "1_09_red_multicapa_ejercicio", "notebooks · 20 min · 3 puntos",
+             [("TODO 1 pt", "tamaños 4, 3, 2 y matrices W_1, W_2 con np.random.normal"),
+              ("TODO 1 pt", "pase hacia adelante con np.dot"), ("1 pt", "agregar sesgos B_1 (1×3) y B_2 (1×2)")],
+             "# comprobaciones\nW_1: (4, 3)  W_2: (3, 2)  X: (1, 4)\noculta: 3 números entre 0 y 1\nsalida: 2 números entre 0 y 1\nparámetros con sesgos: 23",
+             "Pista: la segunda capa usa A_1 (después de la sigmoide), no H_1. Desviación sugerida: 1/√4.",
+             "Diapositivas 7 a 9.")
+    descanso(d, "la retropropagación")
+
+    # 12 idea retro
+    s = d.slide(notes="Con una neurona sabíamos el error. ¿Y una oculta? Se calcula el error en la salida y se manda hacia "
+                      "atrás, repartido según los pesos. Analogía: repartir la responsabilidad de un partido perdido.")
+    title(s, "¿Cuál es el error de una neurona oculta?", "Retropropagación")
+    pos = red(s, 1.4, 2.0, 5.2, 3.4, [3, 2, 1], ["Entrada", "Oculta", "Salida"])
+    (xo, yo) = pos[2][0]
+    for (xh, yh) in pos[1]:
+        arrow(s, xo - 0.32, yo + 0.12, xh + 0.32, yh + 0.12, ORANGE, 3, dash=True)
+    text(s, xo - 0.6, yo - 0.85, 1.5, 0.4, "error", 16, ORANGE, True, align=PP_ALIGN.CENTER)
+    text(s, 7.7, 1.95, 4.88, 4.4, ["Nadie nos dice qué debió producir una neurona oculta.",
+                                   Runs([B("Solución: "), ("calcular el error en la salida y ", {}),
+                                         ("mandarlo hacia atrás", {"bold": True, "color": ORANGE}), (".", {})]),
+                                   "Cada neurona oculta recibe una parte según el peso que la une con la salida."],
+         19, GRAY, space=14)
+
+    # 13 fórmulas
+    s = d.slide(notes="Con sigmoide f' = salida·(1 - salida). La oculta usa la misma regla delta, con error = δo · peso. Viene "
+                      "de la regla de la cadena con un eslabón más.")
+    title(s, "Las fórmulas")
+    table(s, LM, 1.95, CW, [["Capa", "Término de error", "Incremento de sus pesos"],
+                            ["Salida", "δₒ = (y − ŷ) · ŷ(1 − ŷ)", "Δw_ho = η · δₒ · a_h"],
+                            ["Oculta", "δ_h = δₒ · w_ho · a_h(1 − a_h)", "Δw_ih = η · δ_h · xᵢ"]], 22, [2.0, 5.2, 4.63], 0.85)
+    text(s, LM, 4.85, CW, 1.5, [Runs([B("a_h "), ("= salida de la neurona oculta.", {})]),
+                                Runs([("La oculta usa la regla delta, pero su “error” es ", {}),
+                                      ("δₒ × el peso que la une con la salida", {"bold": True, "color": ORANGE}), (".", {})])],
+         19, GRAY, space=8)
+
+    # 14 ejemplo adelante
+    s = d.slide(notes="Red 3-2-1 del notebook 1_10. Hazlo en el pizarrón.")
+    title(s, "Ejemplo (notebook 1_10): hacia adelante")
+    text(s, LM, 1.8, CW, 0.5, "x = [0.5, 0.1, −0.2] · y = 0.6 · η = 0.5 · W_ih = [[0.5, −0.6], [0.1, −0.2], [0.1, 0.7]] · "
+                               "W_ho = [0.1, −0.3]", 15, GRAY, font=MONO)
+    table(s, LM, 2.45, CW, [["Valor", "Cálculo", "Resultado"], ["Entrada a la oculta", "x · W_ih", "[0.24, −0.46]"],
+                            ["Salida oculta a_h", "σ(…)", "[0.5597, 0.3870]"],
+                            ["Entrada a la salida", "0.5597·0.1 + 0.3870·(−0.3)", "−0.0601"],
+                            ["Salida ŷ", "σ(−0.0601)", [("0.4850", {"bold": True, "color": ORANGE})]]], 19, [3.3, 5.0, 3.53],
+          0.66, highlight=[4])
+
+    # 15 ejemplo atrás
+    s = d.slide(notes="Los incrementos tienen el mismo tamaño que los pesos. Con otra η se escalan igual.")
+    title(s, "Ejemplo (notebook 1_10): hacia atrás")
+    table(s, LM, 1.9, CW, [["Valor", "Cálculo", "Resultado"], ["Error", "0.6 − 0.4850", "0.1150"],
+                           ["δₒ", "0.1150 · 0.4850 · 0.5150", "0.02873"],
+                           ["δ_h", "0.02873 · [0.1, −0.3] · a_h(1 − a_h)", "[0.000708, −0.002045]"],
+                           ["Δw_ho", "0.5 · 0.02873 · [0.5597, 0.3870]", "[0.00804, 0.00556]"],
+                           ["Δw_ih", "0.5 · δ_h · x  (matriz 3 × 2)", "[[0.000177, −0.000511], …]"]], 18, [1.8, 5.6, 4.43], 0.62)
+    text(s, LM, 5.85, CW, 0.6, "Cada peso tiene su incremento: las matrices de incrementos miden lo mismo que las de pesos.",
+         18, ORANGE, True)
+
+    # 16 desvanece
+    s = d.slide(notes="El error llega multiplicado por pesos pequeños y derivadas de la sigmoide (máx. 0.25). Con muchas capas "
+                      "casi desaparece. Por eso las redes profundas usan ReLU.")
+    title(s, "El gradiente que se desvanece")
+    for k, (lab, val, col) in enumerate([("|δ| salida", 0.02873, ORANGE), ("|δ| oculta (mayor)", 0.002045, BLUE)]):
+        hbar = 4.2 * val / 0.02873
+        x = LM + 0.6 + k * 2.6
+        rect(s, x, 6.2 - hbar, 1.6, hbar, col, rounded=False)
+        text(s, x - 0.3, 6.25, 2.2, 0.4, lab, 15, INK, True, align=PP_ALIGN.CENTER)
+        text(s, x - 0.3, 6.2 - hbar - 0.45, 2.2, 0.4, f"{val:.5f}", 15, col, True, align=PP_ALIGN.CENTER)
+    text(s, 6.6, 1.95, 5.98, 4.4, [("La capa oculta recibe un error ~14 veces más pequeño.", {"bold": True, "color": INK}),
+                                   "Se multiplica por pesos pequeños y por derivadas de la sigmoide (≤ 0.25).",
+                                   "Con muchas capas, las primeras casi no aprenden.",
+                                   ("Por eso las redes profundas usan ReLU.", {"bold": True, "color": ORANGE})],
+         19, GRAY, space=14)
+
+    practica(d, "1_10_retropropagacion_base", "notebooks · 15 min · 3 puntos",
+             [("TODO 1 pt", "error, δ de salida y δ de la oculta"), ("TODO 1 pt", "incrementos y actualización"),
+              ("1 pt", "¿mismo tamaño que los pesos?")],
+             "# comprobaciones (η = 0.5)\nerror = 0.1150\ndelta salida = 0.02873\ndelta oculta = [0.000708 -0.002045]\nΔw_ho = [0.00804 0.00556]",
+             "Pista: para Δw_ih convierte x en columna con x[:, None]: da una matriz 3 × 2.", "Diapositivas 13 a 15.")
+
+    # 18 algoritmo + 1_11
+    s = d.slide(notes="Notebook 1_11: datos de admisiones, red 6-2-1, 900 épocas, semilla 21. El original imprime la pérdida "
+                      "con solo el último ejemplo: usar features.values.")
+    title(s, "Entrenar la red completa (notebook 1_11)")
+    pasos = ["Incrementos acumulados = 0", "Por ejemplo: adelante → δₒ y δ_h → acumular", "Actualizar W_ih y W_ho",
+             "Medir la pérdida y repetir"]
+    for k, t in enumerate(pasos):
+        y = 1.95 + k * 0.72
+        shape(s, MSO_SHAPE.OVAL, LM, y, 0.52, 0.52, BLUE, str(k + 1), 16)
+        text(s, LM + 0.75, y - 0.04, 5.0, 0.6, t, 17, INK, anchor=MSO_ANCHOR.MIDDLE)
+    table(s, 6.5, 1.95, 6.08, [["Actualización", "Pérdida", "Exactitud"], ["0.001 · acumulado", "0.265 → 0.201", "0.725"],
+                               ["0.5 · acum. / n", "0.264 → 0.200", [("0.750", {"bold": True, "color": ORANGE})]]],
+          17, [2.5, 2.1, 1.48], 0.62)
+    rect(s, LM, 5.15, CW, 1.2, PALEORANGE, radius=0.06)
+    text(s, LM + 0.3, 5.15, CW - 0.6, 1.2, Runs([("Ojo: ", {"bold": True, "color": ORANGE}),
+                                                 ("el notebook original imprime la pérdida con solo el último ejemplo (x). "
+                                                  "Usa features.values.", {})]), 18, INK, anchor=MSO_ANCHOR.MIDDLE)
+
+    practica(d, "1_11 + ¡XOR resuelto!", "notebooks · 20 min · 3 puntos  ·  + docs/practica_05.py",
+             [("TODO 1 pt", "ciclo de entrenamiento"), ("TODO 1 pt", "curva de aprendizaje"), ("1 pt", "preguntas")],
+             "# python docs/practica_05.py  (red 2-3-1)\n[0 0] -> 0.025 -> 0\n[0 1] -> 0.981 -> 1\n[1 0] -> 0.971 -> 1\n[1 1] -> 0.026 -> 0\npérdida: 0.2596 -> 0.0006",
+             "Demo: python docs/practica_05.py --graficar. La frontera aprendida ya no es una recta.",
+             "Cierra con XOR resuelto en vivo.")
+    quiz(d, ["¿Por qué una capa oculta permite resolver XOR?", "¿Qué tamaño tiene W entre una capa de 4 y una de 3?",
+             "¿Cuántos parámetros tiene una red 2 → 3 → 1?", "¿Cómo se calcula el error de una neurona oculta?",
+             "¿Qué es el gradiente que se desvanece?"],
+         "Respuestas: 1) cada oculta traza una recta y la salida las combina. 2) 4 × 3. 3) 13. 4) δo · peso · derivada. "
+         "5) el error se hace muy pequeño al ir hacia atrás.")
+    cierre(d, ["Las capas ocultas combinan rectas: resuelven problemas no lineales.",
+               "Pase hacia adelante: la clase 4 repetida capa por capa.",
+               "Retropropagación: el error viaja hacia atrás, repartido según los pesos."],
+           "Próxima clase: optimizadores (cómo caminar mejor por la montaña del error).",
+           "notebooks 1_09, 1_10 y 1_11 (9 pts)", "libro, “Retropropagación”",
+           "Tarea extra: en practica_05.py cambiar n_ocultas a 2 y 8, y la semilla.")
+    return d
+
+
+# ================================================================ CLASE 6
+def clase6():
+    d = Deck("Introducción a las Redes Neuronales  ·  Clase 6")
+    cover(d, "CLASE 6  ·  OPTIMIZACIÓN", "Optimizadores:", "caminar mejor",
+          "Descenso por gradiente en 2D, momentum y decaimiento de la tasa de aprendizaje",
+          "Entrenar es bajar por la montaña del error; el optimizador es la forma de caminar.")
+    agenda(d, [["0:00", "Repaso"], ["0:10", "Descenso por gradiente en 2D"], ["0:30", "Práctica: notebook 21"],
+               ["0:45", "Valles estrechos y momentum"], ["1:10", "Práctica: notebook 22"], ["1:25", "Descanso"],
+               ["1:35", "Decaimiento de la tasa"], ["2:00", "Práctica: notebook 23"], ["2:20", "Quiz y cierre"]], highlight=[6])
+    objetivos(d, [("Aplicar", "el descenso con dos parámetros."), ("Leer", "un mapa de contorno."),
+                  ("Explicar", "el momentum y cuándo ayuda."), ("Programar", "el decaimiento de la tasa.")])
+    repaso(d, "Repaso", [("¿La regla?", "x ← x − η · f′(x)"), ("¿η muy grande?", "Oscila o diverge."),
+                         ("¿η muy pequeña?", "Avanza muy lento.")],
+           "Hoy: muchos parámetros y montañas con formas difíciles.")
+
+    # 5 derivadas parciales
+    s = d.slide(notes="Una derivada por variable, tratando la otra como número fijo. El gradiente apunta hacia donde sube más "
+                      "rápido; bajamos en contra.")
+    title(s, "Descenso por gradiente en 2D")
+    card(s, LM, 1.95, 5.8, 2.6, "Esfera: f(x, y) = x² + y²",
+         [("∂f/∂x = 2x", {"font": MONO, "color": INK}), ("∂f/∂y = 2y", {"font": MONO, "color": INK}),
+          "Una derivada por variable (la otra queda fija)."], BLUE, size=19, head_size=22)
+    card(s, LM + 6.0, 1.95, 5.83, 2.6, "Gradiente ∇f = (2x, 2y)",
+         ["Una flecha que apunta hacia donde f sube más rápido.", ("Bajamos en contra.", {"bold": True, "color": ORANGE})],
+         ORANGE, size=19, head_size=22)
+    rect(s, LM, 4.85, CW, 1.4, NAVY, radius=0.06)
+    text(s, LM, 4.85, CW, 1.4, ["x ← x − η · ∂f/∂x", "y ← y − η · ∂f/∂y"], 24, CREAM, True, MONO, align=PP_ALIGN.CENTER,
+         anchor=MSO_ANCHOR.MIDDLE, space=2)
+
+    # 6 contorno
+    s = d.slide(notes="Mapa topográfico: cada línea une puntos de igual altura. El camino cruza las líneas en ángulo recto.")
+    title(s, "El mapa de contorno")
+    cx, cy = LM + 3.0, 4.15
+    for k, rr in enumerate([2.3, 1.75, 1.2, 0.65]):
+        shape(s, MSO_SHAPE.OVAL, cx - rr, cy - rr, 2 * rr, 2 * rr, None, line=[NAVY, BLUE, LBLUE, AMBER][k], lw=2.5)
+    pts = [(-1.0, -1.0), (-0.8, -0.8), (-0.55, -0.55), (-0.3, -0.3), (-0.1, -0.1)]
+    sc = 1.6
+    polyline(s, [(cx + a * sc, cy - b * sc) for a, b in pts], ORANGE, 3)
+    for a, b in pts:
+        shape(s, MSO_SHAPE.OVAL, cx + a * sc - 0.08, cy - b * sc - 0.08, 0.16, 0.16, ORANGE)
+    shape(s, MSO_SHAPE.OVAL, cx - 0.12, cy - 0.12, 0.24, 0.24, NAVY)
+    text(s, 7.2, 2.0, 5.38, 4.4, ["Como un mapa topográfico: cada línea une puntos de la misma “altura”.",
+                                  "En la esfera son círculos alrededor del mínimo (0, 0).",
+                                  ("El camino cruza las líneas en ángulo recto: el gradiente es perpendicular a ellas.",
+                                   {"bold": True, "color": ORANGE})], 19, GRAY, space=14)
+
+    # 7 tabla eta
+    s = d.slide(notes="Cada paso multiplica x por (1 - 2η): 0.9 → -0.8 (zigzag que se achica), 1 → -1 (rebota), >1 diverge.")
+    title(s, "El efecto de η en 2D (notebook 21)")
+    table(s, LM, 1.9, CW, [["η", "Iteraciones", "Qué pasa"], ["0.01", "300", "Lento: termina en (−0.0023, −0.0023)"],
+                           ["0.1", "56", "Bien"], ["0.5", "2", "De un salto (solo en esta función)"],
+                           ["0.9", "66", "Llega zigzagueando"], ["1.0", "300", "Rebota para siempre entre (−1, −1) y (1, 1)"]],
+          19, [1.6, 2.4, 7.83], 0.58, align=[PP_ALIGN.CENTER, PP_ALIGN.CENTER, None])
+    text(s, LM, 5.6, CW, 0.8, Runs([("Cada paso multiplica x por ", {}), ("(1 − 2η)", {"font": MONO, "bold": True}),
+                                    (": con η > 1 crece y diverge.", {})]), 19, GRAY)
+
+    practica(d, "21_opt_gradiente_2d", "notebooks · 15 min · experimentos",
+             [("1", "Ejecuta con los valores originales"), ("2", "Cambia learning_rate: 0.1, 0.5, 0.9, 1.0"),
+              ("3", "Anota iteraciones y compáralas con la tabla")],
+             "# valores originales\nParámetros: [-0.00233, -0.00233]\nValor: 1.09e-05\n\n# sin ffmpeg, la animación:\n.save('x.gif', writer='pillow')",
+             "La clase GradientDescentOptimizer guarda cada paso en history: así se dibuja el camino.", "Diapositiva 7.")
+
+    # 9 valle estrecho
+    s = d.slide(notes="Función de Beale: valle largo, estrecho y curvo; mínimo en (3, 0.5). El gradiente apunta a las paredes, "
+                      "no a lo largo del valle.")
+    title(s, "Valles estrechos: la función de Beale", "Momentum")
+    cx, cy = LM + 3.2, 4.1
+    for k, (rw, rh) in enumerate([(3.0, 1.6), (2.3, 1.15), (1.6, 0.7), (0.9, 0.3)]):
+        shape(s, MSO_SHAPE.OVAL, cx - rw, cy - rh, 2 * rw, 2 * rh, None, line=[NAVY, BLUE, LBLUE, AMBER][k], lw=2.5)
+    zig = [(-2.6, 0.9), (-2.1, -0.75), (-1.6, 0.6), (-1.1, -0.5), (-0.6, 0.35), (-0.2, -0.2)]
+    polyline(s, [(cx + a, cy + b) for a, b in zig], ORANGE, 3)
+    shape(s, MSO_SHAPE.OVAL, cx - 0.12, cy - 0.12, 0.24, 0.24, NAVY)
+    text(s, 7.4, 2.0, 5.18, 4.4, ["Valle largo, estrecho y curvo. Mínimo en (3, 0.5).",
+                                  "El gradiente apunta casi siempre hacia las paredes.",
+                                  ("Con η grande, el descenso rebota de pared a pared y puede salir disparado.",
+                                   {"bold": True, "color": ORANGE})], 19, GRAY, space=14)
+
+    # 10 momentum fórmula
+    s = d.slide(notes="Promedio de los gradientes recientes. β es la memoria. Con β = 0 es el descenso simple.")
+    title(s, "La idea del momentum")
+    rect(s, LM, 1.95, CW, 1.5, NAVY, radius=0.06)
+    text(s, LM, 1.95, CW, 1.5, ["m ← β · m + (1 − β) · ∇f", "parámetros ← parámetros − η · m"], 26, CREAM, True, MONO,
+         align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.MIDDLE, space=2)
+    card(s, LM, 3.75, 5.8, 2.6, "Promedio de gradientes", "En vez del gradiente de este instante, un promedio de los recientes.",
+         BLUE, size=18, head_size=22)
+    card(s, LM + 6.0, 3.75, 5.83, 2.6, "β = memoria", "Con β = 0.9 el paso de ahora se parece mucho a los anteriores.",
+         ORANGE, size=18, head_size=22)
+
+    # 11 bola
+    s = d.slide(notes="Los empujones a los lados cambian de signo y se cancelan; el empuje a lo largo del valle se mantiene.")
+    title(s, "Una bola rodando por el valle")
+    text(s, LM, 1.95, 6.2, 3.0, ["Los empujones hacia las paredes cambian de signo en cada rebote: ",
+                                 ("en el promedio se cancelan.", {"bold": True, "color": ORANGE}),
+                                 "El empuje a lo largo del valle va siempre en la misma dirección: ",
+                                 ("se mantiene.", {"bold": True, "color": BLUE})], 19, GRAY, space=4)
+    table(s, 7.3, 1.95, 5.28, [["β", "Efecto"], ["0", "Sin memoria: descenso simple"], ["0.5 – 0.9", "Suaviza los rebotes"],
+                               ["0.99", "Demasiada memoria: le cuesta girar"]], 17, [1.5, 3.78], 0.62)
+
+    # 12 resultados momentum
+    s = d.slide(notes="Conclusión honesta: con η pequeña no acelera (promedia); su ventaja es permitir η grande sin diverger.")
+    title(s, "Resultados en Beale (notebook 22)")
+    text(s, LM, 1.8, CW, 0.5, "Desde (2.5, 1.0), 500 iteraciones", 17, GRAY)
+    table(s, LM, 2.35, CW, [["η", "Descenso simple", "Momentum β = 0.5", "Momentum β = 0.9"],
+                            ["0.01", "f = 6.95·10⁻⁴", "f = 7.37·10⁻⁴", "f = 1.07·10⁻³"],
+                            ["0.03", [("diverge", {"bold": True, "color": ORANGE})], "f = 1.9·10⁻⁶",
+                             [("f = 8.0·10⁻⁷", {"bold": True, "color": BLUE})]]], 20, [1.5, 3.4, 3.4, 3.53], 0.75,
+          align=[PP_ALIGN.CENTER] * 4, highlight=[2])
+    rect(s, LM, 4.9, CW, 1.4, NAVY, radius=0.06)
+    text(s, LM + 0.3, 4.9, CW - 0.6, 1.4, "El momentum permite usar una η más grande sin descontrolarse… y llega mucho más "
+                                          "cerca del mínimo.", 20, CREAM, True, anchor=MSO_ANCHOR.MIDDLE)
+
+    practica(d, "22_opt_momentum", "notebooks · 15 min · experimentos",
+             [("1", "Ejecuta con los valores originales"), ("2", "Sube learning_rate a 0.03"),
+              ("3", "Compara con el descenso simple (línea comentada)")],
+             "# originales (η 0.01, β 0.9)\nfinal ≈ (2.922, 0.480)  f ≈ 1.07e-03\n\n# η 0.03\ndescenso simple: OverflowError\nmomentum: ≈ (2.998, 0.499)",
+             "Crea un optimizador nuevo en cada prueba: el objeto recuerda su momentum.", "Diapositiva 12.")
+    descanso(d, "el decaimiento de la tasa")
+
+    # 15 dilema
+    s = d.slide(notes="Fija grande: rápido pero rebota. Fija pequeña: fino pero lento. Solución: empezar grande y reducir.")
+    title(s, "El dilema de la tasa fija", "Decaimiento de la tasa")
+    for k, (h, b, c) in enumerate([("η grande", "Avanza rápido… pero cerca del mínimo rebota.", ORANGE),
+                                   ("η pequeña", "Afina bien… pero tarda muchísimo.", BLUE),
+                                   ("Decaimiento", "Empieza grande y la reduce con el tiempo.", NAVY)]):
+        card(s, LM + k * 3.98, 1.95, 3.8, 3.0, h, b, c, size=19, head_size=24)
+    text(s, LM, 5.3, CW, 1.0, "Lo mejor de los dos mundos: rápido al principio, fino al final.", 22, ORANGE, True)
+
+    # 16 tres reglas + gráfica
+    s = d.slide(notes="t es la iteración. Escalonada: a la mitad cada 100. Inversa: rápido al inicio, luego despacio. "
+                      "Exponencial: suave pero puede bajar demasiado.")
+    title(s, "Tres reglas de decaimiento")
+    table(s, LM, 1.9, 6.4, [["Regla", "Fórmula"], ["Escalonada", "η₀ · γ^(t // s)"], ["Inversa", "η₀ / (1 + k·t)"],
+                            ["Exponencial", "η₀ · e^(−k·t)"]], 19, [2.4, 4.0], 0.7)
+    g = plotbox(s, 7.4, 1.9, 5.18, 4.45, (0, 500), (0, 0.055), xlabel="iteración t", ylabel="η")
+    curve(s, g, lambda t: 0.05 * 0.5 ** (t // 100), (0, 500), (0, 0.055), ORANGE, 3, n=500)
+    curve(s, g, lambda t: 0.05 / (1 + 0.01 * t), (0, 500), (0, 0.055), BLUE, 3)
+    curve(s, g, lambda t: 0.05 * math.exp(-0.01 * t), (0, 500), (0, 0.055), NAVY, 3)
+    text(s, LM, 5.0, 6.4, 1.3, Runs([C("━ escalonada  ", ORANGE), C("━ inversa  ", BLUE), C("━ exponencial", NAVY)]), 17, GRAY)
+
+    # 17 valores
+    s = d.slide(notes="Haz en el pizarrón la escalonada en t = 250: 250 // 100 = 2, 0.05 · 0.5² = 0.0125.")
+    title(s, "Calcular a mano")
+    text(s, LM, 1.8, CW, 0.5, "η₀ = 0.05 · γ = 0.5 cada s = 100 · k = 0.01", 18, GRAY, font=MONO)
+    table(s, LM, 2.4, CW, [["t", "Escalonada", "Inversa", "Exponencial"], ["0", "0.05", "0.05", "0.05"],
+                           ["100", "0.025", "0.025", "0.0184"], ["250", "0.0125", "0.0143", "0.0041"]], 22,
+          [2.0, 3.3, 3.3, 3.23], 0.75, align=[PP_ALIGN.CENTER] * 4, highlight=[3])
+    text(s, LM, 5.65, CW, 0.7, "Escalonada en t = 250:  250 // 100 = 2  →  0.05 · 0.5² = 0.0125", 19, ORANGE, True, MONO)
+
+    # 18 resultados
+    s = d.slide(notes="Escalonada: casi mil veces menos error que la fija. Exponencial con k = 0.01 decae muy rápido y se congela.")
+    title(s, "Resultados en Beale (notebook 23)")
+    text(s, LM, 1.8, CW, 0.5, "Desde (1.0, 1.0), η₀ = 0.05, 500 iteraciones", 17, GRAY)
+    table(s, LM, 2.35, CW, [["Configuración", "f final", "Qué pasa"], ["Tasa fija 0.05", "5.8·10⁻²", "Rebota, no llega"],
+                            ["Escalonada", "6.3·10⁻⁵", "Casi mil veces mejor"], ["Inversa", "1.0·10⁻⁴", "Muy bien"],
+                            ["Exponencial", "1.5·10⁻³", "Decae demasiado rápido: se congela"],
+                            ["Escalonada con γ = 0.8", [("7.8·10⁻⁷", {"bold": True, "color": BLUE})], "La mejor"]],
+          19, [4.0, 2.6, 5.23], 0.6, highlight=[5])
+
+    practica(d, "23_opt_lr_decay", "notebooks · 20 min · 3 puntos  ·  nuevo (el original estaba vacío)",
+             [("TODO 1 pt", "las tres reglas de decaimiento"), ("TODO 1 pt", "next_params con la tasa de cada iteración"),
+              ("TODO 1 pt", "experimentar y comparar")],
+             "# comprobaciones\nt=100: 0.02500  0.02500  0.01839\nt=250: 0.01250  0.01429  0.00410\n\nfija 0.05:     f = 5.76e-02\ndecaimiento:   f = 6.34e-05",
+             "Pista: guarda la tasa en self.tasas, súmale 1 a self.t y devuelve param − tasa · gradiente.",
+             "Demo final: python docs/practica_06.py --graficar")
+    quiz(d, ["¿Qué es el gradiente de f(x, y)?", "¿Por qué el descenso rebota en un valle estrecho?",
+             "¿Qué controla β en el momentum?", "¿Qué ventaja dio el momentum en Beale?",
+             "¿Qué pasa si la tasa decae demasiado rápido?"],
+         "Respuestas: 1) vector de derivadas parciales, apunta hacia donde sube. 2) el gradiente apunta a las paredes. "
+         "3) la memoria. 4) permitió η = 0.03 sin diverger. 5) se congela antes de llegar.")
+    cierre(d, ["Más parámetros: mismo descenso, una derivada por parámetro.",
+               "Momentum: suaviza rebotes y permite tasas más grandes.",
+               "Decaimiento: empezar rápido y terminar fino."],
+           "Próxima clase: redes convolucionales, el puente al aprendizaje profundo.",
+           "notebook 23 (3 pts) + conclusiones de 21 y 22", "Goodfellow et al., Deep Learning, secciones 8.3 (momentum) y 8.5 (Adam)",
+           "Adam combina momentum con una tasa que se adapta a cada parámetro.")
+    return d
+
+
+# ================================================================ CLASE 7
+def clase7():
+    d = Deck("Introducción a las Redes Neuronales  ·  Clase 7")
+    cover(d, "CLASE 7  ·  PUENTE AL APRENDIZAJE PROFUNDO", "Redes", "convolucionales",
+          "Imágenes, kernels, detección de bordes y cómo se aprende un filtro",
+          "Hoy aplicamos todo lo aprendido a imágenes: la base de las redes profundas para visión.")
+    agenda(d, [["0:00", "Repaso"], ["0:10", "Imágenes y por qué convolución"], ["0:25", "Correlación cruzada"],
+               ["0:50", "Detector de bordes y ReLU"], ["1:00", "Práctica: 3_1"], ["1:30", "Descanso"],
+               ["1:40", "Aprender el kernel"], ["2:05", "Reto: 3_2 y practica_07"], ["2:25", "Quiz y cierre"]], highlight=[6])
+    objetivos(d, [("Explicar", "por qué se usan convoluciones en imágenes."), ("Calcular", "una correlación cruzada a mano."),
+                  ("Programar", "la operación de una capa convolucional."),
+                  ("Entrenar", "los números de un kernel con descenso.")])
+    repaso(d, "Repaso", [("¿Una capa?", "H = X·W + B y una activación."), ("¿Cómo se entrena?", "Descenso por gradiente."),
+                         ("¿Momentum?", "Suaviza rebotes y permite η grande.")],
+           "Hoy: lo mismo, pero sobre imágenes.")
+
+    # 5 imagen = matriz
+    s = d.slide(notes="Escala de grises: 0 negro, 255 blanco. Color: 3 matrices (R, G, B). La foto de los notebooks mide 256 × 256.")
+    title(s, "Una imagen es una matriz de números", "Imágenes")
+    M = [[30, 60, 120, 200, 240, 250], [25, 55, 110, 190, 235, 245], [20, 50, 100, 180, 230, 240],
+         [20, 45, 95, 170, 225, 235], [15, 40, 90, 160, 220, 230]]
+    grid(s, LM, 2.0, 0.78, M, 14, shade=True)
+    text(s, 6.0, 2.0, 6.58, 4.4, [Runs([B("Escala de grises: "), ("0 = negro, 255 = blanco.", {})]),
+                                  Runs([B("A color: "), ("3 matrices (rojo, verde, azul).", {})]),
+                                  Runs([B("La foto de los notebooks: "), ("256 × 256 = 65 536 números por canal.", {})])],
+         19, GRAY, space=14)
+
+    # 6 densa vs conv
+    s = d.slide(notes="Con capas densas: 65 536 × 100 = 6.5 millones de pesos e ignora la vecindad. Convolución: 9 pesos que "
+                      "recorren toda la imagen y buscan el mismo patrón en todas partes.")
+    title(s, "¿Por qué no una capa densa?")
+    card(s, LM, 1.95, 5.8, 3.6, "Capa densa", ["65 536 píxeles × 100 neuronas", ("= 6.5 millones de pesos",
+                                                                              {"bold": True, "color": ORANGE}),
+                                               "Ignora que los píxeles vecinos se relacionan."], ORANGE, size=19, head_size=24)
+    card(s, LM + 6.0, 1.95, 5.83, 3.6, "Convolución", ["Un filtro de 3 × 3", ("= 9 pesos", {"bold": True, "color": BLUE}),
+                                                       "Los mismos pesos recorren toda la imagen: buscan el mismo patrón en "
+                                                       "todas partes."], BLUE, size=19, head_size=24)
+    text(s, LM, 5.85, CW, 0.6, "Un gato en la esquina o en el centro: el mismo filtro lo detecta.", 19, GRAY)
+
+    # 7 kernel deslizante
+    s = d.slide(notes="Coloca el kernel, multiplica cada número por el píxel de abajo, suma todo: un píxel de salida. Desliza y "
+                      "repite.")
+    title(s, "El kernel se desliza sobre la imagen", "Correlación cruzada")
+    I5 = [[0, 0, 9, 9, 9]] * 5
+    grid(s, LM, 2.0, 0.62, I5, 16, hl=(0, 0, 2, 2))
+    text(s, LM, 5.2, 3.1, 0.4, "Imagen 5 × 5", 15, INK, True, align=PP_ALIGN.CENTER)
+    text(s, 4.15, 3.25, 0.6, 0.5, "⊗", 28, GRAY, True, align=PP_ALIGN.CENTER)
+    grid(s, 4.85, 2.6, 0.62, [[-1, 0, 1]] * 3, 16, fill=PALEORANGE)
+    text(s, 4.6, 4.55, 2.4, 0.4, "Kernel 3 × 3", 15, INK, True, align=PP_ALIGN.CENTER)
+    arrow(s, 6.85, 3.5, 7.45, 3.5, GRAY, 3)
+    grid(s, 7.6, 2.6, 0.62, [[27, 27, 0]] * 3, 16, hl=(0, 0, 0, 0), hl_color=BLUE)
+    text(s, 7.35, 4.55, 2.4, 0.4, "Salida 3 × 3", 15, INK, True, align=PP_ALIGN.CENTER)
+    text(s, 9.8, 2.0, 2.78, 4.3, ["1. Coloca el kernel.", "2. Multiplica cada número por el píxel de abajo.",
+                                  "3. Suma todo: un píxel de salida.", "4. Desliza y repite."], 16, GRAY, space=10)
+
+    # 8 ejemplo
+    s = d.slide(notes="Fila 0 0 9 9 9 y kernel -1 0 1: cada fila aporta 9, tres filas = 27. En zona plana: 0. El kernel se "
+                      "enciende donde hay un borde vertical.")
+    title(s, "Ejemplo en el pizarrón")
+    text(s, LM, 1.8, CW, 0.5, "Cada fila de la imagen: 0 0 9 9 9   ·   cada fila del kernel: −1 0 1", 18, GRAY, font=MONO)
+    table(s, LM, 2.45, CW, [["Ventana (columnas)", "Valores", "Cálculo por fila", "× 3 filas"],
+                            ["0 – 2", "0 0 9", "−0 + 0 + 9 = 9", "27"], ["1 – 3", "0 9 9", "−0 + 0 + 9 = 9", "27"],
+                            ["2 – 4", "9 9 9", "−9 + 0 + 9 = 0", "0  (zona plana)"]], 19, [3.0, 2.3, 3.6, 2.93], 0.66,
+          align=[PP_ALIGN.CENTER] * 4)
+    text(s, LM, 5.3, CW, 1.0, [Runs([B("Salida: "), ("[[27, 27, 0], [27, 27, 0], [27, 27, 0]]", {"font": MONO})]),
+                               ("El kernel se enciende donde hay un borde vertical y vale 0 donde la imagen es plana.",
+                                {"bold": True, "color": ORANGE})], 18, GRAY, space=6)
+
+    # 9 tamaño
+    s = d.slide(notes="Sin padding la salida pierde k píxeles por lado: n - 2k. Con padding de ceros puede medir lo mismo.")
+    title(s, "Tamaño de la salida")
+    rect(s, LM, 1.95, CW, 1.2, NAVY, radius=0.06)
+    text(s, LM, 1.95, CW, 1.2, "sin padding:  salida = n − 2k", 28, CREAM, True, MONO, align=PP_ALIGN.CENTER,
+         anchor=MSO_ANCHOR.MIDDLE)
+    table(s, LM, 3.45, CW, [["Imagen", "Kernel", "k", "Salida"], ["5 × 5", "3 × 3", "1", "3 × 3"],
+                            ["256 × 256", "3 × 3", "1", "254 × 254"], ["256 × 256", "5 × 5", "2", "252 × 252"]], 19,
+          [3.2, 2.8, 1.6, 4.23], 0.58, align=[PP_ALIGN.CENTER] * 4)
+    text(s, LM, 5.95, CW, 0.5, "Con padding (rellenar la orilla con ceros) la salida puede medir lo mismo que la entrada.", 17,
+         GRAY)
+
+    # 10 kernel del notebook
+    s = d.slide(notes="Es el ejemplo dividido entre 3. Positivo de oscuro a claro, negativo de claro a oscuro, cero en lo plano.")
+    title(s, "El kernel del notebook 3_1", "Detector de bordes y ReLU")
+    grid(s, LM + 0.3, 2.1, 1.05, [["−1/3", "0", "1/3"]] * 3, 17, fill=PALEORANGE)
+    text(s, 5.0, 2.0, 7.58, 4.4, [Runs([("Positivo ", {"bold": True, "color": BLUE}),
+                                        ("donde la imagen pasa de oscuro a claro (→).", {})]),
+                                  Runs([("Negativo ", {"bold": True, "color": ORANGE}),
+                                        ("donde pasa de claro a oscuro.", {})]),
+                                  Runs([B("≈ 0 "), ("en zonas planas.", {})])], 20, GRAY, space=16)
+
+    # 11 relu
+    s = d.slide(notes="Respuesta a la pregunta del notebook: la ReLU borra los negativos (bordes claro→oscuro) y el kernel no ve "
+                      "bordes horizontales.")
+    title(s, "¿Por qué solo se ven algunos bordes?")
+    card(s, LM, 1.95, 5.8, 3.4, "La ReLU borra negativos",
+         "Los bordes de claro a oscuro dan valores negativos: la ReLU los convierte en 0.", ORANGE, size=19, head_size=23)
+    card(s, LM + 6.0, 1.95, 5.83, 3.4, "Solo compara izquierda y derecha",
+         "Los bordes horizontales no cambian de izquierda a derecha: este kernel no los ve.", BLUE, size=19, head_size=23)
+    text(s, LM, 5.65, CW, 0.7, "Es la respuesta a la pregunta del notebook 3_1.", 19, GRAY, True)
+
+    practica(d, "3_1_capa_convolucional", "notebooks · 30 min · 4 puntos",
+             [("TODO 1 pt", "correlacionPixel: dos for de −k a k"), ("TODO 1 pt", "G de ceros del tamaño de I"),
+              ("TODO 1 pt", "recortar las orillas: G[k:m-k, k:n-k]"), ("1 pt", "pregunta de la ReLU")],
+             "# comprobaciones\nimagen: (256, 256) uint8\nsalida: (254, 254)\n\n# resultado debe ser de NumPy:\nresultado = np.array(sumatoria)",
+             "Tras la ReLU se ven solo algunos bordes verticales, como en files/ccnout.png.", "Diapositivas 7 a 11.")
+    descanso(d, "aprender el kernel")
+
+    # 14 idea
+    s = d.slide(notes="Nadie elige los números del kernel: se aprenden. Son los pesos de la capa convolucional.")
+    title(s, "Los números del kernel se aprenden", "Aprender el kernel")
+    grid(s, LM + 0.3, 2.1, 0.95, [["w₁", "w₂", "w₃"], ["w₄", "w₅", "w₆"], ["w₇", "w₈", "w₉"]], 18, fill=PALEORANGE)
+    text(s, 4.6, 2.0, 7.98, 4.4, ["En una red convolucional nadie elige los números del kernel.",
+                                  ("Son los pesos de la capa: se aprenden con descenso por gradiente.",
+                                   {"bold": True, "color": ORANGE}),
+                                  "Igual que en la clase 4, pero ahora la “predicción” es una imagen entera."],
+         20, GRAY, space=16)
+
+    # 15 gradiente
+    s = d.slide(notes="El mismo peso se usa en todas las posiciones; por la regla de la cadena su gradiente suma la contribución "
+                      "de cada posición.")
+    title(s, "El gradiente de un peso del kernel")
+    rect(s, LM, 1.95, CW, 1.3, NAVY, radius=0.06)
+    text(s, LM, 1.95, CW, 1.3, "∂ECM/∂K[u,v] = (2/N) · Σ (P − T) · [G > 0] · I[i+u, j+v]", 22, CREAM, True, MONO,
+         align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.MIDDLE)
+    table(s, LM, 3.5, CW, [["Pieza", "Significado"], ["P − T", "error en cada píxel (predicción − objetivo)"],
+                           ["[G > 0]", "1 si la ReLU dejó pasar, 0 si no (derivada de la ReLU)"],
+                           ["I[i+u, j+v]", "el píxel que se multiplicó por ese peso"]], 18, [2.8, 9.03], 0.58)
+    text(s, LM, 5.95, CW, 0.5, Runs([("Luego:  ", {}), ("K ← K − η · gradiente", {"font": MONO, "bold": True, "color": ORANGE})]),
+         19, GRAY)
+
+    # 16 trampas
+    s = d.slide(notes="practica_07 muestra el efecto de centrar: sin centrar, diverge.")
+    title(s, "Trampas y trucos")
+    card(s, LM, 1.95, 5.8, 4.3, "Trampas", bullets([Runs([B("ReLU muerta: "), ("todo G negativo → sin gradiente.", {})]),
+                                                    Runs([B("Escala: "), ("píxeles 0–255 → gradientes enormes.", {})]),
+                                                    Runs([B("Lentitud: "), ("píxel por píxel tarda minutos.", {})])]),
+         ORANGE, size=18, head_size=24)
+    card(s, LM + 6.0, 1.95, 5.83, 4.3, "Trucos", bullets([Runs([B("Normalizar: "), ("dividir entre 255.", {})]),
+                                                         Runs([B("Centrar: "), ("restar el promedio.", {})]),
+                                                         Runs([B("Vectorizar "), ("y usar ", {}), B("momentum"), (".", {})])]),
+         BLUE, size=18, head_size=24)
+
+    # 17 vectorizar
+    s = d.slide(notes="9 (o 25) versiones desplazadas de la imagen; la correlación es su suma ponderada; el gradiente de cada "
+                      "peso, un promedio sobre una matriz.")
+    title(s, "Vectorizar: versiones desplazadas")
+    code(s, LM, 1.95, 7.3, 3.2, """# una versión desplazada por cada peso (u, v)
+d = {(u, v): I[k+u:m-k+u, k+v:n-k+v]
+     for u in range(-k, k+1) for v in range(-k, k+1)}
+
+G = sum(K[u+k, v+k] * d[(u, v)] for (u, v) in d)""", 15)
+    text(s, 8.35, 1.95, 4.23, 4.4, ["La correlación es la suma de cada versión por su peso.",
+                                    "El gradiente de cada peso es un promedio sobre una matriz completa.",
+                                    ("Milisegundos por época.", {"bold": True, "color": ORANGE})], 18, GRAY, space=12)
+
+    # 18 resultados
+    s = d.slide(notes="practica_07: recupera Sobel exacto en ruido centrado. Reto 3_2: foto real, 5×5, ReLU, momentum 0.9, η 2, "
+                      "2000 épocas: ECM 31600 → 29.")
+    title(s, "Resultado: el descenso descubre el filtro de Sobel")
+    text(s, LM, 1.85, 5.6, 0.4, "Sobel (objetivo)", 17, INK, True)
+    grid(s, LM, 2.3, 0.8, [[-1, -2, -1], [0, 0, 0], [1, 2, 1]], 17, fill=CARD)
+    text(s, 3.6, 1.85, 2.6, 0.4, "Aprendido (reto 3_2)", 17, INK, True)
+    grid(s, 3.6, 2.3, 0.8, [["−0.86", "−1.77", "−0.89"], ["−0.03", "−0.01", "0.04"], ["0.93", "1.79", "0.84"]], 14,
+         fill=PALEORANGE)
+    text(s, 6.6, 1.95, 5.98, 4.4, [Runs([B("practica_07: "), ("recupera Sobel exacto (ECM 0.97 → 0).", {})]),
+                                   Runs([B("Reto 3_2: "), ("ECM 31 600 → 29; la imagen predicha es casi idéntica.", {})]),
+                                   ("Una CNN profunda hace esto con muchos kernels y muchas capas: bordes → formas → objetos.",
+                                    {"bold": True, "color": ORANGE})], 18, GRAY, space=12)
+
+    practica(d, "3_2 · reto + practica_07", "notebooks · 20 min · reto (puntos extra)",
+             [("1", "Normaliza y centra la entrada"), ("2", "Vectoriza con versiones desplazadas"),
+              ("3", "Descenso con momentum β 0.9, η 2, 2000 épocas")],
+             "# referencia del reto\nECM inicial ≈ 31600\nECM final   ≈ 29\nkernel ≈ Sobel en el centro\n\n# demo:\n# python docs/practica_07.py --graficar",
+             "Guía con la estrategia completa: docs/guias_notebooks/NB_3_2.", "Diapositivas 14 a 18.")
+    quiz(d, ["¿Por qué no usar capas densas para imágenes?", "¿Cuánto mide la salida de una imagen 7 × 7 con un kernel 3 × 3?",
+             "¿Qué detecta el kernel con filas −1 0 1?", "¿Por qué se ven solo algunos bordes tras la ReLU?",
+             "¿Qué son los “pesos” de una capa convolucional?"],
+         "Respuestas: 1) demasiados pesos e ignoran la vecindad. 2) 5 × 5. 3) bordes verticales. 4) la ReLU borra los "
+         "negativos. 5) los números del kernel.")
+    cierre(d, ["Convolución: un filtro pequeño recorre la imagen con los mismos pesos.",
+               "Los kernels detectan patrones y se aprenden con descenso por gradiente.",
+               "Las redes profundas apilan muchas capas convolucionales."],
+           "Fin del curso introductorio. Siguiente: aprendizaje profundo.",
+           "notebook 3_1 (4 pts) + reto 3_2 (extra)", "Goodfellow et al., Deep Learning, cap. 9 (redes convolucionales)",
+           "Cierre del curso: felicita al grupo; recorrido desde McCulloch y Pitts hasta CNN.")
+    return d
+
+
 if __name__ == "__main__":
     out = sys.argv[1] if len(sys.argv) > 1 else "entregables"
     os.makedirs(out, exist_ok=True)
     for name, fn in [("Clase1_Diapositivas", clase1), ("Clase2_Diapositivas", clase2),
-                     ("Clase3_Diapositivas", clase3), ("Clase4_Diapositivas", clase4)]:
+                     ("Clase3_Diapositivas", clase3), ("Clase4_Diapositivas", clase4),
+                     ("Clase5_Diapositivas", clase5), ("Clase6_Diapositivas", clase6),
+                     ("Clase7_Diapositivas", clase7)]:
         path = os.path.join(out, name + ".pptx")
         print(path, fn().save(path), "diapositivas")

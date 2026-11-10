@@ -30,7 +30,7 @@ Las guías **no** dan el código de la solución: dan pistas y resultados para c
 | 16 | `3_1_capa_convolucional` | Capa convolucional (correlación cruzada) | 7 | 4 | [Guía](NB_3_1_capa_convolucional.md) |
 | 17 | `3_2_entrenar_capa_conv` | Reto: entrenar un kernel convolucional | 7 | reto | [Guía](NB_3_2_entrenar_capa_conv.md) |
 
-Las clases 5 a 7 todavía no tienen guía de clase ni diapositivas. La columna indica en qué orden conviene hacer los notebooks.
+La columna **Clase** indica en qué clase se trabaja cada notebook; cada clase tiene su guía (`docs/GUIA_PASO_A_PASO_CLASEn.md`) y sus diapositivas en `entregables/`.
 
 ## Antes de cualquier notebook
 
