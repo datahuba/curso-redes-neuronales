@@ -6,7 +6,7 @@ Material del curso: guías, notas, prácticas y notebooks para entender cómo fu
 
 | Carpeta / archivo | Qué contiene |
 |---|---|
-| [`entregables/`](entregables/) | Guías y diapositivas de cada clase en PDF, y diapositivas en PowerPoint |
+| [`entregables/`](entregables/) | Guías y diapositivas de cada clase (PDF y PowerPoint) y las guías de los notebooks en PDF (`Guias_de_los_notebooks.pdf`) |
 | [`docs/GUIA_PASO_A_PASO_CLASE1.md`](docs/GUIA_PASO_A_PASO_CLASE1.md) | Clase 1 desde cero: instalación paso a paso y explicación de cada tema |
 | [`docs/GUIA_PASO_A_PASO_CLASE2.md`](docs/GUIA_PASO_A_PASO_CLASE2.md) | Clase 2: McCulloch y Pitts, perceptrón y regla de aprendizaje, con práctica |
 | [`docs/GUIA_PASO_A_PASO_CLASE3.md`](docs/GUIA_PASO_A_PASO_CLASE3.md) | Clase 3: neurona moderna, funciones de activación y descenso por gradiente |
@@ -16,7 +16,8 @@ Material del curso: guías, notas, prácticas y notebooks para entender cómo fu
 | [`docs/02_Principios.md`](docs/02_Principios.md) | Módulo 2: McCulloch-Pitts y perceptrón |
 | [`docs/practica_02.py`](docs/practica_02.py) | Práctica en Python puro: McCulloch-Pitts y perceptrón (AND, OR, XOR) |
 | [`docs/practica_03.py`](docs/practica_03.py), [`docs/practica_04.py`](docs/practica_04.py) | Prácticas de las clases 3 y 4 (añadir `--graficar` para ver las gráficas) |
-| [`notebooks/`](notebooks/) | Ejercicios en Jupyter (rellenar los `TODO`) |
+| [`notebooks/`](notebooks/) | Los 17 ejercicios en Jupyter (rellenar los `TODO`) |
+| [`docs/guias_notebooks/`](docs/guias_notebooks/README.md) | **Una guía paso a paso por cada notebook**, con pistas y valores para comprobar (PDF en `entregables/`) |
 | [`tools/`](tools/) | Scripts que generan las diapositivas (`build_decks.py`, `export_pdf.ps1`) y los PDF de las guías (`md_to_pdf.py`) |
 
 ## Inicio rápido

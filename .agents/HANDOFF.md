@@ -52,3 +52,14 @@
 - Clave local (no publicar, en .gitignore): soluciones_docente_m3.py. 1_07: ~100 épocas → exactitud 0.775; 1000 → 0.725.
 - Ojo en 1_07: `weights += ...` (en el lugar); con `weights = weights + ...` la neurona no ve el cambio.
 - PLAN_CLASE3.md eliminado (reemplazado por las guías). Siguiente: módulo 4, redes multicapa y retropropagación (1_09–1_11).
+
+## Actualización (2026-11-10): guía por notebook (los 17)
+- docs/guias_notebooks/: README (índice) + NB_<notebook>.md para los 17 notebooks; PDFs en entregables/guias_notebooks/
+  y combinado en entregables/Guias_de_los_notebooks.pdf (46 págs). md_to_pdf.py ahora acepta varios .md → un PDF.
+- notebooks/23_opt_lr_decay.ipynb: el original estaba VACÍO; se creó uno nuevo (decaimiento escalonado/inverso/exponencial).
+- notebooks/1_03_2: se agregó n_classes=2 a DecisionBoundaryDisplay (scikit-learn 1.9 lo exige).
+- Clave local (gitignored): soluciones_docente_notebooks.py rellena y EJECUTA los 17 notebooks (nbclient) →
+  notebooks_resueltos/*.ipynb + RESUMEN.txt. Todos corren sin errores. Valores de las guías salen de ahí.
+- Hallazgos: 1_11 imprime la pérdida con solo el último ejemplo (bug del original); 22 con lr 0.03 el descenso simple
+  diverge y momentum converge; 3_2 entrena bien solo con normalizar+centrar+vectorizar+momentum (ECM 31600→29, kernel≈Sobel).
+- El Python del sistema (3.13 de la Store) perdió sus paquetes una vez; se reinstalaron con pip.

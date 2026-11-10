@@ -1,6 +1,7 @@
 """Convierte guías Markdown a PDF (HTML con estilo + Chrome/Edge sin ventana).
 
-Uso: python tools/md_to_pdf.py docs/GUIA.md entregables/Guia.pdf
+Uso: python tools/md_to_pdf.py docs/GUIA.md [otra.md ...] entregables/Guia.pdf
+     (varios .md se unen en un solo PDF, cada uno empezando en página nueva)
 Requiere: pip install markdown-it-py mdit-py-plugins  ·  Chrome o Edge instalado.
 Las fórmulas $$...$$ se dibujan con KaTeX (necesita internet al convertir).
 """
@@ -31,7 +32,7 @@ html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 10.5pt; line-height: 1.5; color: #1F2937; margin: 0; }
 h1 { color: var(--navy); font-size: 17pt; margin: 22pt 0 8pt; padding-bottom: 4pt; border-bottom: 2.5pt solid var(--orange);
      break-after: avoid; }
-h1:first-of-type { font-size: 21pt; margin-top: 0; border-bottom: none; padding: 14pt 16pt; background: var(--navy);
+.doc > h1:first-of-type { font-size: 21pt; margin-top: 0; border-bottom: none; padding: 14pt 16pt; background: var(--navy);
      color: #F7F5EF; border-left: 6pt solid var(--orange); }
 h2 { color: var(--navy); font-size: 13.5pt; margin: 16pt 0 6pt; break-after: avoid; }
 h3 { color: var(--blue); font-size: 11.5pt; margin: 12pt 0 4pt; break-after: avoid; }
@@ -57,6 +58,7 @@ blockquote p { margin: 2pt 0; }
 .contains-task-list { list-style: none; padding-left: 6pt; }
 .task-list-item input { margin-right: 6pt; }
 .math.block { margin: 8pt 0; text-align: center; }
+.doc + .doc { break-before: page; }
 """
 
 TEMPLATE = """<!doctype html><html lang="es"><head><meta charset="utf-8"><title>{title}</title>
@@ -77,10 +79,11 @@ def render(md_text):
     return md.render(md_text)
 
 
-def main(src, dst):
-    text = pathlib.Path(src).read_text(encoding="utf-8")
-    title = next((ln[2:].strip() for ln in text.splitlines() if ln.startswith("# ")), "Guía")
-    page = TEMPLATE.format(title=html.escape(title), css=CSS, body=render(text))
+def main(srcs, dst):
+    texts = [pathlib.Path(src).read_text(encoding="utf-8") for src in srcs]
+    title = next((ln[2:].strip() for ln in texts[0].splitlines() if ln.startswith("# ")), "Guía")
+    body = "".join(f'<section class="doc">{render(t)}</section>' for t in texts)
+    page = TEMPLATE.format(title=html.escape(title), css=CSS, body=body)
     browser = next((b for b in BROWSERS if b and os.path.exists(b)), None)
     if not browser:
         sys.exit("No se encontró Chrome ni Edge.")
@@ -95,6 +98,6 @@ def main(src, dst):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 3:
+    if len(sys.argv) < 3:
         sys.exit(__doc__)
-    main(sys.argv[1], sys.argv[2])
+    main(sys.argv[1:-1], sys.argv[-1])
