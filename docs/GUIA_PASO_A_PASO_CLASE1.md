@@ -1,32 +1,35 @@
-# Guía paso a paso — Clase 1: Introducción a las Redes Neuronales
+# Guía paso a paso — Clase 1: El proyecto y los datos
 
-**Temas:** presentación del curso · instalación de herramientas · inteligencia artificial y redes neuronales · aprendizaje automático
-**Duración:** ~2 h 15 min
-**Material:** diapositivas `Clase1_Diapositivas` (PDF y PowerPoint, 19 diapositivas) · repositorio https://github.com/datahuba/curso-redes-neuronales
+**El proyecto del curso:** construir desde cero, en Python y NumPy, una red neuronal que **reconoce números escritos a mano**. En la última clase cada alumno dibuja un número con el mouse y su propia red lo adivina.
+**Pieza de hoy:** instalar todo, conocer los 70 000 dígitos de MNIST y armar una primera «IA» que acierta el 82 % sin una sola neurona.
+**Duración:** ~2 h 30 min
+**Material:** diapositivas `Clase1_Diapositivas` · notebook `proyecto/P1_conocer_los_datos.ipynb` · repositorio https://github.com/datahuba/curso-redes-neuronales
 
-Esta guía explica **todo** lo que aparece en las diapositivas desde cero, como si nunca hubieras visto el tema. Tiene tres partes:
+**Cómo es el curso desde ahora:** primero se construye y después se explica. Cada clase arranca con un problema concreto del proyecto («esto todavía no funciona»), la teoría aparece **justo cuando hace falta** para resolverlo, y la clase termina con algo que corre y una precisión medida. Cada clase dedica unos 2/3 del tiempo al teclado.
 
-- **Parte A:** preparar las computadoras **antes** de clase. Es una instalación rigurosa, con una verificación en cada paso.
-- **Parte B:** qué explicar en cada diapositiva, con definiciones sencillas y ejemplos.
-- **Parte C:** problemas frecuentes y cómo resolverlos.
+La guía tiene tres partes:
+- **Parte A:** preparar las computadoras **antes** de clase (instalación rigurosa, con verificación en cada paso).
+- **Parte B:** la clase paso a paso, siguiendo el notebook.
+- **Parte C:** problemas frecuentes.
 
 ## Objetivos de la clase
 
 Al terminar, cada alumno podrá:
-1. Explicar qué es la inteligencia artificial y dónde encajan las redes neuronales.
-2. Distinguir las tareas del aprendizaje automático (regresión, clasificación, agrupamiento…) y sus tres tipos (supervisado, no supervisado, por refuerzo).
-3. Tener su computadora lista para hacer los ejercicios del curso.
+1. Explicar qué vamos a construir en el curso y en qué se diferencia «programar reglas» de «aprender de datos».
+2. Cargar MNIST, ver que una imagen es una tabla de números y prepararla (aplanar y normalizar).
+3. Construir un clasificador por plantillas y medir su **precisión** con datos de prueba.
 
 ## Agenda
 
-| Tiempo | Tema | Diapositivas |
-|---|---|---|
-| 0:00 | Presentación y motivación | 1–5 |
-| 0:20 | Herramientas e instalación | 6–8 |
-| 0:55 | Descanso | — |
-| 1:05 | Inteligencia artificial y redes neuronales | 9–12 |
-| 1:35 | El aprendizaje automático | 13–17 |
-| 2:05 | Quiz y cierre | 18–19 |
+| Tiempo | Tema |
+|---|---|
+| 0:00 | Demo: «al final del curso harás esto» y cómo es el curso (15 min) |
+| 0:15 | Instalación y verificación (40 min) |
+| 0:55 | Descanso (10 min) |
+| 1:05 | IA, aprendizaje automático y datos: lo mínimo (15 min) |
+| 1:20 | Práctica: notebook `P1`, secciones 1–2 (20 min) |
+| 1:40 | La IA de plantillas y la precisión, notebook `P1` secciones 3–4 (35 min) |
+| 2:15 | Puesta en común y cierre (15 min) |
 
 ---
 
@@ -69,7 +72,7 @@ Recomendación: prepara el **Camino 2** en tu computadora y ten listo el **Camin
 1. Entra a https://colab.research.google.com e inicia sesión con tu cuenta de Google.
 2. Menú **Archivo → Abrir cuaderno** → pestaña **GitHub**.
 3. Pega `datahuba/curso-redes-neuronales` y presiona Enter.
-4. Elige el notebook, por ejemplo `notebooks/1_01_mcculloch_pitts.ipynb`.
+4. Elige el notebook, por ejemplo `proyecto/P1_conocer_los_datos.ipynb`.
 5. Haz clic en la primera celda de código y presiona **Shift + Enter** para ejecutarla.
 6. Para guardar tus cambios: **Archivo → Guardar una copia en Drive**. Si no lo haces, se pierden.
 
@@ -82,7 +85,9 @@ print(np.__version__)
 
 Si aparece un número de versión (por ejemplo `1.26.4`), Colab funciona.
 
-**Notebooks que usan la carpeta `nni` o archivos de datos** (como `1_03_2`): en Colab necesitan el repositorio completo. Ejecuta esto en la primera celda:
+**Los notebooks del proyecto** (`proyecto/P1` … `P7`) funcionan en Colab tal cual: su primera celda descarga sola las herramientas (`digitos.py`) y los datos.
+
+**Los notebooks de apoyo** de la carpeta `notebooks/` que usan la carpeta `nni` o archivos de datos (como `1_03_2`) necesitan el repositorio completo. Ejecuta esto en la primera celda:
 
 ```python
 !git clone https://github.com/datahuba/curso-redes-neuronales
@@ -242,7 +247,7 @@ Debe imprimir `TODO OK`. Si dice `ModuleNotFoundError`, revisa que estés en `(n
 ### Paso 7. Abrir los notebooks en VS Code (verificación final)
 
 1. En VS Code: **File → Open Folder…** (Archivo → Abrir carpeta) → elige `C:\Users\TuUsuario\projects\curso-redes-neuronales` → **Seleccionar carpeta**. Si pregunta si confías en los autores, elige **Yes, I trust**.
-2. En el panel izquierdo abre `notebooks` → `1_01_mcculloch_pitts.ipynb`.
+2. En el panel izquierdo abre `proyecto` → `P1_conocer_los_datos.ipynb`.
 3. **Elige el kernel (muy importante):**
    1. Arriba a la derecha, haz clic en **Select Kernel**.
    2. Elige **Python Environments…**.
@@ -305,207 +310,100 @@ Se abre el navegador con la lista de archivos. Para cerrarlo, en la terminal pre
 - [ ] Tu computadora pasó la **verificación final** del Paso 7.
 - [ ] Probaste abrir un notebook en **Colab** (plan B).
 - [ ] Tienes abiertas las diapositivas.
+- [ ] Preparaste la demo de `dibujar.py` (A.5).
 - [ ] Llegaste 15 minutos antes para probar el proyector.
 - [ ] Si los alumnos instalarán en clase, avísales que traigan laptop con **5 GB libres** y permisos de administrador. Si pueden, que descarguen Anaconda en casa: son unos 900 MB.
 
+
+## A.5 Preparar la demo (docente, 10 min)
+
+La clase empieza mostrando el **final** del curso. Hazlo la noche anterior:
+
+1. `python tools/build_proyecto.py` (solo en tu computadora: genera los notebooks resueltos en `notebooks_resueltos/proyecto/`).
+2. Abre `notebooks_resueltos/proyecto/P5_red_multicapa.ipynb` y ejecútalo entero (~1 min). Al final guarda `pesos.npz`.
+3. En una terminal, dentro de `notebooks_resueltos/proyecto/`: `python dibujar.py`. Dibuja un 3, un 7, un 0. Deja la ventana lista.
+
+> Si `tools/build_proyecto.py` dice que no encuentra `tools/proyecto_src`, te falta la carpeta con las fuentes (no está en GitHub porque tiene las soluciones). Cópiala desde tu computadora de trabajo.
+
 ---
 
-# PARTE B — Qué explicar en cada diapositiva
+# PARTE B — La clase paso a paso
 
-Junto a cada título va el tiempo aproximado.
+## 1. La demo (10 min)
 
-## Diapositiva 1 — Portada (2 min)
-**Qué decir:** "Este es un curso introductorio. Vamos a entender cómo funcionan las redes neuronales **por dentro**: su teoría y cómo programarlas desde conceptos simples. Esto es la base para después estudiar aprendizaje profundo (*deep learning*) y construir cosas más complejas."
+Antes de decir nada, abre `dibujar.py` en el proyector y **pide a un alumno que dibuje un número**. La red lo adivina y muestra cuánto confía en cada dígito.
 
-## Diapositiva 2 — Agenda (1 min)
-Hoy vemos 4 temas, uno por cada video del curso:
-1. Presentación del curso.
-2. Instalación de herramientas.
-3. Inteligencia artificial y redes neuronales.
-4. Aprendizaje automático.
+Di: *«Esto lo van a programar ustedes, línea por línea, sin librerías mágicas. En 7 clases. Hoy empezamos por lo primero: los datos.»*
 
-## Diapositiva 3 — Objetivos (1 min)
-Lee los tres objetivos de la clase (ver arriba). Pide que al final de la clase ellos mismos digan si los cumplieron.
+Pregunta a la clase: **¿cómo le explicarían a una computadora qué es un 7?** Deja que propongan reglas («una raya arriba y una diagonal…») y muestra en el pizarrón cómo fallan con un 7 con rayita, uno inclinado o uno mal hecho. Conclusión: **escribir reglas no escala; hay que aprender de ejemplos.**
 
-## Diapositiva 4 — "Ya las usas todos los días" (10 min)
-**Actividad (5 min):** pregunta "¿Qué aplicación con inteligencia artificial usaron hoy?". Anota las respuestas en el pizarrón.
+## 2. Cómo es el curso (5 min)
 
-**Explica cada tarjeta:**
-- **Vehículos:** autos que ven la calle con cámaras y deciden cómo manejar.
-- **Lenguaje:** Alexa, Google, traductores y chatbots entienden y producen texto.
-- **Imagen:** los filtros de TikTok detectan tu cara y la modifican.
-- **Salud:** detectan enfermedades en radiografías.
-- **Videojuegos:** generan gráficos realistas más rápido. Calcular la luz real (*ray tracing*) es muy costoso.
-- **Refuerzo:** programas que aprenden a jugar jugando muchas veces.
-- **Generativa:** DALL·E y Stable Diffusion crean imágenes a partir de un texto. Hoy ya cuesta distinguir si una imagen la hizo una persona o una IA.
-- **Robótica:** robots que perciben y se mueven.
+La tabla del recorrido (diapositiva «Dónde estamos en el proyecto», que se repite en cada clase) es el mapa del curso: cada clase agrega **una pieza** y la precisión sube. Pégala en el aula o vuelve a ella al inicio de cada clase.
 
-**Mensaje clave:** las redes neuronales ya trabajan "por detrás" en muchos lados; por eso conviene saber cómo funcionan.
-
-## Diapositiva 5 — "¿Qué veremos en el curso?" (5 min)
-Recorre los módulos:
-1. **Introducción** (hoy).
-2. **Principios:** la neurona de McCulloch y Pitts y el perceptrón.
-3. **Red neuronal simple:** funciones de activación y descenso por gradiente.
-4. **Redes multicapa:** retropropagación.
-5. **Preliminares (opcional):** cálculo, álgebra lineal, probabilidad y Python. Quien sienta que le falta base, que empiece por aquí.
-
-**Cómo trabajamos cada tema:** leer el libro → explicación en clase → ejercicio en papel → notebook en Python.
-
-## Diapositiva 6 — "Dos formas de hacer los ejercicios" (5 min)
-- Los ejercicios son **notebooks** con instrucciones: solo hay que **rellenar partes del código**.
-- Usamos solo **Python y NumPy**, "a pie", a propósito. Así entendemos qué pasa por dentro, en lugar de llamar a una función mágica como `.fit()` que lo hace todo sin que veamos nada.
-- **Opción 1, Colab:** no se configura nada; funciona en el navegador.
-- **Opción 2, tu máquina:** más trabajo al inicio, pero es como se trabaja en proyectos reales y en equipo.
-
-## Diapositiva 7 — "Instalación (1/2): tres programas" (10 min)
-Muestra dónde se descarga cada programa (Pasos 1–3 de la Parte A) y para qué sirve:
-- **Anaconda:** Python + ambientes.
-- **Git:** descargar el código del curso.
-- **VS Code:** editor; necesita las extensiones **Python** y **Jupyter**.
-
-Si los alumnos ya los instalaron en casa, pasa directo a la siguiente.
-
-## Diapositiva 8 — "Instalación (2/2): los comandos" (20 min)
-**Haz la instalación en vivo** (Pasos 4–7) y que los alumnos la repitan.
-
-| Comando | En palabras |
-|---|---|
-| `conda create --name nni python=3.11` | "Crea una caja llamada nni con Python dentro." |
-| `conda activate nni` | "Entra a la caja. Fíjense que ahora dice (nni)." |
-| `cd ~`, `mkdir projects`, `cd projects` | "Voy a mi carpeta de usuario, creo la carpeta de proyectos y entro." |
-| `git clone <url>` | "Descarga una copia del repositorio del curso." |
-| `cd curso-redes-neuronales` | "Entra a la carpeta del curso." |
-| `pip install -r requirements.txt` | "Mete en la caja todas las herramientas de la lista." |
-| VS Code → Abrir carpeta → kernel `nni` | "Abro el proyecto en el editor y elijo el motor correcto." |
-
-Termina cuando todos vean la **verificación final** del Paso 7. Quien no lo logre, que use Colab hoy y lo resuelva después con la Parte C.
-
-## Diapositiva 9 — "¿Qué es la inteligencia artificial?" (8 min)
-- **No existe una definición única** aceptada por todos, ni un teorema que diga "esto sí es IA y esto no".
-- El libro de **Russell y Norvig** (*Inteligencia Artificial: un enfoque moderno*) agrupa las definiciones en dos enfoques:
-  1. **Imitar al humano:** construir máquinas que piensen como nosotros, duplicando lo que hace el cerebro. Problema: si copiamos perfectamente al humano, también copiamos sus errores.
-  2. **Actuar racionalmente:** que la máquina **perciba** su entorno, **razone** (procese) y **actúe** para resolver el problema, aunque no lo haga como el cerebro.
-- **Ejemplo:** una calculadora no piensa como un humano, pero resuelve sumas perfectamente. Es "racional" para esa tarea.
-
-## Diapositiva 10 — "El test de Turing" (10 min)
-**El problema:** como no hay una definición de inteligencia, Alan Turing propuso una **prueba**.
-
-**Cómo funciona:**
-1. Una persona conversa por mensajes, como en un chat, con "alguien" que no ve.
-2. Del otro lado puede haber una persona o una máquina.
-3. Si la persona **no logra distinguir** si habla con una máquina, la máquina **pasa** el test y se considera inteligente.
-
-**¿Por qué es "operacional"?** Porque solo mide si pasa o no; no le importa cómo funciona por dentro.
-
-**Qué necesita una máquina para pasarlo** (explica las flechas en orden, como un flujo):
-1. **Lenguaje natural:** recibir y entender el mensaje.
-2. **Representación del conocimiento:** convertir el mensaje en algo que la máquina pueda manejar internamente.
-3. **Inferencia:** a partir de ese conocimiento, generar una respuesta.
-4. **Síntesis:** convertir la respuesta otra vez en lenguaje para el humano.
-5. **Aprendizaje:** adaptarse a cada usuario distinto.
-
-**Conexión con el curso:** con el aprendizaje profundo, las redes neuronales ya cubren todas esas partes:
-- extraen características a una representación interna llamada **espacio latente**;
-- hacen inferencia;
-- generan la salida con un **decodificador** (texto o imagen);
-- y sus parámetros internos (**pesos**) se ajustan a cada tarea.
-
-## Diapositiva 11 — "¿Qué tan lejos llegan las redes?" (8 min)
-Dibuja **tres ejes** en el pizarrón:
-
-| Eje | Significa | Redes neuronales |
+| Clase | Pieza | Precisión |
 |---|---|---|
-| **Operacional** | Resolver la tarea: controlar, jugar, reconocer, generar | **Muy buenas**: reconocen personas, manejan autos, crean imágenes |
-| **Razonamiento** | Representar conocimiento, inferir como humano y, al extremo, tener conciencia | Limitadas, al menos por ahora |
-| **Explicabilidad** | Poder garantizar cuándo funcionan y cuándo no, y por qué | Limitadas: a veces fallan y no sabemos exactamente por qué |
+| 1 | Plantillas promedio | 82 % |
+| 2 | Una neurona (perceptrón) | 0 vs 1: 99.8 % |
+| 3 | Sigmoide + descenso por gradiente | 3 vs 5: 96 % |
+| 4 | 10 neuronas + softmax → **¡ya dibujan!** | 92 % |
+| 5 | Capa oculta + retropropagación | 97 % |
+| 6 | Optimizadores (momentum) | 97.6 % |
+| 7 | Convolución + aumento de datos | 97 % y resiste dibujos movidos |
 
-**Conclusión:** son herramientas muy efectivas para resolver problemas, pero no tienen conciencia ni son completamente explicables. Por eso en el curso nos interesa mucho **cómo entrenarlas** bien.
+Explica la dinámica de los notebooks: las celdas con `...` son suyas; después de cada ejercicio hay una celda de **comprobación** que dice ✅ o ❌ con una pista.
 
-## Diapositiva 12 — "Dónde encajan las redes neuronales" (5 min)
-Explica los recuadros, uno dentro de otro:
-- **Inteligencia artificial** (el más grande): todo intento de que las máquinas hagan tareas inteligentes.
-  - **Aprendizaje automático:** la parte de la IA que **aprende de ejemplos**.
-    - **Redes neuronales:** un tipo de aprendizaje automático formado por muchas unidades simples conectadas.
-      - **Aprendizaje profundo:** redes con **muchas capas**; cada capa extrae rasgos más abstractos (bordes → formas → objetos).
+## 3. Instalación (40 min)
 
-## Diapositiva 13 — "El aprendizaje automático" (8 min)
-**Definición (Arthur Samuel, 1959):** "dar a las computadoras la capacidad de aprender sin ser programadas explícitamente".
+Sigue la **Parte A** (Colab o instalación local). La verificación final es abrir `proyecto/P1_conocer_los_datos.ipynb` con el kernel **nni** y ejecutar la primera celda sin errores.
 
-**Ejemplo del ajedrez:**
-- Queremos una computadora que gane al ajedrez.
-- Un programador **no puede** escribir qué hacer en cada posición posible del tablero: hay muchísimas combinaciones, sería intratable.
-- Solución: que la computadora **aprenda de la experiencia**, por ejemplo jugando muchas partidas.
+Consejo: quien termine primero ayuda a su compañero. Si alguien se traba más de 10 minutos, que siga en **Colab** y lo arreglan después.
 
-**Tres ingredientes** (están en la diapositiva):
-1. **Tarea:** ganar al ajedrez.
-2. **Experiencia:** partidas jugadas o datos.
-3. **Desempeño:** mejora después de observar; gana más seguido.
+## 4. Lo mínimo de teoría (15 min)
 
-## Diapositiva 14 — "Tarea 1: Regresión" (10 min)
-**Qué es:** encontrar una **función** que relacione una **entrada** con una **salida numérica continua**. Ejemplo: entrada = metros cuadrados de una casa; salida = precio.
+Solo tres ideas; el resto aparece cuando el proyecto lo pida:
 
-**Explica la gráfica:**
-- **Puntos naranjas = datos** (la "experiencia" o *dataset*). Pueden venir de estudios, mediciones o simulaciones.
-- **Línea azul = la función real.** En la vida real **no la conocemos**; solo tenemos los puntos.
-- **Líneas grises = hipótesis:** funciones candidatas que proponemos para explicar los puntos.
+- **Inteligencia artificial** = máquinas que hacen tareas que asociamos a la inteligencia. **Aprendizaje automático** = la parte de la IA que aprende **de ejemplos** en vez de seguir reglas escritas (Arthur Samuel, 1959). **Redes neuronales** = una forma de aprendizaje automático, la que vamos a construir.
+- **Aprendizaje supervisado:** le damos ejemplos **con la respuesta correcta** (imagen + «es un 7»). Es lo que haremos todo el curso. (Existen también el no supervisado y el aprendizaje por refuerzo; basta con nombrarlos.)
+- **Entrenamiento vs prueba:** se aprende con unos datos y se evalúa con **otros**. Analogía: si el examen trae las mismas preguntas de la práctica, no sabes si el alumno entendió o memorizó.
 
-Conceptos:
-- Una hipótesis es **consistente** si explica bien los datos que tenemos.
-- Pero eso no basta: queremos que también funcione con **datos futuros** del mismo fenómeno. Eso se llama **generalización**.
+## 5. Práctica: conocer los datos (20 min)
 
-**Pregunta a la clase:** "¿Una curva que pase exactamente por todos los puntos haciendo zigzag es buena?" → No necesariamente: puede explicar estos datos y fallar con los nuevos.
+Notebook `P1`, secciones 1 y 2.
 
-## Diapositiva 15 — "Otras tareas" (10 min)
-1. **Clasificación:** asignar una **etiqueta** de una lista predefinida {l₁, …, lₙ}. Ejemplo: le das una foto y responde "perro" o "gato" (dataset *Dogs vs Cats* de Kaggle). A diferencia de la regresión, la salida es una **categoría**, no un número continuo.
-2. **Agrupamiento (clustering):** **no hay etiquetas**; el algoritmo agrupa solo, por parecido. Ejemplo: con medidas como qué tan puntiagudas son las orejas o qué tan largos los bigotes, encuentra dos grupos (que resultan ser perros y gatos). Cada grupo tiene su **media** (centro) y su **varianza** (qué tan dispersos están).
-3. **Reducción de dimensionalidad:** describir algo con **menos características**. Ejemplo: en 2 ejes, perros y gatos están revueltos y ninguna recta los separa; si los proyectamos a 1 solo eje nuevo, basta un **umbral** (un punto) para separarlos.
-4. **Modelado generativo:** aprender la **distribución** de los datos para **crear ejemplos nuevos**. Ejemplo: aprender "cómo es un rostro" y generar rostros que no existen.
-
-## Diapositiva 16 — "Tipos de aprendizaje" (10 min)
-1. **Supervisado:**
-   - La experiencia es una lista de **pares (x, y)**: x = el ejemplo (una figura), y = su etiqueta (cono, cubo, esfera).
-   - El algoritmo busca la función que lleva de x a y. Ese proceso se llama **entrenamiento**.
-   - Después debe acertar con ejemplos **nuevos** que nunca vio: **generalización**. Ejemplo: un auto autónomo debe manejar en calles donde nunca se entrenó.
-2. **No supervisado:**
-   - Hay ejemplos **sin etiquetas**.
-   - El algoritmo descubre qué los distingue (los cubos tienen 6 caras; las esferas no tienen vértices, aunque cambie su tamaño o color) y los agrupa.
-3. **Por refuerzo:**
-   - La experiencia **no está disponible** de antemano: se consigue **interactuando**.
-   - Se detalla en la siguiente diapositiva.
-
-## Diapositiva 17 — "Aprendizaje por refuerzo" (8 min)
-Explica el ciclo **Agente ⇄ Ambiente** del diagrama:
-1. El **agente** (el programa) hace una **acción**, por ejemplo mover una pieza de ajedrez.
-2. La acción cambia el **estado** del **ambiente** (el tablero).
-3. El agente **observa** el nuevo estado y recibe una **recompensa**.
-4. Se repite muchas veces.
-
-Conceptos:
-- **Recompensa a corto plazo:** comer una pieza.
-- **Recompensa a largo plazo (horizonte):** ganar la partida. Es lo que realmente importa.
-- **Objetivo:** maximizar la recompensa total.
-- Al inicio el agente pierde mucho. Con la experiencia ajusta su regla de "en este estado, haz esta acción" y termina ganando.
-
-**Cierre del tema:** las redes neuronales sirven para muchas de estas tareas: regresión, clasificación, reducción de dimensionalidad y generación.
-
-## Diapositiva 18 — Quiz (10 min)
-Que respondan en papel durante 5 minutos; luego revisa en voz alta.
-
-| # | Pregunta | Respuesta |
+| Celda | Qué pasa | Qué remarcar |
 |---|---|---|
-| 1 | ¿Por qué el test de Turing es una definición operacional? | Solo mide si pasa o no; no importa cómo funciona por dentro. |
-| 2 | ¿En cuál de los tres ejes destacan las redes? | El operacional: resolver problemas. |
-| 3 | ¿Qué es generalizar? | Funcionar bien con ejemplos que nunca vio. |
-| 4 | ¿Diferencia entre clasificación y agrupamiento? | La clasificación tiene etiquetas predefinidas; el agrupamiento no. |
-| 5 | ¿Qué maximiza un agente de refuerzo? | La recompensa acumulada (a largo plazo). |
+| Cargar los datos | Primera vez descarga 11 MB | `X_train` es (60000, 28, 28): 60 000 imágenes de 28 × 28 |
+| `mostrar(...)` | Ven 20 dígitos con su etiqueta | Algunos son difíciles hasta para una persona |
+| Imprimir `X_train[0][4:24, 4:24]` | Una tabla de números | **Una imagen es una tabla de números.** Pide que encuentren el «5» dentro de los números |
+| Ejercicio 1 (`np.bincount`) | ~6 000 de cada dígito | Datos balanceados: ningún dígito domina |
+| Ejercicio 2 (aplanar y normalizar) | De 28×28 a 784; de 0–255 a 0–1 | La red recibe una **fila de 784 números**. Dividir entre 255 deja todo en la misma escala |
 
-## Diapositiva 19 — "Para la próxima clase" (2 min)
-1. Tener el ambiente instalado y el repositorio clonado (Parte A).
-2. Leer **Russell y Norvig:** capítulo 1 y secciones 18.1 y 18.2 (*Learning from examples*).
-3. Leer **Goodfellow, Bengio y Courville, *Deep Learning*:** sección 5.1 (*Learning algorithms*).
+**Errores típicos:** `reshape(784)` sin la cantidad de imágenes (debe ser `reshape(60000, 784)`); olvidar dividir entre 255 (la comprobación lo detecta).
 
-La próxima clase empezaremos con la primera neurona artificial: el modelo de **McCulloch y Pitts**.
+## 6. La IA de plantillas (35 min)
+
+Notebook `P1`, secciones 3 y 4.
+
+**Antes de la celda**, en el pizarrón: si promedio los 6 000 «tres», ¿qué saldrá? Que lo imaginen y luego lo vean (Ejercicio 3).
+
+- **Ejercicio 3:** `X[y_train == d].mean(axis=0)`. Explica la máscara: `y_train == d` es una lista de Verdadero/Falso que «filtra» filas.
+- **Ejercicio 4:** «parecido» = suma de diferencias al cuadrado (distancia). La plantilla más cercana gana: `np.argmin`.
+- **El examen:** ~82 %. Pregunta: *¿es bueno?* Al azar sería 10 %. Pero 1 de cada 5 mal es muchísimo para leer cheques.
+- **Los errores:** mirarlos juntos es lo más valioso de la clase. Que propongan por qué falla (un 7 se parece al promedio del 9, etc.).
+
+**Idea clave para cerrar:** nadie programó qué es un 3; las plantillas **salieron de los datos**. Pero no se corrigen solas cuando se equivocan. Eso es lo que hará una neurona.
+
+## 7. Cierre (15 min)
+
+Puesta en común de la sección «Para pensar» del notebook y el vocabulario: *dato, etiqueta, entrenamiento, prueba, precisión*.
+
+**Tarea:**
+1. Terminar `P1` hasta ver el 82 %.
+2. Desafío: ¿sube la precisión si en vez de la distancia usas el **producto punto** `plantillas @ x` y te quedas con el mayor (`argmax`)? ¿Por qué crees que pasa lo que pasa?
+3. Opcional (para los curiosos): leer la [introducción del libro del Dr. Irving Vasquez](https://irvingvasquez.github.io/libro_redes_neuronales/).
+
+**Próxima clase:** una neurona que **corrige sus pesos cada vez que se equivoca**.
 
 ---
 
@@ -526,6 +424,9 @@ La próxima clase empezaremos con la primera neurona artificial: el modelo de **
 | `pip` falla con error de red o SSL | Internet o proxy de la institución | Prueba otra red, o usa Colab |
 | La instalación de Anaconda falla por permisos | Sin permisos de administrador | Usa Colab (Camino 1) |
 | Las tildes se ven como `�` en la terminal | Codificación de Windows | Ejecuta `chcp 65001` antes; es solo visual |
+| `ModuleNotFoundError: No module named 'digitos'` | El notebook no se abrió desde la carpeta `proyecto/` | Abre en VS Code la carpeta `curso-redes-neuronales` completa y el notebook desde `proyecto/`; en Colab la primera celda lo descarga sola |
+| La descarga de MNIST falla | Sin internet o proxy | Copia `proyecto/datos/mnist.npz` desde otra computadora (con USB) |
+| `NameError` en una celda | Se saltaron una celda anterior | **Run All** (Ejecutar todo) desde arriba |
 | Colab perdió mis cambios | No se guardó una copia | **Archivo → Guardar una copia en Drive** |
 
 **Si nada funciona:** usa Colab en clase y revisa la instalación después, con calma, repitiendo la Parte A paso por paso.

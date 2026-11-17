@@ -1,5 +1,22 @@
 # Curso: Introducción a las Redes Neuronales — Índice
 
+## El proyecto del curso
+
+Todo el curso construye una sola cosa, desde cero y en Python con NumPy: **una red neuronal que reconoce números escritos a mano**. Cada clase agrega una pieza; la teoría aparece cuando el proyecto la necesita.
+
+| Clase | Notebook | Pieza | Resultado |
+|---|---|---|---|
+| 1 | `proyecto/P1_conocer_los_datos` | Datos (MNIST) y plantillas promedio | 82 % |
+| 2 | `proyecto/P2_una_neurona` | Perceptrón y regla de Rosenblatt | 0 vs 1: 99.8 % |
+| 3 | `proyecto/P3_aprender_con_gradiente` | Sigmoide y descenso por gradiente | 3 vs 5: 96 % |
+| 4 | `proyecto/P4_diez_neuronas` | 10 neuronas, softmax, mini-lotes; `dibujar.py` | 92 % |
+| 5 | `proyecto/P5_red_multicapa` | Capa oculta y retropropagación | 97 % |
+| 6 | `proyecto/P6_entrenar_mejor` | Momentum y decaimiento de la tasa | 97.6 % |
+| 7 | `proyecto/P7_convolucion` | Convolución, pooling y aumento de datos | resiste dibujos movidos |
+
+La tabla de abajo es el **material de apoyo** (libro y notebooks originales) para reforzar cada tema.
+
+
 Material del Dr. J. Irving Vasquez (jivg.org):
 - **Libro** (CC BY-NC 4.0): https://irvingvasquez.github.io/libro_redes_neuronales/
 - **Notebooks** (CC BY 4.0): https://github.com/irvingvasquez/cv2course_intro_nn — copia en `notebooks/` (sin soluciones)

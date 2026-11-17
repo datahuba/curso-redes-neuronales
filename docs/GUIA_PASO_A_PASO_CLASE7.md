@@ -1,45 +1,35 @@
-# Guía paso a paso — Clase 7: Redes convolucionales (puente al aprendizaje profundo)
+# Guía paso a paso — Clase 7: Redes convolucionales y cierre del proyecto
 
-**Temas:** imágenes como matrices · correlación cruzada · kernels y detección de bordes · ReLU · aprender un kernel con descenso por gradiente
-**Duración:** ~2 h 35 min
-**Material:** diapositivas `Clase7_Diapositivas` (PDF y PowerPoint, 21 diapositivas) · repositorio https://github.com/datahuba/curso-redes-neuronales
-**Requisito:** Clases 4, 5 y 6 (descenso por gradiente, regla de la cadena, momentum)
+**Proyecto:** reconocedor de dígitos escritos a mano, en Python y NumPy.
+**Pieza de hoy:** **filtros convolucionales** + max-pooling + **aumento de datos**. Una red convolucional que llega a ~97 % con solo 20 000 imágenes y, con aumento de datos, **resiste dibujos movidos**: 81 % contra el 17 % de la red densa.
+**Problema que resolvemos:** si mueves el dibujo 3 píxeles, la red densa se derrumba (de 97 % a 17 %). Aprendió *dónde* hay tinta, no *qué forma* tiene.
+**Duración:** ~2 h 30 min
+**Material:** diapositivas `Clase7_Diapositivas` · notebook `proyecto/P7_convolucion.ipynb`
 
 ## Objetivos de la clase
 
 Al terminar, cada alumno podrá:
-1. Explicar por qué para imágenes se usan **convoluciones** en lugar de capas densas.
-2. Calcular a mano la correlación cruzada de una imagen pequeña con un kernel.
-3. Programar la operación de una capa convolucional.
-4. Entrenar los números de un kernel con descenso por gradiente.
-
-La guía tiene cuatro partes:
-- **Parte A:** preparar las computadoras antes de clase.
-- **Parte B:** teoría desde cero.
-- **Parte C:** práctica en la computadora.
-- **Parte D:** problemas frecuentes.
-
----
+1. Explicar la **convolución** como «la misma lupa recorriendo toda la imagen» y programarla.
+2. Explicar qué hacen el **max-pooling** y el **aumento de datos**.
+3. Entrenar una red convolucional pequeña y compararla con la red densa.
+4. Reconocer en código de PyTorch las piezas que programó a mano durante el curso.
 
 ## Agenda
 
-| Tiempo | Tema | Diapositivas |
-|---|---|---|
-| 0:00 | Presentación, objetivos y repaso (10 min) | 1–4 |
-| 0:10 | B1. Imágenes y por qué convolución (15 min) | 5–6 |
-| 0:25 | B2. Correlación cruzada (25 min) | 7–9 |
-| 0:50 | B3. Detector de bordes y ReLU (10 min) | 10–11 |
-| 1:00 | C1. Práctica: notebook `3_1` (30 min) | 12 |
-| 1:30 | Descanso (10 min) | 13 |
-| 1:40 | B4. Aprender el kernel (25 min) | 14–18 |
-| 2:05 | C2. Reto: notebook `3_2` y `practica_07` (20 min) | 19 |
-| 2:25 | Quiz y cierre (10 min) | 20–21 |
+| Tiempo | Tema |
+|---|---|
+| 0:00 | El experimento que rompe la red, notebook `P7` sección 1 (15 min) |
+| 0:15 | La convolución: Ejercicio 1 y filtros a mano (25 min) |
+| 0:40 | La versión rápida y la red convolucional, Ejercicio 2 (25 min) |
+| 1:05 | Descanso (10 min) |
+| 1:15 | Entrenar (mientras corre: explicar la retropropagación nueva) (15 min) |
+| 1:30 | Aumento de datos, Ejercicio 3 (25 min) |
+| 1:55 | Los filtros aprendidos (10 min) |
+| 2:05 | Cierre del curso: lo mismo en PyTorch y el recorrido completo (25 min) |
 
 ---
 
-# PARTE A — Antes de clase (15 min)
-
-En **Anaconda PowerShell Prompt**:
+# PARTE A — Antes de clase (10 min)
 
 ```bash
 cd ~\projects\curso-redes-neuronales
@@ -50,209 +40,90 @@ git pull
 ```bash
 conda activate nni
 ```
-```bash
-python docs/practica_07.py
-```
 
-**Verificación:**
-- el ejemplo del pizarrón da `[[27, 27, 0], [27, 27, 0], [27, 27, 0]]`;
-- el kernel aprendido es `[[-1, -2, -1], [0, 0, 0], [1, 2, 1]]`, el filtro de Sobel;
-- al final dice `Todas las comprobaciones pasaron`.
+**Docente:** ejecuta `notebooks_resueltos/proyecto/P7_convolucion.ipynb` (~2 min).
 
-Con `--graficar` muestra la foto original, sus bordes verticales, sus bordes horizontales y la curva del error.
-
-**Checklist:**
-- [ ] `python docs/practica_07.py --graficar` funciona.
-- [ ] En el pizarrón: una cuadrícula de 5 × 5 con números (la imagen del ejemplo de B2) y otra de 3 × 3 (el kernel).
-- [ ] Mira de antemano la estrategia del reto en la guía de `3_2`: es la parte más difícil del curso.
+**Importante:** la sección 1 usa el `pesos.npz` de la Clase 5 o 6. Quien no lo tenga: ejecutar antes su `P6` (sección 7) o su `P5`.
 
 ---
 
-# PARTE B — Teoría desde cero
+# PARTE B — La clase paso a paso
 
-## Repaso (5 min) — diapositivas 1–4
-- "¿Qué hace una capa de una red?" → H = X·W + B y luego la activación.
-- "¿Cómo se entrenan los pesos?" → descenso por gradiente, con la regla de la cadena.
+## 1. El experimento (15 min)
 
-Hoy aplicamos lo mismo a **imágenes**.
+Antes de ejecutar, pregunta: *si muevo todos los dígitos 3 píxeles a la derecha y abajo, ¿cuánto bajará la precisión de su red de 97 %?* Que apuesten. Luego ejecutan: **~17 %**.
 
-## B1. Imágenes y por qué convolución (15 min) — diapositivas 5–6
+Explicación: la red densa tiene un peso **distinto** para cada píxel. Aprendió «en el píxel 300 suele haber tinta si es un 1». Si el 1 se corre, ese píxel queda vacío. **No sabe que los píxeles vecinos están relacionados.**
 
-### Una imagen es una matriz (diapositiva 5)
-- Una imagen en escala de grises es una **matriz de números**: 0 es negro y 255 es blanco.
-- Una imagen a color son **3 matrices**: rojo, verde y azul.
-- La foto de los notebooks mide **256 × 256**: 65 536 números por canal.
+## 2. La convolución (25 min)
 
-### ¿Por qué no una capa densa? (diapositiva 6)
-Con una capa densa (Clase 5), cada píxel se conecta con cada neurona. Con solo 100 neuronas ya serían 65 536 × 100 = **6.5 millones de pesos**. Además:
-- trata cada píxel por separado e **ignora que los vecinos están relacionados**;
-- un gato en la esquina y un gato en el centro serían problemas distintos.
+Analogía: una **lupa** de 3 × 3 que recorre la imagen buscando **una sola cosa** (por ejemplo, un borde vertical). En cada posición: multiplica casilla por casilla, suma, anota un número. Resultado: un **mapa** de dónde encontró esa cosa.
 
-**La convolución** usa un filtro pequeño (por ejemplo 3 × 3 = **9 pesos**) que **recorre toda la imagen**. Los mismos 9 pesos se usan en cada posición:
-- buscan el **mismo patrón** (un borde, una textura) en todas partes;
-- hay muchísimos menos parámetros.
+- Ejemplo en el pizarrón con un recorte 3 × 3 y el filtro de bordes verticales `[[1,0,−1],[2,0,−2],[1,0,−1]]`: a la izquierda claro y a la derecha oscuro da un número grande; en una zona pareja da 0.
+- **El mismo filtro en todas las posiciones** → si detecta una curva arriba, también la detecta abajo. Y usa solo 9 pesos en vez de 784.
+- La salida es 26 × 26 porque la lupa no cabe en el borde.
 
-## B2. Correlación cruzada (25 min) — diapositivas 7–9
+Ejercicio 1 y las tres imágenes filtradas (bordes verticales, horizontales, desenfoque).
 
-### Cómo funciona (diapositiva 7)
-1. Coloca el **kernel** (una matriz pequeña) sobre una zona de la imagen.
-2. Multiplica cada número del kernel por el píxel que tiene debajo.
-3. **Suma** todo: ese es un píxel de la imagen de salida.
-4. Desliza el kernel una posición y repite.
+**Idea clave:** en una red convolucional **los 9 números del filtro son pesos que se aprenden** con descenso por gradiente.
 
-En fórmula: G[i, j] = Σᵤ Σᵥ H[u, v] · I[i + u, j + v]. Los índices u y v van de −k a k; con un kernel de 3 × 3, k = 1.
+## 3. Versión rápida y la red (25 min)
 
-> Las librerías llaman "convolución" a esta operación. Estrictamente es una correlación cruzada: la convolución matemática voltea el kernel. Para las redes da igual, porque el kernel se aprende.
+- **Recortes:** sacar todos los recortes 3 × 3 como filas de 9 números y hacer `recortes @ filtros`. Es la misma cuenta, pero con un solo `@`: así lo hacen las librerías de verdad.
+- **Max-pooling 2 × 2:** de cada cuadrito nos quedamos con el máximo. «¿Hay un borde por acá? Sí/no»: reduce el tamaño a la mitad y tolera movimientos chicos.
+- Arquitectura: `28×28 → 8 filtros + ReLU → 26×26×8 → pooling → 13×13×8 = 1352 → 10`.
 
-### Ejemplo en el pizarrón (diapositiva 8)
-**Imagen 5 × 5:** oscuro (0) a la izquierda y claro (9) a la derecha. Cada fila es `0 0 9 9 9`.
+Ejercicio 2 (pase hacia adelante): mismas piezas de siempre, en otro orden.
 
-**Kernel 3 × 3:** cada fila es `−1 0 1`. Resta la izquierda y suma la derecha.
+## 4. Entrenar (15 min)
 
-**Píxel de salida en la posición (1, 1),** con la ventana en las columnas 0 a 2:
-- cada fila aporta (−1)·0 + 0·0 + 1·9 = 9;
-- son 3 filas: **27**.
+Mientras entrena (~1 min), explica los **dos detalles nuevos** de la retropropagación (están comentados en el código):
+1. En el max-pooling solo el **ganador** de cada cuadrito recibe culpa (los demás no influyeron).
+2. El filtro se usó en las 676 posiciones → su pendiente es la **suma** de las 676.
 
-**Las tres posiciones de la fila:**
+Resultado: ~97 % con solo 20 000 imágenes y 8 filtros. Con las movidas: ~23 %. *¿Decepción?* Mejora un poco, pero **no alcanza**: la capa densa del final sigue aprendiendo posiciones.
 
-| Columnas de la ventana | Valores | Resultado |
+## 5. Aumento de datos (25 min)
+
+Pregunta: *si quieres que no le importe la posición, ¿qué ejemplos le mostrarías?* → **Ejemplos movidos.** No hace falta conseguir datos nuevos: se fabrican moviendo los que ya hay.
+
+Ejercicio 3 (`np.roll` con desplazamiento al azar). Resultado esperado:
+
+| Red | Originales | Movidas 3 px |
 |---|---|---|
-| 0–2 | `0 0 9` | 27 |
-| 1–3 | `0 9 9` | 27 |
-| 2–4 | `9 9 9` | 0 (zona plana: sin borde) |
+| Densa (Clase 6) | ~97.6 % | ~17 % |
+| Convolucional | ~97 % | ~23 % |
+| Convolucional + aumento | ~94 % | **~81 %** |
 
-**Salida 3 × 3:** `[[27, 27, 0], [27, 27, 0], [27, 27, 0]]`.
+Para comentar: pierde un poco con las originales y gana muchísimo con las movidas. *¿Qué otros aumentos tienen sentido para dígitos?* (rotar un poco, engrosar el trazo, ruido). *¿Y cuál NO?* (voltear horizontalmente: un 2 volteado ya no es un 2).
 
-El kernel **se enciende donde hay un borde vertical** y vale 0 donde la imagen es plana.
+## 6. Los filtros aprendidos (10 min)
 
-### Tamaño de la salida (diapositiva 9)
-- Sin relleno (**padding 0**), el kernel no puede centrarse en las orillas. La salida pierde k píxeles de cada lado: n − 2k.
-  - imagen 5 × 5, kernel 3 × 3 → salida **3 × 3**;
-  - imagen 256 × 256 → salida **254 × 254**.
-- Con **padding** (rellenar la orilla con ceros), la salida puede medir lo mismo que la entrada.
+Arriba los 8 filtros (3 × 3) y abajo qué detectan en un dígito. Muchos se parecen a **detectores de bordes** en distintas direcciones, **sin que nadie se los diera**.
 
-## B3. Detector de bordes y ReLU (10 min) — diapositivas 10–11
+## 7. Cierre del curso (25 min)
 
-### El kernel del notebook `3_1` (diapositiva 10)
-Cada fila es `−1/3 0 1/3`. Es nuestro ejemplo dividido entre 3:
-- da valores **positivos** donde la imagen pasa de **oscuro a claro** (de izquierda a derecha);
-- da valores **negativos** donde pasa de claro a oscuro;
-- da **≈ 0** en zonas planas.
+1. **Lo mismo en PyTorch** (sección 9 del notebook): que identifiquen cada línea con lo que programaron: `Conv2d` = sus filtros, `cross_entropy` = su softmax + error, `backward()` = su retropropagación, `SGD(momentum=0.9)` = su momentum.
+2. **El recorrido completo:** la tabla de precisiones de la Clase 1, ahora completa. Que cada uno diga qué pieza le costó más.
+3. **Qué sigue:** más capas convolucionales (redes profundas), PyTorch, otros datos (ropa: Fashion-MNIST; letras; fotos).
 
-### Después de la ReLU (diapositiva 11)
-La ReLU convierte los negativos en 0. Por eso, en la imagen final solo se ven **algunos** bordes verticales: los de oscuro a claro. Tampoco aparecen bordes horizontales, porque este kernel solo compara izquierda contra derecha.
+**Proyecto final sugerido** (en parejas, para entregar): elegir una mejora, medirla y presentarla en 3 minutos.
+- Dos capas ocultas en la red densa.
+- Momentum + decaimiento juntos.
+- Más filtros o una segunda capa convolucional.
+- Aumento con rotaciones.
+- Entrenar con Fashion-MNIST (cambiando la URL en `digitos.py`).
 
-Esa es la respuesta a la pregunta del notebook `3_1`.
+**Refuerzo opcional:** `notebooks/3_1_capa_convolucional` y `3_2_entrenar_capa_conv`.
 
 ---
 
-## B4. Aprender el kernel (25 min) — diapositivas 14–18
-
-### La idea (diapositiva 14)
-En una red convolucional **nadie elige** los números del kernel: **se aprenden**, igual que los pesos de la Clase 4. Los 9 (o 25) números del kernel son los **pesos** de la capa convolucional.
-
-### El gradiente de un peso del kernel (diapositiva 15)
-Llamemos:
-- G = correlación(K, I);
-- P = ReLU(G), la predicción;
-- T, la imagen objetivo;
-- ECM = promedio de (P − T)².
-
-El peso K[u, v] se usa en **todas** las posiciones. Por la regla de la cadena, su gradiente **suma la contribución de cada posición**:
-
-∂ECM/∂K[u, v] = (2/N) · Σ (P − T)[i, j] · [G[i, j] > 0] · I[i + u, j + v]
-
-Se lee: el error en cada píxel, por si la ReLU dejó pasar (1 o 0), por el píxel que se multiplicó por ese peso. Luego: **K ← K − η·gradiente**.
-
-### Las trampas (diapositiva 16)
-1. **ReLU muerta:** si al inicio todos los G son negativos, la ReLU da 0 en todos lados y ningún peso recibe gradiente. Con fotos (todos los píxeles positivos) y un kernel aleatorio pasa muy seguido.
-2. **Escala:** con píxeles de 0 a 255 los gradientes son enormes. Hay que normalizar a 0–1.
-3. **Lentitud:** calcular píxel por píxel con `for` tarda minutos por época.
-
-**Los trucos que funcionan:**
-- normalizar (dividir entre 255);
-- **centrar** la entrada (restarle su promedio);
-- **vectorizar**;
-- usar **momentum** (Clase 6).
-
-`practica_07.py` muestra el efecto de centrar: con la imagen sin centrar, el entrenamiento **diverge**.
-
-### Vectorizar (diapositiva 17)
-En lugar de recorrer píxeles, se preparan las versiones **desplazadas** de la imagen: 9 para un kernel de 3 × 3, o 25 para uno de 5 × 5.
-- La correlación es la suma de cada versión por su peso.
-- El gradiente de cada peso es un promedio sobre una matriz completa.
-- Todo con NumPy: milisegundos por época.
-
-### Resultados (diapositiva 18)
-- **`practica_07.py`:** sobre una imagen de ruido centrada, el descenso **recupera exactamente** el filtro de Sobel `[[−1, −2, −1], [0, 0, 0], [1, 2, 1]]`, con ECM de 0.97 a ≈ 0.
-- **Reto `3_2`** (foto real, kernel de 5 × 5, ReLU, momentum β = 0.9, η = 2, 2000 épocas):
-  - el ECM baja de ≈ 31 600 a ≈ **29**;
-  - el kernel aprendido es un Sobel en el centro (fila −0.86, −1.77, −0.89 arriba y 0.93, 1.79, 0.84 abajo);
-  - la imagen predicha es casi idéntica al objetivo.
-
-**Mensaje final:** una red convolucional profunda hace esto mismo con **muchos** kernels y **muchas** capas. Las primeras capas aprenden bordes; las siguientes, formas; las últimas, objetos.
-
----
-
-# PARTE C — Práctica en la computadora
-
-Guías celda por celda: `docs/guias_notebooks/` (NB_3_1 y NB_3_2).
-
-## C1. `notebooks/3_1_capa_convolucional.ipynb` (30 min, 4 puntos) — diapositiva 12
-- **`correlacionPixel`:** dos `for` en `range(-k, k + 1)`, acumulando `H[u+k, v+k] * I[i+u, j+v]`. `resultado` debe ser un número de NumPy, por ejemplo `np.array(sumatoria)`.
-- **`G`:** ceros del mismo tamaño que I; al final, recórtalo a `G[k:m-k, k:n-k]`.
-- **Pregunta:** ver B3.
-
-✅ **Comprobación:**
-- la salida mide **254 × 254**;
-- tras la ReLU se ven solo algunos bordes verticales, como en `files/ccnout.png`.
-
-## C2. Reto `notebooks/3_2_entrenar_capa_conv.ipynb` y `practica_07.py` (20 min) — diapositiva 19
-- Sigue la estrategia de B4. El detalle está en la guía [NB_3_2](guias_notebooks/NB_3_2_entrenar_capa_conv.md).
-- Si el tiempo no alcanza, deja el reto de tarea y muestra en vivo:
-
-```bash
-python docs/practica_07.py --graficar
-```
-
----
-
-## Quiz y cierre (10 min) — diapositivas 20–21
-
-| Pregunta | Respuesta |
-|---|---|
-| ¿Por qué no usar capas densas para imágenes? | Demasiados pesos, e ignoran que los píxeles vecinos se relacionan |
-| ¿Cuánto mide la salida de una imagen 7 × 7 con un kernel 3 × 3, sin padding? | 5 × 5 |
-| ¿Qué detecta el kernel con filas −1 0 1? | Bordes verticales (de oscuro a claro, hacia la derecha) |
-| ¿Por qué se ven solo algunos bordes tras la ReLU? | La ReLU elimina los valores negativos (bordes de claro a oscuro) |
-| ¿Qué son los "pesos" de una capa convolucional? | Los números del kernel |
-
-**Para llevar:**
-1. Convolución = un filtro pequeño que recorre la imagen con los mismos pesos.
-2. Los kernels detectan patrones (bordes, texturas), y **se aprenden** con descenso por gradiente.
-3. Las redes profundas apilan muchas capas convolucionales: es el siguiente curso.
-
-**Tarea:**
-1. Terminar `3_1` (4 puntos).
-2. Intentar el reto `3_2`, opcional y con puntos extra.
-3. En `practica_07.py`, cambia el kernel objetivo por el detector vertical `[[−1, 0, 1]] * 3` y comprueba que también lo aprende.
-
-**Rúbrica:**
-
-| Notebook | Puntos |
-|---|---|
-| 3_1 | 4 |
-| 3_2 (reto) | Extra |
-
----
-
-# PARTE D — Problemas frecuentes
+# PARTE C — Problemas frecuentes
 
 | Síntoma | Causa | Solución |
 |---|---|---|
-| `AttributeError: 'float' object has no attribute 'astype'` | `resultado` es un número normal de Python | `np.array(sumatoria)` |
-| La imagen sale con un marco negro | No recortaste G | `G[k:m-k, k:n-k]` |
-| La predicción del reto es toda negra | ReLU muerta | Centra la entrada; ver B4 |
-| El ECM explota o sale `nan` | Tasa grande o datos sin normalizar | Divide entre 255 y baja η |
-| Cada época tarda minutos | Cálculo píxel por píxel | Vectoriza con versiones desplazadas |
-| `FileNotFoundError: files/Lenna.png` | Notebook fuera de la carpeta del repo | Abre la carpeta `curso-redes-neuronales` |
+| «No encuentro pesos.npz» | No guardaron pesos en la Clase 5/6 | Ejecutar `P6` o `P5` completo antes |
+| `ValueError: cannot reshape` en `max_pool` | `Z` con forma equivocada | `Z = R @ red["F"] + red["bf"]` debe dar `(n, 26, 26, 8)` |
+| Entrenar tarda más de 5 minutos | Computadora lenta | Usar `X_train[:10000]` (baja ~1 punto la precisión) |
+| `MemoryError` | Poca RAM | Lotes más chicos en `precision(..., lote=500)` y 10 000 imágenes |
+| La red con aumento no mejora con las movidas | `mover_al_azar` no mueve (devuelve la misma imagen) | Revisar el `np.roll` con `(dy, dx)` y `axis=(0, 1)` |

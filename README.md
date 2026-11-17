@@ -6,22 +6,23 @@ Material del curso: guías, notas, prácticas y notebooks para entender cómo fu
 
 | Carpeta / archivo | Qué contiene |
 |---|---|
-| [`entregables/`](entregables/) | Guías y diapositivas de cada clase (PDF y PowerPoint) y las guías de los notebooks en PDF (`Guias_de_los_notebooks.pdf`) |
-| [`docs/GUIA_PASO_A_PASO_CLASE1.md`](docs/GUIA_PASO_A_PASO_CLASE1.md) | Clase 1 desde cero: instalación paso a paso y explicación de cada tema |
-| [`docs/GUIA_PASO_A_PASO_CLASE2.md`](docs/GUIA_PASO_A_PASO_CLASE2.md) | Clase 2: McCulloch y Pitts, perceptrón y regla de aprendizaje, con práctica |
-| [`docs/GUIA_PASO_A_PASO_CLASE3.md`](docs/GUIA_PASO_A_PASO_CLASE3.md) | Clase 3: neurona moderna, funciones de activación y descenso por gradiente |
-| [`docs/GUIA_PASO_A_PASO_CLASE4.md`](docs/GUIA_PASO_A_PASO_CLASE4.md) | Clase 4: regla delta, entrenamiento completo, ADALINE y redes de varias salidas |
-| [`docs/GUIA_PASO_A_PASO_CLASE5.md`](docs/GUIA_PASO_A_PASO_CLASE5.md) | Clase 5: redes multicapa y retropropagación (¡XOR resuelto!) |
-| [`docs/GUIA_PASO_A_PASO_CLASE6.md`](docs/GUIA_PASO_A_PASO_CLASE6.md) | Clase 6: optimizadores (descenso en 2D, momentum, decaimiento de la tasa) |
-| [`docs/GUIA_PASO_A_PASO_CLASE7.md`](docs/GUIA_PASO_A_PASO_CLASE7.md) | Clase 7: redes convolucionales y cómo se aprende un kernel |
+| [`proyecto/`](proyecto/) | **El curso es un proyecto:** construir desde cero un reconocedor de dígitos escritos a mano. Un notebook por clase (`P1` … `P7`) y `dibujar.py`, una ventana para dibujar números y que tu red los lea |
+| [`entregables/`](entregables/) | Guías y diapositivas de cada clase (PDF y PowerPoint) y el curso completo en un PDF |
+| [`docs/GUIA_PASO_A_PASO_CLASE1.md`](docs/GUIA_PASO_A_PASO_CLASE1.md) | Clase 1: instalación paso a paso, los datos (MNIST) y una primera IA con plantillas (82 %) |
+| [`docs/GUIA_PASO_A_PASO_CLASE2.md`](docs/GUIA_PASO_A_PASO_CLASE2.md) | Clase 2: una neurona (perceptrón) que aprende de sus errores |
+| [`docs/GUIA_PASO_A_PASO_CLASE3.md`](docs/GUIA_PASO_A_PASO_CLASE3.md) | Clase 3: sigmoide y descenso por gradiente |
+| [`docs/GUIA_PASO_A_PASO_CLASE4.md`](docs/GUIA_PASO_A_PASO_CLASE4.md) | Clase 4: 10 neuronas con softmax (92 %) y ¡a dibujar! |
+| [`docs/GUIA_PASO_A_PASO_CLASE5.md`](docs/GUIA_PASO_A_PASO_CLASE5.md) | Clase 5: capa oculta y retropropagación (97 %) |
+| [`docs/GUIA_PASO_A_PASO_CLASE6.md`](docs/GUIA_PASO_A_PASO_CLASE6.md) | Clase 6: optimizadores (momentum, decaimiento de la tasa) |
+| [`docs/GUIA_PASO_A_PASO_CLASE7.md`](docs/GUIA_PASO_A_PASO_CLASE7.md) | Clase 7: redes convolucionales, aumento de datos y cierre del proyecto |
 | [`docs/CURSO.md`](docs/CURSO.md) | Índice del curso: módulos, lecturas y notebooks |
 | [`docs/01_Introduccion.md`](docs/01_Introduccion.md) | Módulo 1: motivación, IA y aprendizaje automático |
 | [`docs/02_Principios.md`](docs/02_Principios.md) | Módulo 2: McCulloch-Pitts y perceptrón |
 | [`docs/practica_02.py`](docs/practica_02.py) | Práctica en Python puro: McCulloch-Pitts y perceptrón (AND, OR, XOR) |
 | `docs/practica_03.py` … `docs/practica_07.py` | Prácticas de las clases 3 a 7 (añadir `--graficar` para ver las gráficas) |
-| [`notebooks/`](notebooks/) | Los 17 ejercicios en Jupyter (rellenar los `TODO`) |
+| [`notebooks/`](notebooks/) | 17 ejercicios de apoyo en Jupyter (opcionales, para reforzar cada tema) |
 | [`docs/guias_notebooks/`](docs/guias_notebooks/README.md) | **Una guía paso a paso por cada notebook**, con pistas y valores para comprobar (PDF en `entregables/`) |
-| [`tools/`](tools/) | Scripts que generan las diapositivas (`build_decks.py`, `export_pdf.ps1`) y los PDF de las guías (`md_to_pdf.py`) |
+| [`tools/`](tools/) | Scripts que generan los notebooks del proyecto (`build_proyecto.py`), las diapositivas (`build_decks.py`, `export_pdf.ps1`) y los PDF (`md_to_pdf.py`, `build_curso_pdf.py`) |
 
 ## Inicio rápido
 
@@ -41,7 +42,7 @@ cd curso-redes-neuronales
 pip install -r requirements.txt
 ```
 
-Después abre la carpeta `notebooks/` en VS Code y elige el kernel `nni`.
+Después abre la carpeta del repositorio en VS Code, entra a `proyecto/` y abre `P1_conocer_los_datos.ipynb` con el kernel `nni`.
 
 ¿Sin Python instalado? Abre cualquier notebook en [Google Colab](https://colab.research.google.com): **Archivo → Abrir cuaderno → GitHub** → `datahuba/curso-redes-neuronales`.
 

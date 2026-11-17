@@ -8,3 +8,11 @@ __pycache__/
 notebooks_resueltos/
 notebooks/output/*
 !notebooks/output/.gitkeep
+PARA_ALUMNOS/
+PARA_ALUMNOS_*.zip
+# Proyecto: fuentes con soluciones y archivos que genera cada alumno
+tools/proyecto_src/
+proyecto/datos/
+proyecto/*.npz
+proyecto/*.png
+entregables/_figuras/

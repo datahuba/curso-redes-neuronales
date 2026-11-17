@@ -13,16 +13,14 @@ import tempfile
 import pymupdf
 
 E = "entregables"
-CLASES = [
-    (1, "Introducción e instalación", []),
-    (2, "McCulloch y Pitts y el perceptrón", ["1_01_mcculloch_pitts", "1_02_perceptron_AND", "1_03_1_perceptron_simple",
-                                             "1_03_2_regla_de_aprendizaje"]),
-    (3, "Neurona moderna y descenso por gradiente", ["1_04_red_neuronal_simple", "1_05_descenso_por_gradiente_1D"]),
-    (4, "Regla delta, ADALINE y varias salidas", ["1_06_descenso_unpaso", "1_07_descenso_por_gradiente", "1_08_adaline"]),
-    (5, "Redes multicapa y retropropagación", ["1_09_red_multicapa_ejercicio", "1_10_retropropagacion_base",
-                                              "1_11_retropropagacion_completo"]),
-    (6, "Optimizadores", ["21_opt_gradiente_2d", "22_opt_momentum", "23_opt_lr_decay"]),
-    (7, "Redes convolucionales", ["3_1_capa_convolucional", "3_2_entrenar_capa_conv"]),
+CLASES = [   # (n, tema, guías de notebooks de apoyo): el proyecto se trabaja en proyecto/P1..P7
+    (1, "El proyecto y los datos", []),
+    (2, "Una neurona que aprende de sus errores", []),
+    (3, "Aprender bajando la montaña (descenso por gradiente)", []),
+    (4, "Diez neuronas: reconocer del 0 al 9", []),
+    (5, "La red de verdad: capa oculta y retropropagación", []),
+    (6, "Entrenar más rápido y mejor (optimizadores)", []),
+    (7, "Redes convolucionales y cierre del proyecto", []),
 ]
 
 
@@ -44,9 +42,9 @@ def indice_md(paginas):
               "**Basado en** el curso, el libro y los notebooks del Dr. J. Irving Vasquez (jivg.org).", "",
               "Este documento reúne, en orden, las 7 clases. Cada clase incluye:",
               "- su **guía paso a paso**;",
-              "- sus **diapositivas**;",
-              "- las **guías de sus notebooks**.", "",
-              "Los notebooks (`.ipynb`) se trabajan en la computadora, desde la carpeta `notebooks/` del repositorio.", "",
+              "- sus **diapositivas**.", "",
+              "El curso es un solo proyecto: construir desde cero un **reconocedor de dígitos escritos a mano**. "
+              "Cada clase agrega una pieza en su notebook (`proyecto/P1` … `P7`), que se trabaja en la computadora.", "",
               "## Contenido", "", "| Sección | Página |", "|---|---|"]
     for (nivel, titulo, _), pag in zip(partes(), paginas):
         if nivel == 1:
