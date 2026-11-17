@@ -3,7 +3,7 @@
 **Proyecto:** reconocedor de dígitos escritos a mano, en Python y NumPy.
 **Pieza de hoy:** **momentum** y **decaimiento de la tasa de aprendizaje**, comparados en una **carrera** con la misma red. La red definitiva llega a **~97.6 %**.
 **Problema que resolvemos:** con descenso por gradiente simple, si `eta` es chico tarda una eternidad y si es grande rebota.
-**Duración:** ~2 h 15 min
+**Duración:** ~2 h de clase, más 15–30 min de margen para dudas
 **Material:** diapositivas `Clase6_Diapositivas` · notebook `proyecto/P6_entrenar_mejor.ipynb`
 
 ## Objetivos de la clase
@@ -15,17 +15,19 @@ Al terminar, cada alumno podrá:
 
 ## Agenda
 
-| Tiempo | Tema |
+> **Cómo se da esta clase:** directo a la práctica. Los alumnos abren el notebook en el minuto 2 y la teoría entra en **pausas cortas** (⏸) justo cuando el ejercicio la necesita. Regla de oro: **primero lo hacen, después lo explicas** (o, si hace falta para poder hacerlo, lo explicas en 3–5 minutos y vuelven al teclado). Las diapositivas siguen el mismo orden: «Paso» (oscuras) = trabajan; «Pausa · teoría» (claras) = explicas.
+
+| Tiempo | Qué pasa |
 |---|---|
-| 0:00 | Repaso y problema: el zigzag y la lentitud (10 min) |
-| 0:10 | Paso 0: traer las funciones de la Clase 5 (10 min) |
-| 0:20 | La pista de carreras y SGD (10 min) |
-| 0:30 | Momentum: la pelota que rueda, Ejercicio 1 (25 min) |
-| 0:55 | Descanso (10 min) |
-| 1:05 | Decaimiento de la tasa, Ejercicio 2 (15 min) |
-| 1:20 | ¡La carrera! y experimentos (30 min) |
-| 1:50 | La red definitiva + dibujar (15 min) |
-| 2:05 | Cierre: Adam y lo que viene (10 min) |
+| 0:00 | Abrir `P6` y la misión de hoy (3 min) |
+| 0:03 | **Paso 1** · Traer tu red de la Clase 5 y correr SGD (15 min) |
+| 0:18 | ⏸ Pausa: momentum, la pelota que rueda (5 min) |
+| 0:23 | ⏸ Pausa: decaimiento de la tasa (3 min) |
+| 0:26 | **Paso 2** · Programar los dos corredores (20 min) |
+| 0:46 | Descanso (10 min) |
+| 0:56 | **Paso 3** · ¡La carrera! (15 min) |
+| 1:11 | **Paso 4** · Experimentos y red definitiva + dibujar (40 min) |
+| 1:51 | Mapa y cierre: Adam y lo que viene (10 min) |
 
 ---
 
@@ -49,43 +51,30 @@ conda activate nni
 
 # PARTE B — La clase paso a paso
 
-## 1. Repaso y problema (10 min)
+## Arranque (3 min)
+Abren `proyecto/P6_entrenar_mejor.ipynb`. Misión: *una carrera entre formas de bajar la montaña, y la red definitiva. La red no cambia: solo cómo la entrenamos.*
 
-Recuerda las gráficas de la Clase 3: con `eta` chico, pasos de hormiga; con `eta` grande, rebota. Dibuja un valle **alargado** (como una canaleta): la pendiente apunta casi siempre hacia las paredes, no hacia el fondo → **zigzag**. Así son los errores de las redes reales.
+## Paso 1 · Traer tu red y correr SGD (15 min)
+**Haz:** pegar `relu`, `softmax`, `crear_red`, `adelante` y `gradientes` de **su** `P5`; ejecutar la pista de carreras y el corredor SGD.
+**Deben ver:** `✅ tus funciones de la Clase 5 están listas`.
+**Si alguien no terminó el P5:** que copie las funciones de un compañero.
 
-## 2. Paso 0 (10 min)
+## ⏸ Pausa: momentum (5 min)
+Dibuja un valle **alargado** (una canaleta): la pendiente apunta a las paredes → **zigzag**. Así son los errores de las redes reales.
+Analogía: una **pelota** que rueda acumula velocidad: si la pendiente apunta siempre al mismo lado, **acelera**; si cambia de lado (zigzag), los empujones se **cancelan**.
+`v ← βv − η·pendiente`, `peso ← peso + v`. Con β = 0.9 «recuerdo el 90 % de mi velocidad». Pendiente constante 1 y η 0.01: 0.01, 0.019, 0.027… hasta 0.1 → **10 veces más rápido**.
 
-Pegar `relu`, `softmax`, `crear_red`, `adelante` y `gradientes` del `P5`. Mensaje: **la red no cambia hoy, solo cambia cómo bajamos la montaña.**
+## ⏸ Pausa: decaimiento (3 min)
+Como estacionar: lejos, rápido; cerca, despacio. `η = η₀ / (1 + k·época)` → 0.3, 0.15, 0.1, 0.075…
 
-## 3. La pista y SGD (10 min)
+## Paso 2 · Programar los dos corredores (20 min)
+**Haz:** Ejercicios 1 (momentum) y 2 (decaimiento).
+**Errores típicos:** sumar `-v`; guardar `memoria[k] = v` antes de calcular el nuevo `v`; signo cambiado (`+ eta * g`) → `nan`.
 
-- Un **optimizador** es una función que recibe las pendientes y decide cómo mover los pesos.
-- SGD es lo que ya hacían: `peso −= eta · pendiente`. («Estocástico» porque usa lotes al azar.)
-- Para que la carrera sea rápida: 20 000 imágenes, 5 épocas.
+## Descanso (10 min)
 
-## 4. Momentum (25 min)
-
-Analogía: una **pelota** que rueda cuesta abajo acumula velocidad.
-- Si la pendiente apunta siempre al mismo lado, la velocidad crece → **acelera** en las bajadas largas.
-- Si cambia de lado a cada rato (zigzag), los empujones se **cancelan** → se **suaviza**.
-
-$$v \leftarrow \beta\, v - \eta \cdot \text{pendiente} \qquad \text{peso} \leftarrow \text{peso} + v$$
-
-`β = 0.9` → «recuerdo el 90 % de mi velocidad anterior». En el pizarrón: con pendiente constante 1 y `eta = 0.01`, la velocidad va 0.01, 0.019, 0.027… hasta 0.1: **10 veces más rápido** que SGD.
-
-**Error típico:** escribir `memoria[k] = v` antes de calcular el nuevo `v`, o sumar `-v`.
-
-## 5. Decaimiento de la tasa (15 min)
-
-Analogía: estacionar el auto. Lejos, vas rápido; cerca, despacio para no chocar.
-
-$$\eta_{\text{época}} = \frac{\eta_0}{1 + k \cdot \text{época}}$$
-
-Con `eta0 = 0.3, k = 1`: 0.3, 0.15, 0.1, 0.075…
-
-## 6. ¡La carrera! (30 min)
-
-Resultados esperados (20 000 imágenes, 5 épocas):
+## Paso 3 · ¡La carrera! (15 min)
+**Haz:** sección 5. **Deben ver** (20 000 imágenes, 5 épocas):
 
 | Corredor | Error final | Precisión |
 |---|---|---|
@@ -93,23 +82,19 @@ Resultados esperados (20 000 imágenes, 5 épocas):
 | Momentum (eta 0.01) | ~0.15 | ~95 % |
 | Decaimiento (eta0 0.3) | ~0.11 | ~96 % |
 
-Pregunta clave: *¿por qué momentum le gana a SGD con el **mismo** eta?* Y: *¿no sería igual usar SGD con eta más grande?* → Que lo prueben (sección 6): con `eta=0.5` funciona bien; con `eta=2.0` se rompe. Momentum da velocidad **sin** volverse inestable.
+**Pregunta:** *¿por qué momentum le gana a SGD con el **mismo** eta? ¿No sería igual SGD con eta más grande?* → lo prueban en el paso 4.
 
-Experimentos en grupos (sección 6): `beta=0.99`, SGD con distintos `eta`. Cada grupo cuenta el resultado en 1 minuto.
+## Paso 4 · Experimentos y red definitiva (40 min)
+**Haz:** sección 6 en grupos (SGD con `eta` 0.5 y 2.0; momentum con `beta=0.99`), cada grupo cuenta su resultado en 1 minuto. Después sección 7: la red definitiva con momentum y todos los datos (~40 s).
+**Deben ver:** `Precisión de la red definitiva: 97.64%`. Y `python dibujar.py` para compararla con la de la Clase 5.
+**Conclusión:** momentum da velocidad **sin** volverse inestable (SGD con `eta=2.0` se rompe).
 
-## 7. La red definitiva (15 min)
-
-Momentum con todos los datos y 5 épocas (~40 s): **~97.6 %**. `guardar_pesos` y `python dibujar.py`. Que comparen con la red de la Clase 5.
-
-## 8. Cierre (10 min)
-
-- Optimizador = cómo bajar la montaña; la red y las pendientes no cambian.
-- Momentum = velocidad acumulada; decaimiento = pasos que se achican.
-- **Adam** (el más usado hoy) combina las dos ideas: momentum + un `eta` propio para cada peso. En PyTorch es una línea: `torch.optim.Adam(...)`.
-
-**Tarea:** terminar `P6`. Desafío: combinar momentum **con** decaimiento en un solo optimizador. ¿Le gana a los tres?
-**Refuerzo opcional:** `notebooks/21_opt_gradiente_2d`, `22_opt_momentum`, `23_opt_lr_decay` (curvas de nivel en 2D: muy visuales).
-**Próxima clase:** mueve tu dibujo 3 píxeles… y tu red se rompe. Convoluciones.
+## Cierre (10 min)
+- Optimizador = cómo bajar la montaña; red y pendientes no cambian.
+- **Adam** (el más usado hoy) combina las dos ideas: momentum + un `eta` propio para cada peso. En PyTorch es una línea.
+- **Tarea:** terminar `P6`. Desafío: momentum + decaimiento juntos.
+- **Refuerzo opcional:** `21`, `22`, `23` (curvas de nivel en 2D).
+- **Próxima clase:** mueve tu dibujo 3 píxeles… y la red se rompe.
 
 ---
 

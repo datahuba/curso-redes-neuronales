@@ -16,3 +16,5 @@ proyecto/datos/
 proyecto/*.npz
 proyecto/*.png
 entregables/_figuras/
+MATERIAL_DOCENTE/
+MATERIAL_DOCENTE*.zip

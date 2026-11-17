@@ -2,14 +2,14 @@
 
 **El proyecto del curso:** construir desde cero, en Python y NumPy, una red neuronal que **reconoce números escritos a mano**. En la última clase cada alumno dibuja un número con el mouse y su propia red lo adivina.
 **Pieza de hoy:** instalar todo, conocer los 70 000 dígitos de MNIST y armar una primera «IA» que acierta el 82 % sin una sola neurona.
-**Duración:** ~2 h 30 min
+**Duración:** ~2 h de clase, más 15–30 min de margen para dudas
 **Material:** diapositivas `Clase1_Diapositivas` · notebook `proyecto/P1_conocer_los_datos.ipynb` · repositorio https://github.com/datahuba/curso-redes-neuronales
 
-**Cómo es el curso desde ahora:** primero se construye y después se explica. Cada clase arranca con un problema concreto del proyecto («esto todavía no funciona»), la teoría aparece **justo cuando hace falta** para resolverlo, y la clase termina con algo que corre y una precisión medida. Cada clase dedica unos 2/3 del tiempo al teclado.
+**Cómo es el curso desde ahora:** directo a la práctica. Cada clase arranca con el notebook abierto y la teoría entra en pausas cortas, justo cuando el ejercicio la necesita. Cada clase termina con algo que corre y una precisión medida.
 
 La guía tiene tres partes:
 - **Parte A:** preparar las computadoras **antes** de clase (instalación rigurosa, con verificación en cada paso).
-- **Parte B:** la clase paso a paso, siguiendo el notebook.
+- **Parte B:** la clase paso a paso: pasos de práctica y pausas cortas de teoría.
 - **Parte C:** problemas frecuentes.
 
 ## Objetivos de la clase
@@ -21,15 +21,20 @@ Al terminar, cada alumno podrá:
 
 ## Agenda
 
-| Tiempo | Tema |
+> **Cómo se da esta clase:** directo a la práctica. Los alumnos abren el notebook en el minuto 2 y la teoría entra en **pausas cortas** (⏸) justo cuando el ejercicio la necesita. Regla de oro: **primero lo hacen, después lo explicas** (o, si hace falta para poder hacerlo, lo explicas en 3–5 minutos y vuelven al teclado). Las diapositivas siguen el mismo orden: «Paso» (oscuras) = trabajan; «Pausa · teoría» (claras) = explicas.
+
+| Tiempo | Qué pasa |
 |---|---|
-| 0:00 | Demo: «al final del curso harás esto» y cómo es el curso (15 min) |
-| 0:15 | Instalación y verificación (40 min) |
-| 0:55 | Descanso (10 min) |
-| 1:05 | IA, aprendizaje automático y datos: lo mínimo (15 min) |
-| 1:20 | Práctica: notebook `P1`, secciones 1–2 (20 min) |
-| 1:40 | La IA de plantillas y la precisión, notebook `P1` secciones 3–4 (35 min) |
-| 2:15 | Puesta en común y cierre (15 min) |
+| 0:00 | Demo: dibujan un número y la red lo adivina (2 min) |
+| 0:02 | **Paso 1** · Instalar (40 min) |
+| 0:42 | **Paso 2** · Abrir el proyecto `P1` (5 min) |
+| 0:47 | **Paso 3** · Mirar los datos (15 min) |
+| 1:02 | ⏸ Pausa: una imagen es una tabla de números (3 min) |
+| 1:05 | **Paso 4** · Preparar los datos (10 min) |
+| 1:15 | Descanso (10 min) |
+| 1:25 | ⏸ Pausa: reglas vs ejemplos, plantillas (3 min) |
+| 1:28 | **Paso 5** · La IA de plantillas y el examen (30 min) |
+| 1:58 | Resultado (82 %), mapa del proyecto y cierre (15 min) |
 
 ---
 
@@ -329,81 +334,47 @@ La clase empieza mostrando el **final** del curso. Hazlo la noche anterior:
 
 # PARTE B — La clase paso a paso
 
-## 1. La demo (10 min)
+## Demo (2 min)
+Abre `dibujar.py` en el proyector y **pide a un alumno que dibuje un número**. La red lo adivina. Di solo: *«Esto lo van a programar ustedes, en 7 clases. Empezamos ya.»* Nada de teoría todavía.
 
-Antes de decir nada, abre `dibujar.py` en el proyector y **pide a un alumno que dibuje un número**. La red lo adivina y muestra cuánto confía en cada dígito.
+## Paso 1 · Instalar (40 min)
+Sigue la **Parte A** (Colab o instalación local). Quien termina primero ayuda a su compañero; quien se trabe más de 10 min sigue en **Colab** y lo arreglan después.
 
-Di: *«Esto lo van a programar ustedes, línea por línea, sin librerías mágicas. En 7 clases. Hoy empezamos por lo primero: los datos.»*
+## Paso 2 · Abrir el proyecto (5 min)
+**Haz:** abrir `proyecto/P1_conocer_los_datos.ipynb`, elegir el kernel **nni**, ejecutar las dos primeras celdas (Shift + Enter).
+**Deben ver:** `X_train: (60000, 28, 28)`. Quien lo ve, terminó de instalar.
+Explica en 30 segundos la dinámica: las celdas con `...` son suyas; después de cada ejercicio hay una comprobación ✅/❌ con pista.
 
-Pregunta a la clase: **¿cómo le explicarían a una computadora qué es un 7?** Deja que propongan reglas («una raya arriba y una diagonal…») y muestra en el pizarrón cómo fallan con un 7 con rayita, uno inclinado o uno mal hecho. Conclusión: **escribir reglas no escala; hay que aprender de ejemplos.**
+## Paso 3 · Mirar los datos (15 min)
+**Haz:** ejecutar `mostrar(...)` y la celda que imprime la tabla de números; **Ejercicio 1** (`np.bincount`).
+**Deben ver:** ~6 000 ejemplos de cada dígito.
+**Reto mientras tanto:** *¿encuentras el 5 dentro de la tabla de números?*
 
-## 2. Cómo es el curso (5 min)
+## ⏸ Pausa: una imagen es una tabla de números (3 min)
+**Cuándo:** cuando la mayoría vio la tabla.
+**Di:** cada imagen son 28 × 28 = 784 números, 0 negro y 255 blanco. Para la red será **una fila de 784 números entre 0 y 1**. Y hay 60 000 imágenes para aprender y 10 000 para el examen: *si el examen trae las preguntas de la práctica, no sabes si el alumno entendió o memorizó*.
 
-La tabla del recorrido (diapositiva «Dónde estamos en el proyecto», que se repite en cada clase) es el mapa del curso: cada clase agrega **una pieza** y la precisión sube. Pégala en el aula o vuelve a ella al inicio de cada clase.
+## Paso 4 · Preparar los datos (10 min)
+**Haz:** Ejercicio 2: `reshape(60000, 784) / 255` (y lo mismo para la prueba).
+**Error típico:** `reshape(784)` sin decir cuántas imágenes son. La comprobación lo detecta.
 
-| Clase | Pieza | Precisión |
-|---|---|---|
-| 1 | Plantillas promedio | 82 % |
-| 2 | Una neurona (perceptrón) | 0 vs 1: 99.8 % |
-| 3 | Sigmoide + descenso por gradiente | 3 vs 5: 96 % |
-| 4 | 10 neuronas + softmax → **¡ya dibujan!** | 92 % |
-| 5 | Capa oculta + retropropagación | 97 % |
-| 6 | Optimizadores (momentum) | 97.6 % |
-| 7 | Convolución + aumento de datos | 97 % y resiste dibujos movidos |
+## Descanso (10 min)
 
-Explica la dinámica de los notebooks: las celdas con `...` son suyas; después de cada ejercicio hay una celda de **comprobación** que dice ✅ o ❌ con una pista.
+## ⏸ Pausa: reglas vs ejemplos (3 min)
+**Pregunta primero:** *¿cómo le explicarías a una computadora qué es un 7?* Deja que propongan reglas y muestra cómo fallan (7 con rayita, inclinado…).
+**Di:** en vez de reglas, **aprender de ejemplos**. Idea de hoy: promediar los 6 000 «tres» → el tres típico (plantilla). Muestra las plantillas en la diapositiva.
 
-## 3. Instalación (40 min)
+## Paso 5 · La IA de plantillas (30 min)
+**Haz:** Ejercicio 3 (`X[y_train == d].mean(axis=0)`), Ejercicio 4 (`predecir`: la plantilla más parecida con `argmin`), y el examen.
+**Deben ver:** `Precisión: 82.0%`.
+**Si se traban:** explica la máscara `y_train == d` (lista de Verdadero/Falso que filtra filas).
+**Al final:** miren juntos los errores. *¿Tú también los confundirías?*
 
-Sigue la **Parte A** (Colab o instalación local). La verificación final es abrir `proyecto/P1_conocer_los_datos.ipynb` con el kernel **nni** y ejecutar la primera celda sin errores.
-
-Consejo: quien termine primero ayuda a su compañero. Si alguien se traba más de 10 minutos, que siga en **Colab** y lo arreglan después.
-
-## 4. Lo mínimo de teoría (15 min)
-
-Solo tres ideas; el resto aparece cuando el proyecto lo pida:
-
-- **Inteligencia artificial** = máquinas que hacen tareas que asociamos a la inteligencia. **Aprendizaje automático** = la parte de la IA que aprende **de ejemplos** en vez de seguir reglas escritas (Arthur Samuel, 1959). **Redes neuronales** = una forma de aprendizaje automático, la que vamos a construir.
-- **Aprendizaje supervisado:** le damos ejemplos **con la respuesta correcta** (imagen + «es un 7»). Es lo que haremos todo el curso. (Existen también el no supervisado y el aprendizaje por refuerzo; basta con nombrarlos.)
-- **Entrenamiento vs prueba:** se aprende con unos datos y se evalúa con **otros**. Analogía: si el examen trae las mismas preguntas de la práctica, no sabes si el alumno entendió o memorizó.
-
-## 5. Práctica: conocer los datos (20 min)
-
-Notebook `P1`, secciones 1 y 2.
-
-| Celda | Qué pasa | Qué remarcar |
-|---|---|---|
-| Cargar los datos | Primera vez descarga 11 MB | `X_train` es (60000, 28, 28): 60 000 imágenes de 28 × 28 |
-| `mostrar(...)` | Ven 20 dígitos con su etiqueta | Algunos son difíciles hasta para una persona |
-| Imprimir `X_train[0][4:24, 4:24]` | Una tabla de números | **Una imagen es una tabla de números.** Pide que encuentren el «5» dentro de los números |
-| Ejercicio 1 (`np.bincount`) | ~6 000 de cada dígito | Datos balanceados: ningún dígito domina |
-| Ejercicio 2 (aplanar y normalizar) | De 28×28 a 784; de 0–255 a 0–1 | La red recibe una **fila de 784 números**. Dividir entre 255 deja todo en la misma escala |
-
-**Errores típicos:** `reshape(784)` sin la cantidad de imágenes (debe ser `reshape(60000, 784)`); olvidar dividir entre 255 (la comprobación lo detecta).
-
-## 6. La IA de plantillas (35 min)
-
-Notebook `P1`, secciones 3 y 4.
-
-**Antes de la celda**, en el pizarrón: si promedio los 6 000 «tres», ¿qué saldrá? Que lo imaginen y luego lo vean (Ejercicio 3).
-
-- **Ejercicio 3:** `X[y_train == d].mean(axis=0)`. Explica la máscara: `y_train == d` es una lista de Verdadero/Falso que «filtra» filas.
-- **Ejercicio 4:** «parecido» = suma de diferencias al cuadrado (distancia). La plantilla más cercana gana: `np.argmin`.
-- **El examen:** ~82 %. Pregunta: *¿es bueno?* Al azar sería 10 %. Pero 1 de cada 5 mal es muchísimo para leer cheques.
-- **Los errores:** mirarlos juntos es lo más valioso de la clase. Que propongan por qué falla (un 7 se parece al promedio del 9, etc.).
-
-**Idea clave para cerrar:** nadie programó qué es un 3; las plantillas **salieron de los datos**. Pero no se corrigen solas cuando se equivocan. Eso es lo que hará una neurona.
-
-## 7. Cierre (15 min)
-
-Puesta en común de la sección «Para pensar» del notebook y el vocabulario: *dato, etiqueta, entrenamiento, prueba, precisión*.
-
-**Tarea:**
-1. Terminar `P1` hasta ver el 82 %.
-2. Desafío: ¿sube la precisión si en vez de la distancia usas el **producto punto** `plantillas @ x` y te quedas con el mayor (`argmax`)? ¿Por qué crees que pasa lo que pasa?
-3. Opcional (para los curiosos): leer la [introducción del libro del Dr. Irving Vasquez](https://irvingvasquez.github.io/libro_redes_neuronales/).
-
-**Próxima clase:** una neurona que **corrige sus pesos cada vez que se equivoca**.
+## Resultado y cierre (15 min)
+- Diapositiva **82 %**: al azar sería 10 %; pero 1 de cada 5 mal es mucho. Y **las plantillas nunca cambian**: no aprenden de sus errores.
+- **Mapa del proyecto:** así avanzará el curso.
+- **Tarea:** terminar `P1`. Desafío: ¿y si usas el producto punto (`plantillas @ x`) con `argmax`?
+- **Próxima clase:** una neurona que corrige sus pesos cuando se equivoca.
 
 ---
 

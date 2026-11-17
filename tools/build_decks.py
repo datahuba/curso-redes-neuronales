@@ -602,7 +602,38 @@ def resultado(d, numero, linea, sub, notes):
     text(s, LM, 4.8, CW, 1.2, sub, 20, SOFT, align=PP_ALIGN.CENTER)
 
 
-BOOT = "from digitos import cargar_mnist, mostrar, ok"
+def arranque(d, nb, mision, falla, notes):
+    """Segunda diapositiva de cada clase: directo al teclado."""
+    s = d.slide(True, notes=notes)
+    text(s, LM, 0.9, CW, 0.5, "MANOS AL TECLADO", 18, AMBER, True)
+    text(s, LM, 1.5, CW, 1.4, ["Abre  " + nb, "y ejecuta la primera celda"], 40, CREAM, True, line=1.05)
+    rect(s, LM, 3.75, CW, 2.5, RGBColor(0x22, 0x34, 0x5C), radius=0.06)
+    text(s, LM + 0.35, 3.95, CW - 0.7, 2.1,
+         [Runs([C("Hoy construimos: ", AMBER), (mision, {})]), Runs([C("Lo que todavía falla: ", AMBER), (falla, {})]),
+          ("La teoría llega en pausas cortas, justo cuando el ejercicio la necesita.", {"color": MUTED, "size": 17})],
+         21, CREAM, space=12)
+
+
+def paso(d, k, titulo, meta, todos, check, pistas="", notes="", size=18):
+    """Diapositiva de práctica: qué hacer en el notebook (izquierda) y qué deben ver (derecha)."""
+    s = d.slide(True, notes=notes)
+    title(s, f"Paso {k} · {titulo}", meta, size=32 if len(titulo) < 34 else 27)
+    text(s, LM, 1.95, 6.0, 2.6, [Runs([C(t + "   ", AMBER), (b, {})]) for t, b in todos], size, SOFT, space=12)
+    if pistas:
+        text(s, LM, 4.7, 6.0, 1.5, pistas, 16, MUTED)
+    text(s, 7.0, 1.6, 5.58, 0.35, "LO QUE DEBES VER", 13, MUTED, True)
+    code(s, 7.0, 1.95, 5.58, 3.3, check, 15)
+    return s
+
+
+def capsula(d, minutos, t, puntos, **kw):
+    """Teoría en pocos minutos, justo antes (o justo después) del ejercicio que la usa."""
+    return concepto(d, t, f"Pausa · teoría en {minutos} min", puntos, **kw)
+
+
+def final(d, n, take, proxima, tarea, apoyo, notes):
+    mapa(d, n, notes="Así avanzó el proyecto hoy. Señala la fila de la clase.")
+    cierre(d, take, proxima, tarea, apoyo, notes)
 
 
 # ================================================================ CLASE 1
@@ -610,83 +641,60 @@ def clase1():
     d = Deck("Introducción a las Redes Neuronales  ·  Clase 1")
     cover(d, "CLASE 1  ·  EL PROYECTO", "Vamos a construir", "una IA que lee números",
           "Hoy: instalar, conocer los datos y una primera IA… sin neuronas",
-          "Antes de hablar: abre dibujar.py (Parte A.5 de la guía) y pide a un alumno que dibuje un número.")
-    s = problema(d, "La demo", "Dibuja un número.\nLa red lo adivina.",
-                 ["Esto lo van a programar ustedes, línea por línea, en Python y NumPy.",
-                  "Sin librerías mágicas. En 7 clases."],
-                 "Haz la demo en vivo con dibujar.py. Luego pregunta: ¿cómo le explicarían a una computadora qué es un 7?")
-    concepto(d, "¿Cómo le explicas a una computadora qué es un 7?", "Reglas vs ejemplos",
-             ["Con reglas: «una raya arriba y una diagonal»…",
-              "…¿y el 7 con rayita? ¿el inclinado? ¿el mal hecho?",
-              "Las reglas no escalan.",
-              Runs([B("Aprendizaje automático: "), ("aprender de ejemplos con la respuesta correcta.", {})])],
-             formula="ejemplos + respuestas\n→ la máquina saca la regla",
-             notes="Deja que propongan reglas y muéstrales en el pizarrón cómo fallan. Samuel (1959): «capacidad de aprender "
-                   "sin ser programado explícitamente».")
-    mapa(d, 1)
-    agenda(d, [["0:00", "Demo y cómo es el curso"], ["0:15", "Instalación y verificación"], ["0:55", "Descanso"],
-               ["1:05", "IA, aprendizaje automático y datos: lo mínimo"], ["1:20", "Práctica: conocer los datos (P1)"],
-               ["1:40", "Práctica: la IA de plantillas y la precisión (P1)"], ["2:15", "Puesta en común y cierre"]],
-          highlight=[5])
+          "Antes de hablar: abre dibujar.py (guía, Parte A.5) y pide a un alumno que dibuje un número.")
+    problema(d, "La demo · 2 min", "Dibuja un número.\nLa red lo adivina.",
+             ["Esto lo van a programar ustedes, línea por línea, en Python.", "Empezamos ya: primero, a instalar."],
+             "Demo en vivo con dibujar.py. Nada de teoría todavía: directo a instalar.")
     s = d.slide(notes="Sigue la Parte A de la guía. Quien se trabe más de 10 min, sigue en Colab.")
-    title(s, "Dos caminos para trabajar", "Instalación")
+    title(s, "Paso 1 · Instalar (elige un camino)", "40 min")
     card(s, LM, 1.95, 5.8, 3.9, "Colab (sin instalar)",
          bullets(["colab.research.google.com", "Archivo → Abrir cuaderno → GitHub", "datahuba/curso-redes-neuronales",
                   "proyecto/P1_conocer_los_datos.ipynb"]), BLUE, size=17)
     card(s, LM + 6.03, 1.95, 5.8, 3.9, "Tu computadora (recomendado)",
          bullets(["Anaconda + Git + VS Code", "conda create --name nni python=3.11",
                   "git clone …/curso-redes-neuronales", "pip install -r requirements.txt"]), ORANGE, size=17)
-    s = d.slide(True, notes="La verificación: abrir P1 con el kernel nni y ejecutar la primera celda.")
-    title(s, "Verificación final")
-    code(s, LM, 1.9, 7.0, 2.6, "cd ~\\projects\\curso-redes-neuronales\nconda activate nni\ngit pull\n"
-                                "# VS Code → proyecto/P1_conocer_los_datos.ipynb\n# kernel: nni → Shift + Enter", 18)
-    text(s, 8.1, 1.9, 4.48, 3.0, ["OK: La primera celda corre sin errores.", "OK: Descarga MNIST (11 MB, solo una vez).",
-                                  ("¿Problemas? → Colab, y lo arreglamos después.", {"color": AMBER})], 19, SOFT, space=12)
-    descanso(d, "los datos")
-    concepto(d, "Lo mínimo de teoría", "Para entender el proyecto",
-             [Runs([B("IA: "), ("máquinas que hacen tareas «inteligentes».", {})]),
-              Runs([B("Aprendizaje automático: "), ("aprender de ejemplos.", {})]),
-              Runs([B("Supervisado: "), ("cada ejemplo trae su respuesta (imagen + «es un 7»).", {})]),
-              Runs([B("Entrenamiento / prueba: "), ("se aprende con unos datos y se evalúa con otros.", {})])],
-             formula="60 000 para aprender\n10 000 para el examen",
-             remate="Si el examen trae las preguntas de la práctica, no sabes si entendió o memorizó.",
-             notes="Solo nombra no supervisado y por refuerzo. El resto de la teoría llega cuando el proyecto la pida.")
-    s = d.slide(notes="Pide que encuentren el 5 dentro de los números. 0 = negro, 255 = blanco.")
-    title(s, "Una imagen es una tabla de números", "Los datos: MNIST")
-    import numpy as np
+    paso(d, 2, "abrir el proyecto", "P1 · 5 min",
+         [("Abre", "proyecto/P1_conocer_los_datos.ipynb"), ("Kernel", "nni (arriba a la derecha)"),
+          ("Ejecuta", "las dos primeras celdas con Shift + Enter")],
+         "X_train: (60000, 28, 28)  y_train: (60000,)\nX_test:  (10000, 28, 28)  y_test:  (10000,)",
+         "La primera vez descarga 11 MB de datos.", notes="Quien vea esto, ya terminó de instalar.")
+    paso(d, 3, "mirar los datos", "P1 · secciones 1 y 2 · 15 min",
+         [("Ejecuta", "mostrar(...) y la tabla de números"), ("Ej. 1", "¿cuántos ejemplos hay de cada dígito?")],
+         "[5923 6742 5958 6131 5842 5421 5918 6265 5851 5949]\nOK: hay unos 6 000 ejemplos de cada dígito",
+         "Busca el 5 dentro de la tabla de números.", notes="Primero que miren. La explicación viene en la pausa siguiente.")
+    s = d.slide(notes="Explica lo que acaban de ver. 0 = negro, 255 = blanco. Y por qué hay datos de entrenamiento y de prueba.")
+    title(s, "Una imagen es una tabla de números", "Pausa · teoría en 3 min")
     sys.path.insert(0, os.path.join(RAIZ, "proyecto"))
     from digitos import cargar_mnist
-    X0 = cargar_mnist()[0][0]
-    grid(s, LM, 1.85, 0.34, X0[6:20, 9:23].tolist(), 8, shade=True)
-    foto(s, "mnist.png", 6.0, 1.9, w=6.58)
-    text(s, 6.0, 4.6, 6.58, 1.5, ["28 × 28 = 784 números entre 0 y 255.",
-                                  ("Para la red: una fila de 784 números entre 0 y 1.", {"bold": True, "color": ORANGE})],
-         19, GRAY, space=8)
-    practica(d, "P1 · conocer los datos", "Secciones 1 y 2 · 20 min",
-             [("Ej. 1", "¿cuántos ejemplos hay de cada dígito?"), ("Ej. 2", "aplanar a 784 y dividir entre 255")],
-             "cuantos = np.bincount(y_train)\nX = X_train.reshape(60000, 784) / 255\n\n# OK: las imágenes son filas de 784\n"
-             "# OK: los valores van de 0 a 1",
-             "Las celdas con ... son tuyas. Después de cada ejercicio, la comprobación dice OK: o X con una pista.",
-             notes="Error típico: reshape(784) sin la cantidad de imágenes.")
-    figura(d, "Primera IA: el promedio de cada número", "Plantillas", "plantillas.png",
-           [Runs([B("Adivinar = "), ("¿a qué plantilla se parece más?  "),
-                  ("distancia = ((plantillas − x)²).sum(axis=1) → argmin", {"font": MONO})]),
-            ("Nadie programó qué es un 3: las plantillas salen de los datos.", {"bold": True, "color": ORANGE})],
-           "Antes de ejecutar, pregunta: si promedio los 6 000 tres, ¿qué saldrá?", h=1.6)
-    practica(d, "P1 · la IA de plantillas", "Secciones 3 y 4 · 35 min",
-             [("Ej. 3", "plantilla de cada dígito: X[y_train == d].mean(axis=0)"),
-              ("Ej. 4", "predecir(x): la plantilla más cercana")],
-             "predicciones = np.array([predecir(x) for x in Xt])\nprecision = (predicciones == y_test).mean()\n\n"
-             "# Precisión: 82.0%",
-             "Mira los errores: ¿tú también los confundirías?", notes="Mirar los errores juntos es lo más valioso de la clase.")
+    grid(s, LM, 1.85, 0.34, cargar_mnist()[0][0][6:20, 9:23].tolist(), 8, shade=True)
+    text(s, 6.0, 1.95, 6.58, 4.2, bullets(["28 × 28 = 784 números entre 0 (negro) y 255 (blanco).",
+                                          Runs([B("Para la red: "), ("una fila de 784 números entre 0 y 1.", {})]),
+                                          Runs([B("60 000 para aprender, 10 000 para el examen: "),
+                                                ("si el examen trae las preguntas de la práctica, no sabes si entendió.", {})])]),
+         19, GRAY, space=14)
+    paso(d, 4, "preparar los datos", "P1 · Ejercicio 2 · 10 min",
+         [("Ej. 2", "aplanar a 784 y dividir entre 255")],
+         "X = X_train.reshape(60000, 784) / 255\n\nOK: las imágenes son filas de 784\nOK: los valores van de 0 a 1",
+         "Error típico: reshape(784) sin decir cuántas imágenes son.")
+    descanso(d, "nuestra primera IA")
+    capsula(d, 3, "¿Cómo le explicas a una computadora qué es un 7?",
+            ["Con reglas: «una raya arriba y una diagonal»… ¿y el 7 con rayita?",
+             Runs([B("Aprender de ejemplos: "), ("la máquina saca la regla de los datos.", {})]),
+             Runs([B("Idea de hoy: "), ("promediar los 6 000 «tres» → el tres típico (plantilla).", {})])],
+            fig="plantillas.png", formula="ejemplos + respuestas\n→ la máquina saca la regla",
+            notes="Pregunta primero: si promedio los 6 000 tres, ¿qué saldrá? Luego muestra las plantillas.")
+    paso(d, 5, "la IA de plantillas", "P1 · Ejercicios 3 y 4 · 30 min",
+         [("Ej. 3", "plantilla de cada dígito: X[y_train == d].mean(axis=0)"),
+          ("Ej. 4", "predecir(x): la plantilla más parecida (argmin)"), ("Examen", "medir la precisión")],
+         "La IA dice: 7  · La respuesta correcta es: 7\nPrecisión: 82.0%\nOK: la IA de plantillas acierta más del 80 %",
+         "Mira los errores: ¿tú también los confundirías?", notes="Mirar los errores juntos es lo más valioso de la clase.")
     resultado(d, "82 %", "sin una sola neurona", "Pero las plantillas nunca cambian: si se equivocan, no aprenden nada.",
               "¿Es bueno? Al azar sería 10 %. Pero 1 de cada 5 mal es mucho para leer cheques.")
-    cierre(d, ["Vamos a construir un reconocedor de dígitos, pieza por pieza.",
-               "Una imagen es una tabla de números → una fila de 784.",
-               "Aprender de datos + medir con datos que no vio (precisión)."],
-           "Próxima clase: una neurona que corrige sus pesos cuando se equivoca.",
-           "terminar P1. Desafío: ¿y si usas el producto punto (plantillas @ x) con argmax?",
-           "introducción del libro del Dr. Irving Vasquez (opcional).", "Vocabulario: dato, etiqueta, entrenamiento, prueba, precisión.")
+    final(d, 1, ["Una imagen es una tabla de números → una fila de 784.", "Aprender de datos, no de reglas.",
+                 "Medir con datos que no vio: la precisión."],
+          "Próxima clase: una neurona que corrige sus pesos cuando se equivoca.",
+          "terminar P1. Desafío: ¿y si usas el producto punto (plantillas @ x) con argmax?",
+          "introducción del libro del Dr. Irving Vasquez (opcional).", "Vocabulario: dato, etiqueta, entrenamiento, prueba, precisión.")
     return d
 
 
@@ -694,60 +702,53 @@ def clase1():
 def clase2():
     d = Deck("Introducción a las Redes Neuronales  ·  Clase 2")
     cover(d, "CLASE 2  ·  UNA NEURONA", "Una neurona que", "aprende de sus errores",
-          "El perceptrón: de pesos a mano a pesos aprendidos", "Repaso: 82 % con plantillas que nunca cambian.")
-    problema(d, "El problema", "Las plantillas se equivocan…\ny no aprenden nada.",
-             ["Queremos algo que se corrija solo.", "Empecemos fácil: ¿esta imagen es un 0 o un 1?"],
-             "Pregunta: ¿cuánto acertaban las plantillas? ¿Qué pasaba cuando se equivocaban?")
-    mapa(d, 2)
-    agenda(d, [["0:00", "Repaso y problema"], ["0:10", "¿Qué hace una neurona?"], ["0:25", "Práctica: compuerta AND a mano"],
-               ["0:40", "Práctica: los datos 0/1 y la neurona"], ["1:00", "Descanso"], ["1:10", "La regla de Rosenblatt"],
-               ["1:30", "Práctica: entrenar y mirar los pesos"], ["1:55", "Desafío 3 vs 5"], ["2:20", "Cierre"]],
-          highlight=[6])
-    concepto(d, "¿Qué hace una neurona?", "Suma ponderada + decisión",
-             ["Recibe entradas (los 784 píxeles).", Runs([B("Pesos w: "), ("cuánto importa cada entrada (pueden ser negativos).", {})]),
-              Runs([B("Sesgo b: "), ("qué tan fácil es decir que sí.", {})]),
-              Runs([B("Decide: "), ("1 si la suma pasa de 0; si no, 0.", {})])],
-             "salida = (x @ w + b > 0).astype(int)\n\n# @ = multiplicar casilla por casilla\n#     y sumar todo",
-             formula="x₁w₁ + x₂w₂ + … + b > 0 ?",
-             notes="Analogía: decidir si vas a un partido. McCulloch y Pitts (1943): pesos fijos. Rosenblatt (1958): aprenderlos.")
-    practica(d, "P2 · compuerta AND a mano", "Sección 1 · 15 min",
-             [("Calentamiento", "busca w y b para que solo [1, 1] dé 1")],
-             "entradas = [[0,0], [0,1], [1,0], [1,1]]\n# salida esperada:  0, 0, 0, 1\nw_and = np.array([..., ...])\nb_and = ...",
-             "¿Y la compuerta OR? ¿Hay una sola respuesta correcta?",
-             notes="5 minutos sin pistas. Una solución: pesos 1, 1 y sesgo −1.5. OR: sesgo −0.5. Infinitas respuestas → se puede aprender.")
-    practica(d, "P2 · la neurona con imágenes", "Sección 2 y Ejercicio 1 · 20 min",
-             [("Datos", "solo ceros y unos: y = 1 si es un 1"), ("Ej. 1", "neurona(x, w, b) para muchas imágenes a la vez")],
-             "def neurona(x, w, b):\n    return ...\n\n# pesos al azar → ~50 %: tirar una moneda",
-             "Truco: (condición).astype(int) funciona con una imagen o con miles.",
-             notes="Error típico: usar if, que falla con muchas imágenes.")
-    descanso(d, "la regla de aprendizaje")
-    concepto(d, "La regla de Rosenblatt", "Aprender de los errores",
-             ["Acertó → no se toca nada.", "Dijo 0 y era 1 (error +1) → sube los pesos de los píxeles encendidos.",
-              "Dijo 1 y era 0 (error −1) → bájalos.", Runs([B("η (eta): "), ("tamaño de cada corrección.", {})])],
-             "x = [1, 0, 1]   w = [0, 0, 0]   b = 0\ny = 1  → dijo 0 → error = +1\nw = [0.1, 0, 0.1]   b = 0.1\n"
-             "→ suma = 0.3 > 0 → dice 1 OK",
-             formula="error = y − ŷ\nw ← w + η·error·x",
-             notes="Haz el ejemplo de 3 píxeles en el pizarrón. Solo cambian los pesos de los píxeles encendidos.")
-    practica(d, "P2 · entrenar", "Ejercicio 2 · 25 min",
-             [("Ej. 2", "completa la corrección de w y de b"), ("Mira", "cómo bajan los errores por época")],
-             "época 1: se equivocó 45 veces\népoca 2: se equivocó 24 veces\n...\nPrecisión en el examen: 99.81%",
-             notes="Errores típicos: w = eta*error*xi (falta sumar el w anterior); usar y en lugar de yi.")
+          "El perceptrón: de pesos a mano a pesos aprendidos", "Directo al notebook.")
+    arranque(d, "proyecto/P2_una_neurona", "una neurona que distingue el 0 del 1 y aprende de sus errores.",
+             "las plantillas de la Clase 1 se equivocan y no aprenden nada.",
+             "Que abran el notebook mientras dices la misión (1 min).")
+    paso(d, 1, "compuerta AND a mano", "P2 · sección 1 · 10 min",
+         [("Calentamiento", "busca w y b para que solo [1, 1] dé 1"), ("Pista", "prueba pesos 1 y piensa el sesgo")],
+         "x1 x2 → salida\n[0 0] → 0\n[0 1] → 0\n[1 0] → 0\n[1 1] → 1\nOK: tu neurona es una compuerta AND",
+         "Sin explicación previa: que prueben números.", notes="5 minutos de prueba y error. Una solución: 1, 1 y −1.5.")
+    capsula(d, 3, "Lo que acabas de construir: una neurona", [
+        Runs([B("Pesos w: "), ("cuánto importa cada entrada (pueden ser negativos).", {})]),
+        Runs([B("Sesgo b: "), ("qué tan fácil es decir que sí.", {})]),
+        Runs([B("Decide: "), ("1 si la suma pasa de 0.", {})]),
+        "¿Y la compuerta OR? Infinitas respuestas → se puede aprender."],
+        derecha="salida = (x @ w + b > 0).astype(int)\n\n# @ = multiplicar casilla por casilla\n#     y sumar todo",
+        formula="x₁w₁ + x₂w₂ + … + b > 0 ?",
+        notes="Explica sobre lo que ya hicieron. McCulloch y Pitts (1943): pesos fijos; Rosenblatt (1958): aprenderlos.")
+    paso(d, 2, "la neurona con imágenes", "P2 · sección 2 y Ejercicio 1 · 15 min",
+         [("Datos", "solo ceros y unos: y = 1 si es un 1"), ("Ej. 1", "neurona(x, w, b) para muchas imágenes a la vez")],
+         "Precisión con pesos al azar: ~50%\nOK: la neurona devuelve 0/1 para cada fila",
+         "Con 784 entradas nadie busca los pesos a mano.", notes="Error típico: usar if, que falla con muchas imágenes.")
+    descanso(d, "que la neurona aprenda sola")
+    capsula(d, 5, "La regla de Rosenblatt", [
+        "Acertó → no se toca nada.", "Dijo 0 y era 1 (error +1) → sube los pesos de los píxeles encendidos.",
+        "Dijo 1 y era 0 (error −1) → bájalos.", Runs([B("η (eta): "), ("tamaño de cada corrección.", {})])],
+        derecha="x = [1, 0, 1]   w = [0, 0, 0]   b = 0\ny = 1  → dijo 0 → error = +1\nw = [0.1, 0, 0.1]   b = 0.1\n"
+                "→ suma = 0.3 > 0 → dice 1",
+        formula="error = y − ŷ\nw ← w + η·error·x", notes="El ejemplo de 3 píxeles en el pizarrón, y directo al Paso 3.")
+    paso(d, 3, "entrenar", "P2 · Ejercicio 2 · 20 min",
+         [("Ej. 2", "completa la corrección de w y de b"), ("Mira", "cómo bajan los errores por época")],
+         "época 1: se equivocó 45 veces\népoca 2: se equivocó 24 veces\n...\nPrecisión en el examen: 99.81%",
+         notes="Errores típicos: w = eta*error*xi (falta sumar el w anterior); usar y en lugar de yi.")
     s = d.slide(notes="Rojo en el centro (donde el 1 tiene tinta), azul en el anillo (donde el 0 tiene tinta).")
-    title(s, "¿Qué aprendió? Los pesos como imagen")
+    title(s, "¿Qué aprendió? Los pesos como imagen", "P2 · sección 4")
     foto(s, "pesos_perceptron.png", LM, 1.8, h=4.3)
     text(s, 5.6, 2.0, 6.98, 4.0, bullets([Runs([C("Rojo", ORANGE), (": «si hay tinta acá, digo 1»", {})]),
                                           Runs([C("Azul", BLUE), (": «si hay tinta acá, digo 0»", {})]),
                                           "Nadie le dijo dónde mirar: lo sacó de los ejemplos."]), 21, GRAY, space=14)
-    practica(d, "P2 · desafío 3 vs 5", "Sección 5 · 25 min",
-             [("Cambia", "A, B = 3, 5 y ejecuta todo"), ("Observa", "¿los errores por época llegan a cero?")],
-             "época 1: se equivocó 823 veces\népoca 2: se equivocó 651 veces\népoca 3: se equivocó 636 veces\n# nunca se calma",
-             "La regla solo sabe si acertó, no cuánto se equivocó.",
-             notes="Precisión ~95 % pero no se estabiliza. ¿Por qué? Mismo empujón por un error mínimo que por uno enorme.")
-    cierre(d, ["Neurona = suma ponderada + decisión.", "Aprender = corregir los pesos cuando se equivoca.",
-               "Límite: solo dice 0/1 y no mide cuánto se equivocó."],
-           "Próxima clase: «es un 5 con 80 % de seguridad» y bajar el error poco a poco.",
-           "terminar P2; probar 3 vs 5 con epocas=10.", "refuerzo: notebooks 1_01, 1_02, 1_03_1 y 1_03_2 (opcional).",
-           "Cierra con la pregunta: ¿cómo sabría cuánto se equivocó?")
+    paso(d, 4, "desafío 3 vs 5", "P2 · sección 5 · 20 min",
+         [("Cambia", "A, B = 3, 5 y ejecuta todo"), ("Observa", "¿los errores por época llegan a cero?")],
+         "época 1: se equivocó 823 veces\népoca 2: se equivocó 651 veces\népoca 3: se equivocó 636 veces\n# nunca se calma",
+         "La regla solo sabe si acertó, no cuánto se equivocó.",
+         notes="Precisión ~95 % pero no se estabiliza: mismo empujón por un error mínimo que por uno enorme.")
+    final(d, 2, ["Neurona = suma ponderada + decisión.", "Aprender = corregir los pesos cuando se equivoca.",
+                 "Límite: solo dice 0/1 y no mide cuánto se equivocó."],
+          "Próxima clase: «es un 5 con 80 % de seguridad» y bajar el error poco a poco.",
+          "terminar P2; probar 3 vs 5 con epocas=10.", "refuerzo: notebooks 1_01, 1_02, 1_03_1 y 1_03_2 (opcional).",
+          "Pregunta de salida: ¿cómo sabría cuánto se equivocó?")
     return d
 
 
@@ -755,55 +756,55 @@ def clase2():
 def clase3():
     d = Deck("Introducción a las Redes Neuronales  ·  Clase 3")
     cover(d, "CLASE 3  ·  DESCENSO POR GRADIENTE", "Aprender bajando", "la montaña",
-          "Sigmoide, error medible y descenso por gradiente", "Repaso: el perceptrón con 3 vs 5 nunca se calma.")
-    problema(d, "El problema", "El perceptrón no sabe\ncuánto se equivocó.",
-             ["Un 5 dudoso y un 5 clarísimo mal clasificados reciben el mismo empujón.",
-              "Hoy: una salida suave y un error que se pueda medir y bajar."],
-             "Muestra los errores por época del perceptrón con 3 vs 5.")
-    mapa(d, 3)
-    agenda(d, [["0:00", "Repaso y problema"], ["0:10", "La sigmoide"], ["0:30", "La montaña con niebla"],
-               ["0:50", "Práctica: descenso con un número"], ["1:10", "Descanso"], ["1:20", "Error medible y pendiente"],
-               ["1:35", "Práctica: entrenar 3 vs 5"], ["2:05", "¿Cuándo duda?"], ["2:20", "Cierre"]], highlight=[7])
-    concepto(d, "La sigmoide: de «sí/no» a «qué tan seguro»", "Ejercicio 1",
-             ["Un escalón suavizado.", "Muy negativo → 0 · muy positivo → 1 · cero → 0.5.",
-              "La salida se lee como probabilidad: 0.8 = «80 % seguro de que es un 5».",
-              "Suave → si muevo un poco un peso, la salida cambia un poco."],
-             formula="σ(z) = 1 / (1 + e⁻ᶻ)", fig="sigmoide.png", notes="Ejercicio 1 del notebook: escribirla con np.exp.")
-    concepto(d, "La montaña con niebla", "Descenso por gradiente",
-             ["Quieres llegar al fondo del valle: el error mínimo.", "Solo sientes la pendiente bajo tus pies.",
-              "Da un paso cuesta abajo, vuelve a sentir, repite.",
-              Runs([B("Pendiente = derivada: "), ("hacia dónde sube y qué tan empinado.", {})])],
-             "E(w) = (w − 3)²       # error inventado\npendiente = 2·(w − 3)\n\n# w < 3 → pendiente negativa → ir a la derecha",
-             formula="w ← w − η · pendiente", notes="Dibuja la parábola. En el fondo la pendiente es 0.")
-    figura(d, "La tasa de aprendizaje lo es todo", "Práctica · sección 2", "descenso.png",
+          "Sigmoide, error medible y descenso por gradiente", "Directo al notebook.")
+    arranque(d, "proyecto/P3_aprender_con_gradiente", "una neurona que dice «es un 5 con 80 % de seguridad» y aprende "
+             "bajando su error.", "el perceptrón con 3 vs 5 nunca se calma: no sabe cuánto se equivocó.",
+             "Recuerda en una frase los errores por época del perceptrón con 3 vs 5.")
+    paso(d, 1, "la sigmoide", "P3 · sección 1 · 10 min",
+         [("Ej. 1", "escribe sigmoide(z) con np.exp"), ("Mira", "la gráfica: compárala con el escalón")],
+         "OK: la sigmoide va de 0 a 1", "La fórmula está en el notebook.", notes="Que la escriban; la explicación viene ahora.")
+    capsula(d, 3, "De «sí/no» a «qué tan seguro»", [
+        "Un escalón suavizado: muy negativo → 0, muy positivo → 1, cero → 0.5.",
+        "Se lee como probabilidad: 0.8 = «80 % seguro de que es un 5».",
+        "Suave → si muevo un poco un peso, la salida cambia un poco: se puede medir hacia dónde mejorar."],
+        formula="σ(z) = 1 / (1 + e⁻ᶻ)", fig="sigmoide.png")
+    capsula(d, 3, "La montaña con niebla", [
+        "Queremos llegar al fondo del valle: el error mínimo.", "Solo sentimos la pendiente bajo los pies.",
+        "Paso cuesta abajo, volver a sentir, repetir.",
+        Runs([B("Pendiente = derivada: "), ("hacia dónde sube y qué tan empinado.", {})])],
+        derecha="E(w) = (w − 3)²       # error inventado\npendiente = 2·(w − 3)",
+        formula="w ← w − η · pendiente", notes="Dibuja la parábola. En el fondo la pendiente es 0. Luego directo al Paso 2.")
+    paso(d, 2, "bajar la montaña con un número", "P3 · sección 2 · 15 min",
+         [("Ej. 2", "completa el paso: w = w − eta · pendiente"), ("Prueba", "eta = 0.01, 0.1, 0.5, 0.9, 1.05")],
+         "eta = 0.1  → termina en w = 3.08\neta = 0.5  → termina en w = 3.00\neta = 1.05 → se aleja (diverge)\n"
+         "OK: con eta = 0.1 llega cerca de w = 3",
+         "¿Qué pasa con eta muy chico? ¿Y muy grande?")
+    figura(d, "La tasa de aprendizaje lo es todo", "Puesta en común · 5 min", "descenso.png",
            [Runs([B("0.1: "), ("baja suave.   ", {}), B("0.5: "), ("llega de un salto.   ", {}), B("1.05: "),
-                  ("rebota y se aleja (diverge).", {})]),
-            ("Prueba 0.01 y 0.9. ¿Qué pasa?", {"bold": True, "color": ORANGE})],
-           "Ejercicio 2. La tasa de aprendizaje es la decisión más importante al entrenar.", h=3.0)
+                  ("rebota y se aleja.", {})]),
+            ("Elegir eta es la decisión más importante al entrenar.", {"bold": True, "color": ORANGE})],
+           "Que cuenten qué vieron con cada eta.", h=3.0)
     descanso(d, "la neurona que aprende con gradiente")
-    concepto(d, "La pendiente de la neurona", "Error medible",
-             [Runs([B("Entropía cruzada: "), ("castiga estar muy seguro y equivocado.", {})]),
-              "Un solo número que queremos bajar.",
-              Runs([B("Léanla: "), ("(lo que dijo − lo correcto) × entrada.", {})]),
-              "¡Casi Rosenblatt! Pero p − y dice cuánto se equivocó."],
-             "p = sigmoide(X @ w + b)\ngrad_w = X.T @ (p - y) / len(X)\ngrad_b = np.mean(p - y)\nw, b = w - eta*grad_w, b - eta*grad_b",
-             formula="grad_w = Xᵀ(p − y) / n",
-             notes="Para curiosos: la derivada de la sigmoide se cancela con la del logaritmo. Se ve en la Clase 5.")
-    practica(d, "P3 · entrenar 3 vs 5", "Ejercicio 3 · 30 min",
-             [("Ej. 3", "predecir, calcular pendientes, dar el paso"), ("Mira", "la curva de aprendizaje")],
-             "# La curva baja suave, sin saltos\nPrecisión 3 vs 5: 96.1%",
-             "¿Por qué baja rápido al principio y lento al final? Prueba eta = 5.",
-             notes="Errores típicos: X @ (p - y) sin .T; no dividir por len(X).")
-    concepto(d, "Ahora sabe cuándo duda", "Sección 4",
-             ["Las imágenes con probabilidad cerca de 50 %…", "…también harían dudar a una persona.",
-              "La red sabe cuándo no sabe: una ventaja enorme."],
-             "dudas = np.argsort(np.abs(p_test - 0.5))[:10]\nmostrar(Xt[dudas], ...)",
-             notes="Muestra las imágenes dudosas del resuelto.")
-    cierre(d, ["Sigmoide → probabilidades.", "Error medible + descenso por gradiente → aprender poco a poco.",
-               "La curva de aprendizaje se mira siempre."],
-           "Próxima clase: 10 neuronas, una por dígito… y van a dibujar sus números.",
-           "terminar P3; probar 4 vs 9 y 1 vs 7: ¿cuál es el más difícil?", "refuerzo: notebooks 1_04 y 1_05 (opcional).",
-           "Pregunta de salida: ¿qué pasa si eta es demasiado grande?")
+    capsula(d, 4, "La pendiente de la neurona", [
+        Runs([B("Error (entropía cruzada): "), ("castiga estar muy seguro y equivocado.", {})]),
+        Runs([B("Léanla: "), ("(lo que dijo − lo correcto) × entrada.", {})]),
+        "¡Casi Rosenblatt! Pero p − y dice cuánto se equivocó."],
+        derecha="p = sigmoide(X @ w + b)\ngrad_w = X.T @ (p - y) / len(X)\ngrad_b = np.mean(p - y)",
+        formula="grad_w = Xᵀ(p − y) / n", notes="Para curiosos: la derivada de la sigmoide se cancela con la del logaritmo.")
+    paso(d, 3, "entrenar 3 vs 5", "P3 · Ejercicio 3 · 25 min",
+         [("Ej. 3", "predecir, calcular pendientes, dar el paso"), ("Mira", "la curva de aprendizaje")],
+         "# la curva baja suave, sin saltos\nPrecisión 3 vs 5: 96.1%\nOK: el error baja y la neurona acierta más del 90 %",
+         "¿Por qué baja rápido al principio y lento al final? Prueba eta = 5.",
+         notes="Errores típicos: X @ (p - y) sin .T; no dividir por len(X).")
+    paso(d, 4, "¿cuándo duda?", "P3 · sección 4 · 10 min",
+         [("Ejecuta", "las 10 imágenes donde la neurona está menos segura"), ("Piensa", "¿tú también dudarías?")],
+         "dudas = np.argsort(np.abs(p_test - 0.5))[:10]\nmostrar(Xt[dudas], ...)",
+         "La red sabe cuándo no sabe: una ventaja enorme.")
+    final(d, 3, ["Sigmoide → probabilidades.", "Error medible + descenso por gradiente → aprender poco a poco.",
+                 "La curva de aprendizaje se mira siempre."],
+          "Próxima clase: 10 neuronas, una por dígito… y van a dibujar sus números.",
+          "terminar P3; probar 4 vs 9 y 1 vs 7: ¿cuál es el más difícil?", "refuerzo: notebooks 1_04 y 1_05 (opcional).",
+          "Pregunta de salida: ¿qué pasa si eta es demasiado grande?")
     return d
 
 
@@ -811,39 +812,37 @@ def clase3():
 def clase4():
     d = Deck("Introducción a las Redes Neuronales  ·  Clase 4")
     cover(d, "CLASE 4  ·  DIEZ NEURONAS", "Del 0 al 9", "¡y a dibujar!",
-          "One-hot, softmax, mini-lotes y tu primera red que lee tus números", "Hoy cada alumno dibuja sus números.")
-    problema(d, "El problema", "Una neurona responde sí o no.\n¿Cómo reconozco 10 dígitos?",
-             ["10 neuronas, una por dígito, mirando la misma imagen.", "Gana la más convencida."],
-             "Deja que lo deduzcan antes de mostrar la respuesta.")
-    mapa(d, 4)
-    agenda(d, [["0:00", "Repaso y problema"], ["0:10", "One-hot y softmax"], ["0:35", "La tabla de pesos"],
-               ["0:45", "Mini-lotes: entrenar"], ["1:10", "Descanso"], ["1:20", "¿Qué mira cada neurona? Confusión"],
-               ["1:40", "¡A dibujar!"], ["2:10", "Puesta en común y cierre"]], highlight=[7])
-    concepto(d, "One-hot y softmax", "Ejercicios 1 y 2",
-             [Runs([B("One-hot: "), ("3 → [0,0,0,1,0,0,0,0,0,0]  =  np.eye(10)[y]", {})]),
-              Runs([B("Softmax: "), ("10 puntajes → 10 probabilidades que suman 1.", {})]),
-              "La exponencial hace todo positivo y exagera al ganador.",
-              "Restar el máximo antes no cambia nada y evita números gigantes."],
-             "E = np.exp(Z - Z.max(axis=1, keepdims=True))\nP = E / E.sum(axis=1, keepdims=True)\n\n"
-             "# [2, 1, 0.1] → [0.66, 0.24, 0.10]",
-             formula="pₖ = eᶻᵏ / Σ eᶻ", notes="Haz [2, 1, 0.1] en el pizarrón. Error típico: sum sin axis=1, keepdims=True.")
-    concepto(d, "La tabla de pesos y la misma pendiente", "Nada nuevo, solo más columnas",
-             [Runs([B("W: "), ("784 × 10, una columna por neurona.", {})]), "X @ W + b → 10 puntajes por imagen.",
-              "La pendiente es la de la Clase 3: error × entrada."],
-             "P = softmax(Xb @ W + b)\ngrad_W = Xb.T @ (P - Yb) / len(Xb)\ngrad_b = (P - Yb).mean(axis=0)",
-             formula="grad_W = Xᵀ(P − Y) / n", notes="Destaca que la fórmula es idéntica a la de la Clase 3.")
-    practica(d, "P4 · entrenar por mini-lotes", "Ejercicio 3 · 25 min",
-             [("Idea", "no hace falta preguntar a 60 000 para corregir el rumbo: con 128 alcanza"),
-              ("Ej. 3", "el paso dentro del ciclo de lotes")],
-             "época 1: error 0.35\n...\népoca 5: error 0.27\nPrecisión en los 10 dígitos: 92.2%",
-             "Una época ≈ 470 pasos. Mezclar en cada época.", notes="Recuerda: 82 % plantillas → 92 %.")
+          "One-hot, softmax, mini-lotes y tu primera red que lee tus números", "Directo al notebook.")
+    arranque(d, "proyecto/P4_diez_neuronas", "10 neuronas, una por dígito… y al final dibujas tus números.",
+             "hasta ahora solo respondíamos sí o no (0 o 1, 3 o 5).", "Pregunta rápida: ¿cuántas neuronas para 10 dígitos?")
+    paso(d, 1, "one-hot y softmax", "P4 · Ejercicios 1 y 2 · 20 min",
+         [("Ej. 1", "one_hot(y) con np.eye(10)"), ("Ej. 2", "softmax: 10 puntajes → 10 probabilidades")],
+         "[[0. 0. 0. 0. 0. 1. 0. 0. 0. 0.] ...\n[[0.66 0.24 0.1 ]]\nOK: one_hot(3) tiene un 1 en la casilla 3\n"
+         "OK: cada fila suma 1",
+         "Error típico: sum sin axis=1, keepdims=True.")
+    capsula(d, 3, "Lo que acabas de programar", [
+        Runs([B("One-hot: "), ("la respuesta en 10 casillas: 3 → [0,0,0,1,0,…].", {})]),
+        Runs([B("Softmax: "), ("la exponencial hace todo positivo y exagera al ganador.", {})]),
+        "Restar el máximo antes no cambia nada y evita números gigantes."],
+        derecha="E = np.exp(Z - Z.max(axis=1, keepdims=True))\nP = E / E.sum(axis=1, keepdims=True)\n\n# [2, 1, 0.1] → [0.66, 0.24, 0.10]",
+        formula="pₖ = eᶻᵏ / Σ eᶻ", notes="Haz [2, 1, 0.1] en el pizarrón.")
+    capsula(d, 2, "La tabla de pesos y la misma pendiente", [
+        Runs([B("W: "), ("784 × 10, una columna por neurona.", {})]), "X @ W + b → 10 puntajes por imagen.",
+        "La pendiente es la de la Clase 3: error × entrada.",
+        Runs([B("Mini-lotes: "), ("para corregir el rumbo no hace falta preguntar a 60 000; con 128 alcanza.", {})])],
+        derecha="P = softmax(Xb @ W + b)\ngrad_W = Xb.T @ (P - Yb) / len(Xb)\ngrad_b = (P - Yb).mean(axis=0)",
+        formula="grad_W = Xᵀ(P − Y) / n", notes="Destaca que la fórmula es idéntica a la de la Clase 3.")
+    paso(d, 2, "entrenar por mini-lotes", "P4 · Ejercicio 3 · 20 min",
+         [("Ej. 3", "el paso dentro del ciclo de lotes"), ("Mira", "el error por época y la precisión")],
+         "época 1: error 0.35\n...\népoca 5: error 0.27\nPrecisión en los 10 dígitos: 92.2%",
+         "De 82 % (plantillas) a 92 %.")
     descanso(d, "qué mira cada neurona… y a dibujar")
-    figura(d, "¿Qué mira cada neurona?", "Pesos como imágenes", "pesos10.png",
-           ["Fantasmas de cada dígito: compáralos con las plantillas de la Clase 1.",
-            ("Ahora hay azul: lo que resta.", {"bold": True, "color": ORANGE})],
-           "Luego la matriz de confusión: que encuentren las confusiones más grandes (4↔9, 3↔5, 7↔9).", h=1.6)
+    figura(d, "Paso 3 · ¿Qué mira cada neurona?", "P4 · secciones 5 y 6 · 15 min", "pesos10.png",
+           ["Fantasmas de cada dígito: compáralos con las plantillas de la Clase 1. Ahora hay azul: lo que resta.",
+            ("Después: la matriz de confusión. ¿Con qué se confunde más?", {"bold": True, "color": ORANGE})],
+           "Que encuentren las confusiones más grandes (4↔9, 3↔5, 7↔9).", h=1.6)
     s = d.slide(True, notes="Terminal en la carpeta proyecto/. En Colab: Paint + mi_numero.png + última celda.")
-    title(s, "¡A dibujar!")
+    title(s, "Paso 4 · ¡A dibujar!", "P4 · sección 7 · 30 min")
     code(s, LM, 1.9, 6.2, 2.4, "# en el notebook:\nguardar_pesos(W1=W, b1=b)\n\n# en una terminal, carpeta proyecto/:\npython dibujar.py", 18)
     text(s, 7.3, 1.9, 5.28, 3.6, ["Clic izquierdo: dibujar.", "Clic derecho: borrar.",
                                   ("Mini-competencia: ¿quién engaña a la red con un número que una persona leería?",
@@ -852,11 +851,11 @@ def clase4():
          19, SOFT, space=12)
     resultado(d, "92 %", "y ya lee tus dibujos", "Pero cada neurona separa con una línea recta: entrenar más no ayuda.",
               "Pide que anoten qué dibujos la engañan: los usaremos en la Clase 5.")
-    cierre(d, ["10 neuronas + softmax = clasificador de 10 clases.", "Mini-lotes = entrenar rápido.",
-               "Límite: modelo lineal, se queda en ~92 %."],
-           "Próxima clase: una capa oculta → de 92 % a 97 %.",
-           "terminar P4 y traer 3 dibujos que engañan a la red.", "refuerzo: notebooks 1_06, 1_07 y 1_08 (opcional).",
-           "¿Con qué dibujos falla más?")
+    final(d, 4, ["10 neuronas + softmax = clasificador de 10 clases.", "Mini-lotes = entrenar rápido.",
+                 "Límite: modelo lineal, se queda en ~92 %."],
+          "Próxima clase: una capa oculta → de 92 % a 97 %.",
+          "terminar P4 y traer 3 dibujos que engañan a la red.", "refuerzo: notebooks 1_06, 1_07 y 1_08 (opcional).",
+          "¿Con qué dibujos falla más?")
     return d
 
 
@@ -864,32 +863,27 @@ def clase4():
 def clase5():
     d = Deck("Introducción a las Redes Neuronales  ·  Clase 5")
     cover(d, "CLASE 5  ·  RED MULTICAPA", "La red de verdad", "capa oculta y retropropagación",
-          "De 92 % a 97 %", "Empieza mostrando los dibujos que engañaron a la red de la Clase 4.")
-    problema(d, "El problema", "Entrenar más no ayuda:\nse queda en 92 %.",
-             ["Cada neurona solo puede trazar una línea recta.", "El modelo es demasiado simple."],
-             "Pregunta: si entreno más épocas, ¿mejora?")
-    mapa(d, 5)
-    agenda(d, [["0:00", "Repaso: el techo del 92 %"], ["0:10", "La idea de la capa oculta"],
-               ["0:25", "ReLU y pase hacia adelante"], ["0:50", "Descanso"], ["1:00", "Retropropagación"],
-               ["1:25", "Práctica: retropropagación y verificación"], ["1:50", "Entrenar y dibujar"],
-               ["2:15", "Experimentos y cierre"]], highlight=[5])
-    s = d.slide(notes="Analogía de la fábrica: 128 inspectores detectan rasgos; el jefe decide con sus informes. Nadie les dice qué buscar.")
-    title(s, "La capa oculta: inspectores de rasgos", "La idea")
+          "De 92 % a 97 %", "Directo al notebook.")
+    arranque(d, "proyecto/P5_red_multicapa", "una red con capa oculta que pasa de 92 % a 97 %.",
+             "el modelo de la Clase 4 se estanca en 92 %: cada neurona solo traza una línea recta.",
+             "Que muestren un dibujo que engañó a la red de la Clase 4 (1 min) y a abrir el notebook.")
+    paso(d, 1, "ReLU y la red de dos capas", "P5 · secciones 1 a 3 · 20 min",
+         [("Ej. 1", "relu(Z) = max(0, Z)"), ("Mira", "los tamaños de W1, b1, W2, b2"), ("Ej. 2", "adelante(red, X): las 3 líneas")],
+         "W1 (784, 128)\nb1 (128,)\nW2 (128, 10)\nb2 (10,)\n[[0.14 0.14 0.09 ...]]   # sin entrenar: ~0.1\n"
+         "OK: adelante() da 10 probabilidades por imagen",
+         "Regla de tamaños: los números de adentro deben coincidir.")
+    s = d.slide(notes="Explica lo que acaban de armar. Analogía de la fábrica: 128 inspectores detectan rasgos; el jefe decide con "
+                      "sus informes. Sin ReLU, dos capas = una sola.")
+    title(s, "Lo que armaste: inspectores de rasgos", "Pausa · teoría en 4 min")
     red(s, 1.4, 2.0, 5.0, 3.4, [5, 4, 3], ["imagen (784)", "oculta (128)", "salida (10)"])
     text(s, 7.6, 2.0, 4.98, 4.3, bullets(["Cada neurona oculta aprende un rasgo: un círculo arriba, una raya…",
                                           "La salida decide con esos rasgos, no con píxeles sueltos.",
+                                          Runs([B("Sin ReLU: "), ("dos capas = una sola (otra vez lineal).", {})]),
                                           Runs([B("Nadie les dice qué buscar: "), ("lo aprenden.", {})])]), 19, GRAY, space=14)
-    concepto(d, "ReLU y pase hacia adelante", "Ejercicios 1 y 2",
-             [Runs([B("ReLU = max(0, z): "), ("deja pasar lo positivo, apaga lo negativo.", {})]),
-              "Sin activación, dos capas = una sola (volvemos a lo lineal).",
-              "Tamaños: (n×784)·(784×128) → (n×128)·(128×10) → (n×10).",
-              "Pesos iniciales al azar: si todos son 0, todos aprenden lo mismo."],
-             "Z1 = X @ W1 + b1\nA1 = relu(Z1)\nP  = softmax(A1 @ W2 + b2)",
-             formula="784 → 128 → 10", notes="Regla de tamaños: los números de adentro deben coincidir.")
     descanso(d, "retropropagación")
     s = d.slide(notes="El corazón del curso. Primero la idea sin fórmulas: la culpa de cada inspector depende de cuánto pesaba su informe "
-                      "y de si estaba encendido. Luego los 5 pasos, marcando la red hacia atrás.")
-    title(s, "Retropropagación: repartir la culpa hacia atrás", "El corazón del curso")
+                      "y de si estaba encendido. Luego los 5 pasos, marcando la red hacia atrás. Y directo al Paso 2.")
+    title(s, "Retropropagación: repartir la culpa hacia atrás", "Pausa · teoría en 8 min")
     table(s, LM, 1.85, CW, [["Paso", "Código", "En palabras"],
                             ["1", "dZ2 = (P - Y) / n", "error de la salida (como en la Clase 4)"],
                             ["2", "dW2 = A1.T @ dZ2", "pendiente capa 2: error × entrada"],
@@ -898,22 +892,24 @@ def clase5():
                             ["5", "dW1 = X.T @ dZ1", "pendiente capa 1: ¡la misma receta!"]],
           18, [1.0, 4.6, 6.23], 0.58, highlight=[3])
     text(s, LM, 5.55, CW, 0.8, "No hay matemática nueva: la regla de la cadena, capa por capa.", 21, ORANGE, True)
-    practica(d, "P5 · retropropagación", "Ejercicio 3 · 25 min",
-             [("Ej. 3", "los 5 pasos, una línea cada uno"), ("Verifica", "mover un peso 0.00001 y medir")],
-             "W1  tu función: -0.001241\n    a mano:     -0.001241\nOK: la pendiente de W1 es correcta\n"
-             "W2  tu función:  0.000960\n    a mano:      0.000960\nOK: la pendiente de W2 es correcta",
-             "Así depuran redes los profesionales.",
-             notes="Errores típicos: A1 @ dZ2 sin .T; dZ2 @ W2 sin .T; dZ1 = dA1 * Z1 (debe ser la máscara Z1 > 0).")
-    practica(d, "P5 · entrenar y dibujar", "Secciones 5 y 6 · 25 min",
-             [("Entrenar", "el mismo ciclo de la Clase 4"), ("Dibujar", "guardar_pesos(**red) → python dibujar.py")],
-             "época 1: precisión 93.99%\népoca 3: precisión 96.38%\népoca 5: precisión 97.20%",
-             "Prueba los dibujos que engañaban a la red de la Clase 4.")
-    resultado(d, "97 %", "con una capa oculta", "92 % → 97 %: de 8 errores cada 100 a 3.", "Experimentos en grupos (sección 7).")
-    cierre(d, ["Capa oculta = rasgos aprendidos.", "Retropropagación = repartir el error hacia atrás, misma receta.",
-               "Verificar pendientes numéricamente."],
-           "Próxima clase: entrenar más rápido (optimizadores).",
-           "terminar P5 + un experimento (ocultas, eta o sigmoide).", "refuerzo: notebooks 1_09, 1_10 y 1_11 con XOR (opcional).",
-           "Pregunta: ¿por qué hace falta la ReLU?")
+    paso(d, 2, "retropropagación", "P5 · Ejercicio 3 · 25 min",
+         [("Ej. 3", "los 5 pasos, una línea cada uno"), ("Verifica", "mover un peso 0.00001 y medir")],
+         "W1  tu función: -0.001241\n    a mano:     -0.001241\nOK: la pendiente de W1 es correcta\n"
+         "W2  tu función:  0.000960\n    a mano:      0.000960\nOK: la pendiente de W2 es correcta",
+         "Así depuran redes los profesionales.",
+         notes="Errores típicos: A1 @ dZ2 sin .T; dZ2 @ W2 sin .T; dZ1 = dA1 * Z1 (debe ser la máscara Z1 > 0).")
+    paso(d, 3, "entrenar y dibujar", "P5 · secciones 5 y 6 · 25 min",
+         [("Entrenar", "el mismo ciclo de la Clase 4"), ("Dibujar", "guardar_pesos(**red) → python dibujar.py")],
+         "época 1: precisión en el examen 93.99%\népoca 3: precisión en el examen 96.38%\n"
+         "época 5: precisión en el examen 97.20%\nOK: la red multicapa supera el 96 %",
+         "Prueba los dibujos que engañaban a la red de la Clase 4.")
+    resultado(d, "97 %", "con una capa oculta", "92 % → 97 %: de 8 errores cada 100 a 3.",
+              "Si sobra tiempo: experimentos de la sección 7 en grupos.")
+    final(d, 5, ["Capa oculta = rasgos aprendidos.", "Retropropagación = repartir el error hacia atrás, misma receta.",
+                 "Verificar pendientes numéricamente."],
+          "Próxima clase: entrenar más rápido (optimizadores).",
+          "terminar P5 + un experimento (ocultas, eta o sigmoide).", "refuerzo: notebooks 1_09, 1_10 y 1_11 con XOR (opcional).",
+          "Pregunta: ¿por qué hace falta la ReLU?")
     return d
 
 
@@ -921,43 +917,45 @@ def clase5():
 def clase6():
     d = Deck("Introducción a las Redes Neuronales  ·  Clase 6")
     cover(d, "CLASE 6  ·  OPTIMIZADORES", "Entrenar más rápido", "y mejor",
-          "Momentum y decaimiento de la tasa, en una carrera", "La red no cambia hoy: solo cómo bajamos la montaña.")
-    problema(d, "El problema", "eta chico: una eternidad.\neta grande: rebota.",
-             ["En un valle alargado, la pendiente apunta a las paredes → zigzag.", "Así son los errores de las redes reales."],
-             "Dibuja un valle alargado (canaleta) y el zigzag.")
-    mapa(d, 6)
-    agenda(d, [["0:00", "Repaso y problema"], ["0:10", "Paso 0: tus funciones de la Clase 5"], ["0:20", "La pista y SGD"],
-               ["0:30", "Momentum"], ["0:55", "Descanso"], ["1:05", "Decaimiento de la tasa"], ["1:20", "¡La carrera!"],
-               ["1:50", "La red definitiva + dibujar"], ["2:05", "Cierre: Adam"]], highlight=[7])
-    concepto(d, "Momentum: la pelota que rueda", "Ejercicio 1",
-             ["Si la pendiente apunta siempre al mismo lado → acelera.", "Si cambia de lado (zigzag) → se cancela, se suaviza.",
-              Runs([B("β = 0.9: "), ("recuerdo el 90 % de mi velocidad anterior.", {})]),
-              "Pendiente constante: hasta 10 veces más rápido que SGD."],
-             "v = memoria.get(k, 0)\nv = beta * v - eta * g[k]\nmemoria[k] = v\nred[k] += v",
-             formula="v ← βv − η·pendiente\npeso ← peso + v", notes="Velocidad con pendiente 1 y eta 0.01: 0.01, 0.019, 0.027… → 0.1.")
-    descanso(d, "decaimiento y la carrera")
-    concepto(d, "Decaimiento de la tasa", "Ejercicio 2",
-             ["Como estacionar: lejos, rápido; cerca, despacio.", "Pasos grandes al principio, chicos al final.",
-              "eta0 = 0.3, k = 1 → 0.3, 0.15, 0.1, 0.075…"],
-             "eta = eta0 / (1 + k * epoca)", formula="η = η₀ / (1 + k·época)")
-    s = d.slide(notes="Resultados reales con 20 000 imágenes y 5 épocas. Pregunta: ¿por qué momentum le gana a SGD con el mismo eta? "
-                      "¿No sería igual SGD con eta grande? Que prueben 0.5 y 2.0.")
-    title(s, "¡La carrera!", "Misma red, distinto optimizador")
+          "Momentum y decaimiento de la tasa, en una carrera", "Directo al notebook.")
+    arranque(d, "proyecto/P6_entrenar_mejor", "una carrera entre formas de bajar la montaña, y la red definitiva (97.6 %).",
+             "con eta chico tarda una eternidad; con eta grande, rebota.",
+             "Recuerda que necesitan su P5 funcionando: pegan sus funciones en el Paso 1.")
+    paso(d, 1, "traer tu red y correr SGD", "P6 · Paso 0 y secciones 1–2 · 15 min",
+         [("Pega", "relu, softmax, crear_red, adelante y gradientes de tu P5"),
+          ("Ejecuta", "la pista de carreras y el corredor SGD")],
+         "OK: tus funciones de la Clase 5 están listas",
+         "La red no cambia hoy: solo cómo bajamos la montaña.")
+    capsula(d, 4, "Momentum: la pelota que rueda", [
+        "Si la pendiente apunta siempre al mismo lado → acelera.", "Si cambia de lado (zigzag) → se cancela, se suaviza.",
+        Runs([B("β = 0.9: "), ("recuerdo el 90 % de mi velocidad anterior.", {})])],
+        derecha="v = memoria.get(k, 0)\nv = beta * v - eta * g[k]\nmemoria[k] = v\nred[k] += v",
+        formula="v ← βv − η·pendiente\npeso ← peso + v",
+        notes="Dibuja un valle alargado y el zigzag. Velocidad con pendiente 1 y eta 0.01: 0.01, 0.019, 0.027… → 0.1.")
+    capsula(d, 2, "Decaimiento de la tasa", [
+        "Como estacionar: lejos, rápido; cerca, despacio.", "eta0 = 0.3, k = 1 → 0.3, 0.15, 0.1, 0.075…"],
+        derecha="eta = eta0 / (1 + k * epoca)", formula="η = η₀ / (1 + k·época)")
+    paso(d, 2, "programar los dos corredores", "P6 · Ejercicios 1 y 2 · 20 min",
+         [("Ej. 1", "momentum: velocidad acumulada"), ("Ej. 2", "decaimiento: eta que se achica")],
+         "OK: fórmula revisada", "Error típico en momentum: sumar −v o guardar v antes de calcularla.")
+    descanso(d, "¡la carrera!")
+    s = d.slide(notes="Resultados reales con 20 000 imágenes y 5 épocas. Pregunta: ¿por qué momentum le gana a SGD con el mismo eta?")
+    title(s, "Paso 3 · ¡La carrera!", "P6 · sección 5 · 15 min")
     table(s, LM, 1.95, CW, [["Corredor", "Error final", "Precisión"], ["SGD (eta 0.01)", "0.38", "90 %"],
                             ["Momentum (eta 0.01)", "0.15", "95 %"], ["Decaimiento (eta0 0.3)", "0.11", "96 %"]],
           22, [6.83, 2.5, 2.5], 0.75, highlight=[2], align=[None, PP_ALIGN.CENTER, PP_ALIGN.CENTER])
     text(s, LM, 5.2, CW, 1.0, "Momentum da velocidad sin volverse inestable.", 22, ORANGE, True)
-    practica(d, "P6 · experimentos y red definitiva", "Secciones 6 y 7 · 45 min",
-             [("Prueba", "SGD con eta 0.5 y 2.0; momentum con beta 0.99"),
-              ("Definitiva", "momentum, 60 000 imágenes, 5 épocas")],
-             "Precisión de la red definitiva: 97.64%\nOK: la red definitiva supera el 97 %\npython dibujar.py",
-             "Cada grupo cuenta su experimento en 1 minuto.")
-    cierre(d, ["Optimizador = cómo bajar la montaña; red y pendientes no cambian.",
-               "Momentum = velocidad acumulada · decaimiento = pasos que se achican.",
-               "Adam (el más usado) combina las dos ideas."],
-           "Próxima clase: mueve tu dibujo 3 píxeles… y la red se rompe.",
-           "terminar P6. Desafío: momentum + decaimiento juntos.", "refuerzo: notebooks 21, 22 y 23 (curvas en 2D, opcional).",
-           "En PyTorch: torch.optim.Adam(...) es una línea.")
+    paso(d, 4, "experimentos y red definitiva", "P6 · secciones 6 y 7 · 35 min",
+         [("Prueba", "SGD con eta 0.5 y 2.0; momentum con beta 0.99"),
+          ("Definitiva", "momentum, 60 000 imágenes, 5 épocas → python dibujar.py")],
+         "Precisión de la red definitiva: 97.64%\nOK: la red definitiva supera el 97 %",
+         "Cada grupo cuenta su experimento en 1 minuto.")
+    final(d, 6, ["Optimizador = cómo bajar la montaña; red y pendientes no cambian.",
+                 "Momentum = velocidad acumulada · decaimiento = pasos que se achican.",
+                 "Adam (el más usado) combina las dos ideas."],
+          "Próxima clase: mueve tu dibujo 3 píxeles… y la red se rompe.",
+          "terminar P6. Desafío: momentum + decaimiento juntos.", "refuerzo: notebooks 21, 22 y 23 (curvas en 2D, opcional).",
+          "En PyTorch: torch.optim.Adam(...) es una línea.")
     return d
 
 
@@ -965,40 +963,46 @@ def clase6():
 def clase7():
     d = Deck("Introducción a las Redes Neuronales  ·  Clase 7")
     cover(d, "CLASE 7  ·  CONVOLUCIÓN", "Ver formas,", "no posiciones",
-          "Filtros convolucionales, pooling, aumento de datos… y el cierre del proyecto",
-          "Antes de ejecutar la sección 1, que apuesten cuánto bajará la precisión.")
-    figura(d, "Mueve el dibujo 3 píxeles…", "El experimento", "movidas.png",
+          "Filtros convolucionales, pooling, aumento de datos… y el cierre del proyecto", "Directo al notebook.")
+    arranque(d, "proyecto/P7_convolucion", "una red convolucional que reconoce el número aunque lo muevas.",
+             "si mueves el dibujo 3 píxeles, tu red se derrumba. Lo vas a comprobar en 5 minutos.",
+             "Necesitan su pesos.npz de la Clase 5 o 6. Antes de ejecutar la sección 1, que apuesten cuánto bajará.")
+    figura(d, "Paso 1 · Mueve el dibujo 3 píxeles…", "P7 · sección 1 · 10 min", "movidas.png",
            [Runs([("Tu red densa: ", {}), C("97.6 %", BLUE), (" con las originales → ", {}), C("17 %", ORANGE),
                   (" con las movidas.", {})]),
             ("Aprendió dónde hay tinta, no qué forma tiene el número.", {"bold": True, "color": ORANGE})],
            "Cada píxel tiene su propio peso: la red no sabe que los vecinos están relacionados.", h=2.9)
-    mapa(d, 7)
-    agenda(d, [["0:00", "El experimento que rompe la red"], ["0:15", "La convolución"],
-               ["0:40", "Versión rápida y red convolucional"], ["1:05", "Descanso"], ["1:15", "Entrenar"],
-               ["1:30", "Aumento de datos"], ["1:55", "Los filtros aprendidos"], ["2:05", "Cierre del curso"]], highlight=[2])
-    concepto(d, "La convolución: una lupa que recorre la imagen", "Ejercicio 1",
-             ["Un filtro 3 × 3 busca una sola cosa (un borde, una curva).",
-              "En cada posición: multiplicar casilla por casilla y sumar.",
-              Runs([B("El mismo filtro en todas partes: "), ("lo detecta arriba o abajo.", {})]),
-              "9 pesos en vez de 784, y se aprenden."],
-             fig="filtros.png", formula="salida[i, j] = (img[i:i+3, j:j+3] * filtro).sum()", ancho=5.6,
-             notes="Ejemplo en el pizarrón con el filtro de bordes verticales: claro|oscuro da un número grande; zona pareja da 0.")
-    concepto(d, "Nuestra red convolucional", "Ejercicio 2",
-             [Runs([B("Recortes: "), ("todos los 3 × 3 como filas de 9 → un solo @.", {})]),
-              Runs([B("Max-pooling 2 × 2: "), ("el máximo de cada cuadrito; tolera movimientos chicos.", {})]),
-              "Retropropagación: solo el ganador del pooling recibe culpa; el filtro suma su pendiente de las 676 posiciones."],
-             "R = recortes(imgs)\nZ = R @ red['F'] + red['bf']\nA = relu(Z)\nM = max_pool(A)\nplano = M.reshape(n, -1)\nP = softmax(plano @ red['W'] + red['b'])",
-             formula="28² → 8 filtros → 26²×8\n→ pool → 13²×8 → 10",
-             notes="Mientras entrena (~1 min) explica los dos detalles nuevos de la retropropagación.")
-    descanso(d, "entrenar y el truco de los profesionales")
-    s = d.slide(notes="Pregunta: si quieres que no le importe la posición, ¿qué ejemplos le mostrarías? → ejemplos movidos. "
-                      "¿Qué aumento NO tiene sentido? Voltear horizontalmente: un 2 volteado ya no es un 2.")
-    title(s, "Aumento de datos: enseñarle ejemplos movidos", "Ejercicio 3")
+    paso(d, 2, "la convolución a mano", "P7 · Ejercicio 1 · 15 min",
+         [("Ej. 1", "recorte 3×3 por el filtro, todo sumado"), ("Mira", "bordes verticales, horizontales y desenfoque")],
+         "salida[i, j] = (img[i:i+3, j:j+3] * filtro).sum()\n\nOK: la convolución suma 9 productos",
+         "La fórmula está en el notebook.")
+    capsula(d, 4, "Lo que hiciste: una lupa que recorre la imagen", [
+        "El filtro 3 × 3 busca una sola cosa (un borde, una curva).",
+        Runs([B("El mismo filtro en todas partes: "), ("lo detecta arriba o abajo.", {})]),
+        "9 pesos en vez de 784.", Runs([B("La gran idea: "), ("la red aprende los 9 números del filtro.", {})])],
+        fig="filtros.png", formula="salida[i, j] = Σ recorte · filtro", ancho=5.6,
+        notes="Ejemplo en el pizarrón con el filtro de bordes verticales: claro|oscuro da un número grande; zona pareja da 0.")
+    capsula(d, 3, "Nuestra red convolucional", [
+        Runs([B("Recortes: "), ("todos los 3 × 3 como filas de 9 → un solo @.", {})]),
+        Runs([B("Max-pooling 2 × 2: "), ("el máximo de cada cuadrito; tolera movimientos chicos.", {})])],
+        derecha="R = recortes(imgs)\nZ = R @ red['F'] + red['bf']\nA = relu(Z)\nM = max_pool(A)\nplano = M.reshape(n, -1)\nP = softmax(plano @ red['W'] + red['b'])",
+        formula="28² → 8 filtros → 26²×8\n→ pool → 13²×8 → 10")
+    paso(d, 3, "armar y entrenar la red", "P7 · Ejercicio 2 y sección 5 · 20 min",
+         [("Ej. 2", "el pase hacia adelante (Z, A, P)"), ("Entrenar", "~1 minuto con 20 000 imágenes")],
+         "época 3: precisión en el examen 97.11%\nRed convolucional · originales: 97.1%   movidas: 23.2%",
+         "Mientras entrena: solo el ganador del pooling recibe culpa; el filtro suma su pendiente de las 676 posiciones.")
+    descanso(d, "el truco de los profesionales")
+    capsula(d, 2, "¿Y si le enseñamos ejemplos movidos?", [
+        "Mejoró un poco, pero no alcanza: la capa final todavía aprende posiciones.",
+        Runs([B("Aumento de datos: "), ("fabricar ejemplos nuevos moviendo los que ya hay.", {})]),
+        "¿Qué aumento NO sirve? Voltear: un 2 volteado ya no es un 2."],
+        derecha="dy, dx = rng.integers(-3, 4, size=2)\nsalida[i] = np.roll(img, (dy, dx), axis=(0, 1))")
+    s = d.slide(notes="Ejercicio 3 del notebook y comparación final.")
+    title(s, "Paso 4 · Aumento de datos", "P7 · Ejercicio 3 · 20 min")
     table(s, LM, 1.95, CW, [["Red", "Originales", "Movidas 3 px"], ["Densa (Clase 6)", "97.6 %", "17 %"],
                             ["Convolucional", "97 %", "23 %"], ["Convolucional + aumento de datos", "94 %", "81 %"]],
           21, [6.83, 2.5, 2.5], 0.72, highlight=[3], align=[None, PP_ALIGN.CENTER, PP_ALIGN.CENTER])
-    code(s, LM, 5.05, 7.5, 1.2, "dy, dx = rng.integers(-3, 4, size=2)\nsalida[i] = np.roll(img, (dy, dx), axis=(0, 1))", 15)
-    text(s, 8.5, 5.05, 4.08, 1.3, "No hacen falta datos nuevos: se fabrican.", 20, ORANGE, True)
+    text(s, LM, 5.1, CW, 1.0, "Perdió un poquito con las originales y ganó muchísimo con las movidas.", 21, ORANGE, True)
     s = d.slide(True, notes="Que identifiquen cada línea con lo que programaron.")
     title(s, "Lo mismo, en la vida real (PyTorch)", "Cierre del curso")
     code(s, LM, 1.9, 7.4, 4.2, "red = nn.Sequential(\n    nn.Conv2d(1, 8, 3), nn.ReLU(), nn.MaxPool2d(2),\n    nn.Flatten(), nn.Linear(1352, 10))\n"

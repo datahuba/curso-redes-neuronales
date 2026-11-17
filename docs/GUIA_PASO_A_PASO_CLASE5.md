@@ -3,7 +3,7 @@
 **Proyecto:** reconocedor de dígitos escritos a mano, en Python y NumPy.
 **Pieza de hoy:** una **capa oculta** de 128 neuronas con ReLU, entrenada con **retropropagación**: de 92 % a **~97 %**. Y la comparan dibujando.
 **Problema que resolvemos:** el modelo lineal de la Clase 4 se estanca en 92 %; cada neurona solo separa con una línea recta.
-**Duración:** ~2 h 30 min
+**Duración:** ~2 h de clase, más 15–30 min de margen para dudas
 **Material:** diapositivas `Clase5_Diapositivas` · notebook `proyecto/P5_red_multicapa.ipynb` · `proyecto/dibujar.py`
 **Lectura opcional:** [redes multicapa y retropropagación](https://irvingvasquez.github.io/libro_redes_neuronales/) en el libro del Dr. Irving Vasquez
 
@@ -17,16 +17,18 @@ Al terminar, cada alumno podrá:
 
 ## Agenda
 
-| Tiempo | Tema |
+> **Cómo se da esta clase:** directo a la práctica. Los alumnos abren el notebook en el minuto 2 y la teoría entra en **pausas cortas** (⏸) justo cuando el ejercicio la necesita. Regla de oro: **primero lo hacen, después lo explicas** (o, si hace falta para poder hacerlo, lo explicas en 3–5 minutos y vuelven al teclado). Las diapositivas siguen el mismo orden: «Paso» (oscuras) = trabajan; «Pausa · teoría» (claras) = explicas.
+
+| Tiempo | Qué pasa |
 |---|---|
-| 0:00 | Repaso: ¿qué dibujos engañaron a la red? El techo del 92 % (10 min) |
-| 0:10 | La idea de la capa oculta: rasgos (15 min) |
-| 0:25 | ReLU y pase hacia adelante, notebook `P5` secciones 1–3 (25 min) |
-| 0:50 | Descanso (10 min) |
-| 1:00 | Retropropagación en el pizarrón (25 min) |
-| 1:25 | Práctica: Ejercicio 3 y verificación numérica (25 min) |
-| 1:50 | Entrenar y dibujar (25 min) |
-| 2:15 | Experimentos y cierre (15 min) |
+| 0:00 | Abrir `P5`: un dibujo que engañó a la red y la misión (5 min) |
+| 0:05 | **Paso 1** · ReLU y la red de dos capas (25 min) |
+| 0:30 | ⏸ Pausa: lo que armaste, inspectores de rasgos (5 min) |
+| 0:35 | Descanso (10 min) |
+| 0:45 | ⏸ Pausa: retropropagación, la culpa hacia atrás (10 min) |
+| 0:55 | **Paso 2** · Retropropagación y verificación (30 min) |
+| 1:25 | **Paso 3** · Entrenar y dibujar (25 min) |
+| 1:50 | Resultado (97 %), experimentos si sobra tiempo, mapa y cierre (15 min) |
 
 ---
 
@@ -48,72 +50,51 @@ conda activate nni
 
 # PARTE B — La clase paso a paso
 
-## 1. Repaso y problema (10 min)
+## Arranque (5 min)
+Que un alumno muestre un dibujo que engañó a la red de la Clase 4. *Entrenar más no ayuda: se queda en 92 %. Hoy: una capa en medio que aprende rasgos.* Abren `proyecto/P5_red_multicapa.ipynb`.
 
-Que muestren los dibujos que engañaron a la red de la Clase 4. Pregunta: *si entreno más épocas, ¿mejora?* → No: se queda en ~92 %. **El modelo es demasiado simple**: cada neurona solo puede trazar una línea recta en el espacio de las imágenes.
+## Paso 1 · ReLU y la red de dos capas (25 min)
+**Haz:** Ejercicio 1 (`relu`), mirar los tamaños de `W1, b1, W2, b2`, Ejercicio 2 (`adelante`: tres líneas).
+**Deben ver:** `W1 (784, 128)` … y probabilidades ~0.1 (sin entrenar, la red no sabe nada); `✅ adelante() da 10 probabilidades por imagen`.
+**Si se traban con los tamaños:** en el pizarrón `(n×784)·(784×128) → (n×128)·(128×10) → (n×10)`: **los números de adentro deben coincidir**.
 
-## 2. La idea de la capa oculta (15 min)
+## ⏸ Pausa: lo que armaste (5 min)
+Analogía de la fábrica: en vez de que el jefe (salida) mire 784 píxeles, contrata **128 inspectores** (capa oculta); cada uno aprende a detectar un **rasgo** (un círculo arriba, una raya…) y el jefe decide con sus informes. Nadie les dice qué buscar: lo aprenden.
+- *Pregunta trampa:* ¿y sin ReLU? Dos multiplicaciones de matrices seguidas = una sola → otra vez lineal.
+- Pesos al azar: si todos empiezan en 0, los 128 inspectores aprenderían lo mismo.
 
-Analogía de una fábrica: en lugar de que el jefe (salida) mire los 784 píxeles, contrata **128 inspectores** (capa oculta). Cada uno aprende a detectar **un rasgo**: un círculo arriba, una raya vertical, una curva abierta a la derecha… El jefe decide **con esos informes**.
+## Descanso (10 min)
 
-```
-imagen (784) → capa oculta (128, ReLU) → salida (10, softmax)
-```
+## ⏸ Pausa: retropropagación (10 min)
+**El corazón del curso.** Primero sin fórmulas: *el error se mide en la salida; para corregir a un inspector hay que saber cuánta culpa tuvo. Más culpa si su informe pesaba mucho (`W2` grande) y ninguna si estaba apagado (ReLU en 0).*
 
-- Nadie les dice a los inspectores qué buscar: **lo aprenden** solos.
-- Clásico: el XOR no se puede separar con una recta y con una capa oculta sí (si quieres mostrarlo, `notebooks/1_09`–`1_11` lo resuelven).
-
-## 3. ReLU y pase hacia adelante (25 min)
-
-- **ReLU** = `max(0, z)`: deja pasar lo positivo, apaga lo negativo. Pregunta trampa: *¿y si no ponemos activación?* → Dos multiplicaciones de matrices seguidas equivalen a **una sola**: volvemos al modelo lineal.
-- **Tamaños**, en el pizarrón: `X (n×784) @ W1 (784×128) → (n×128) @ W2 (128×10) → (n×10)`. La regla: **las dimensiones de adentro deben coincidir**.
-- **Pesos al azar**: si todos empiezan en 0, los 128 inspectores aprenderían exactamente lo mismo. El `sqrt(2/784)` es una escala que funciona bien con ReLU («inicialización de He»): no hace falta memorizarlo.
-
-Ejercicios 1 y 2. Sin entrenar, todas las probabilidades salen ~0.1: la red no sabe nada.
-
-## 4. Retropropagación en el pizarrón (25 min)
-
-**Este es el corazón del curso.** Idea, sin fórmulas primero:
-
-> El error se mide en la salida. Para corregir a un inspector, hay que saber **cuánta culpa tuvo** en ese error. Su culpa es mayor si su informe pesaba mucho (`W2` grande) para la neurona que se equivocó. Y si estaba apagado (ReLU en 0), no tuvo culpa.
-
-Luego los 5 pasos (dibuja la red y ve marcando hacia atrás):
+Luego los 5 pasos (dibuja la red y márcala hacia atrás):
 
 | Paso | Código | En palabras |
 |---|---|---|
-| 1 | `dZ2 = (P - Y) / n` | Error de la salida (como en la Clase 4) |
-| 2 | `dW2 = A1.T @ dZ2` | Pendiente de la capa 2: error × entrada (la entrada son los informes `A1`) |
-| 3 | `dA1 = dZ2 @ W2.T` | Culpa de cada inspector: el error viaja hacia atrás por los mismos pesos |
-| 4 | `dZ1 = dA1 * (Z1 > 0)` | Si estaba apagado, culpa 0 |
-| 5 | `dW1 = X.T @ dZ1` | Pendiente de la capa 1: **la misma receta** |
+| 1 | `dZ2 = (P - Y) / n` | error de la salida (como en la Clase 4) |
+| 2 | `dW2 = A1.T @ dZ2` | pendiente capa 2: error × entrada |
+| 3 | `dA1 = dZ2 @ W2.T` | culpa de cada neurona oculta |
+| 4 | `dZ1 = dA1 * (Z1 > 0)` | si estaba apagada, culpa 0 |
+| 5 | `dW1 = X.T @ dZ1` | pendiente capa 1: ¡la misma receta! |
 
-Remata: no hay matemática nueva, es la **regla de la cadena** aplicada capa por capa. Por eso se puede apilar cuantas capas quieras.
+No hay matemática nueva: es la **regla de la cadena**, capa por capa. Y directo al teclado.
 
-## 5. Práctica: retropropagación y verificación (25 min)
+## Paso 2 · Retropropagación y verificación (30 min)
+**Haz:** Ejercicio 3 (una línea por paso) y ejecutar la verificación numérica.
+**Deben ver:** «tu función» y «a mano» iguales, `✅` en W1 y W2. Cuéntales que **así depuran redes los profesionales**.
+**Errores típicos:** `A1 @ dZ2` sin `.T`; `dZ2 @ W2` sin `.T`; `dZ1 = dA1 * Z1` (debe ser la máscara `Z1 > 0`). ❌ en W1 pero ✅ en W2 → el error está en los pasos 3–5.
 
-Ejercicio 3. La celda de verificación mueve **un** peso un poquito (`1e-5`) y mide cuánto cambia el error: es la definición de pendiente. Si coincide con lo que calculó su función → ✅.
+## Paso 3 · Entrenar y dibujar (25 min)
+**Haz:** sección 5 (el mismo ciclo de la Clase 4) y sección 6: `guardar_pesos(**red)` y `python dibujar.py`.
+**Deben ver:** 94 % → 97 % en 5 épocas (~40 s). Que prueben **los dibujos que engañaban** a la red de la Clase 4.
 
-Cuéntales que **así depuran redes los profesionales** cuando programan una capa nueva.
-
-**Errores típicos:** `A1 @ dZ2` en vez de `A1.T @ dZ2` (error de tamaños); `dZ2 @ W2` sin `.T`; `dZ1 = dA1 * Z1` (debe ser la **máscara** `Z1 > 0`).
-
-## 6. Entrenar y dibujar (25 min)
-
-- El ciclo de entrenamiento es **el mismo de la Clase 4**; solo cambió de dónde salen las pendientes. 5 épocas ≈ 40 s: 94 % → 97 %.
-- `guardar_pesos(**red)` y `python dibujar.py`. Que prueben **los mismos dibujos que engañaban** a la red de la Clase 4. ¿Cuántos acierta ahora?
-
-## 7. Experimentos y cierre (15 min)
-
-Cada grupo elige uno de la sección 7 y cuenta el resultado:
-- `ocultas=16` vs `ocultas=512`: ¿cuánto cambia la precisión y cuánto el tiempo?
-- `eta=1.0` (puede diverger) o `eta=0.001` (lentísimo).
-- Sigmoide en vez de ReLU (aprende más lento).
-
-**Lo que nos llevamos:** capa oculta = rasgos aprendidos; retropropagación = repartir el error hacia atrás con la misma receta; verificar pendientes numéricamente.
-
-**Tarea:** terminar `P5` y hacer un experimento más. Anotar precisión y tiempo.
-**Refuerzo opcional:** `notebooks/1_09_red_multicapa_ejercicio`, `1_10_retropropagacion_base`, `1_11_retropropagacion_completo` (XOR).
-**Próxima clase:** entrenar más rápido: optimizadores.
+## Resultado y cierre (15 min)
+- **97 %**: de 8 errores cada 100 a 3.
+- Si sobra tiempo, experimentos de la sección 7 (16 vs 512 neuronas ocultas, otro `eta`, sigmoide en vez de ReLU).
+- **Tarea:** terminar `P5` + un experimento; anotar precisión y tiempo.
+- **Refuerzo opcional:** `1_09`, `1_10`, `1_11` (XOR).
+- **Próxima clase:** entrenar más rápido: optimizadores.
 
 ---
 

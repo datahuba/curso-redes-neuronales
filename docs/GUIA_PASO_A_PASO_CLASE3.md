@@ -3,7 +3,7 @@
 **Proyecto:** reconocedor de dígitos escritos a mano, en Python y NumPy.
 **Pieza de hoy:** una neurona con **sigmoide** que da probabilidades y aprende con **descenso por gradiente**: distingue 3 de 5 con **~96 %**.
 **Problema que resolvemos:** el perceptrón solo dice 0/1 y su regla no sabe *cuánto* se equivocó; con 3 vs 5 nunca deja de saltar.
-**Duración:** ~2 h 30 min
+**Duración:** ~2 h de clase, más 15–30 min de margen para dudas
 **Material:** diapositivas `Clase3_Diapositivas` · notebook `proyecto/P3_aprender_con_gradiente.ipynb`
 **Lectura opcional:** [descenso por gradiente](https://irvingvasquez.github.io/libro_redes_neuronales/) en el libro del Dr. Irving Vasquez
 
@@ -16,17 +16,21 @@ Al terminar, cada alumno podrá:
 
 ## Agenda
 
-| Tiempo | Tema |
+> **Cómo se da esta clase:** directo a la práctica. Los alumnos abren el notebook en el minuto 2 y la teoría entra en **pausas cortas** (⏸) justo cuando el ejercicio la necesita. Regla de oro: **primero lo hacen, después lo explicas** (o, si hace falta para poder hacerlo, lo explicas en 3–5 minutos y vuelven al teclado). Las diapositivas siguen el mismo orden: «Paso» (oscuras) = trabajan; «Pausa · teoría» (claras) = explicas.
+
+| Tiempo | Qué pasa |
 |---|---|
-| 0:00 | Repaso: el perceptrón con 3 vs 5 no se calma (10 min) |
-| 0:10 | La sigmoide, notebook `P3` sección 1 (20 min) |
-| 0:30 | La montaña con niebla: pendiente y paso (20 min) |
-| 0:50 | Práctica: descenso con un número, sección 2 (20 min) |
-| 1:10 | Descanso (10 min) |
-| 1:20 | Error medible y pendiente de la neurona (15 min) |
-| 1:35 | Práctica: entrenar 3 vs 5, sección 3 (30 min) |
-| 2:05 | ¿Cuándo duda? Sección 4 y puesta en común (15 min) |
-| 2:20 | Cierre (10 min) |
+| 0:00 | Abrir `P3` y la misión de hoy (3 min) |
+| 0:03 | **Paso 1** · La sigmoide (10 min) |
+| 0:13 | ⏸ Pausa: de «sí/no» a «qué tan seguro» (3 min) |
+| 0:16 | ⏸ Pausa: la montaña con niebla (5 min) |
+| 0:21 | **Paso 2** · Bajar la montaña con un número (20 min) |
+| 0:41 | Puesta en común: la tasa de aprendizaje (5 min) |
+| 0:46 | Descanso (10 min) |
+| 0:56 | ⏸ Pausa: la pendiente de la neurona (5 min) |
+| 1:01 | **Paso 3** · Entrenar 3 vs 5 (30 min) |
+| 1:31 | **Paso 4** · ¿Cuándo duda? (15 min) |
+| 1:46 | Mapa y cierre (10 min) |
 
 ---
 
@@ -48,76 +52,50 @@ conda activate nni
 
 # PARTE B — La clase paso a paso
 
-## 1. Repaso y problema (10 min)
+## Arranque (3 min)
+Mientras abren `proyecto/P3_aprender_con_gradiente.ipynb`: *el perceptrón con 3 vs 5 nunca se calmaba porque no sabe cuánto se equivocó. Hoy: una neurona que dice «80 % seguro» y aprende bajando su error.*
 
-Muestra los errores por época del perceptrón con 3 vs 5 (sube, baja, sube…). Pregunta: *¿qué información le falta a la regla de Rosenblatt?* → Saber **cuánto** se equivocó. Un 5 dudoso y un 5 clarísimo mal clasificados reciben el mismo empujón.
+## Paso 1 · La sigmoide (10 min)
+**Haz:** Ejercicio 1 (la fórmula está en el notebook) y mirar la gráfica comparada con el escalón.
+**Deben ver:** `✅ la sigmoide va de 0 a 1`.
 
-Dos arreglos para hoy: **una salida suave** y **un error que se pueda medir y bajar**.
+## ⏸ Pausa: de «sí/no» a «qué tan seguro» (3 min)
+Sobre la gráfica que ya tienen: es un escalón suavizado. Muy negativo → 0, muy positivo → 1, cero → 0.5. Se lee como **probabilidad**. Y lo clave: como es suave, si muevo un poquito un peso, la salida cambia un poquito → **se puede medir hacia dónde mejorar**.
 
-## 2. La sigmoide (20 min)
+## ⏸ Pausa: la montaña con niebla (5 min)
+Estás en una montaña con niebla y quieres el fondo del valle (el **error mínimo**). Solo sientes la **pendiente** bajo los pies: da un paso cuesta abajo, vuelve a sentir, repite.
+- Regla: `w ← w − η · pendiente`. La pendiente es la **derivada**: dice hacia dónde sube y qué tan empinado.
+- Ejemplo en el pizarrón: $E(w) = (w-3)^2$, pendiente $2(w-3)$: negativa a la izquierda de 3, positiva a la derecha, cero en el fondo.
 
-$$\sigma(z) = \frac{1}{1 + e^{-z}}$$
+## Paso 2 · Bajar la montaña con un número (20 min)
+**Haz:** Ejercicio 2 (una línea) y probar `eta` = 0.01, 0.1, 0.5, 0.9, 1.05.
+**Deben ver:** con 0.1 baja suave hasta 3; con 0.5 llega de un salto; con 1.05 **rebota y se aleja**.
 
-- Es un escalón «suavizado». Muy negativo → 0, muy positivo → 1, cero → 0.5.
-- Ahora la salida se lee como **probabilidad**: 0.8 = «80 % seguro de que es un 5».
-- Lo importante: como es suave, si muevo un poquito un peso, la salida cambia un poquito. Eso permite **medir hacia dónde mejorar**.
+## Puesta en común (5 min)
+Que cuenten qué vio cada uno. Conclusión: **la tasa de aprendizaje es la decisión más importante al entrenar.**
 
-Ejercicio 1 del notebook: escribirla con `np.exp` y comparar la gráfica con el escalón.
+## Descanso (10 min)
 
-## 3. La montaña con niebla (20 min)
+## ⏸ Pausa: la pendiente de la neurona (5 min)
+- **Error (entropía cruzada):** castiga estar muy seguro y equivocado. Viene hecho; es *un número que queremos bajar*.
+- La pendiente: `grad_w = Xᵀ(p − y) / n`. Léanla en voz alta: **(lo que dijo − lo correcto) × entrada**. ¡Casi Rosenblatt! Pero `p − y` dice **cuánto** se equivocó.
+- *Para curiosos:* la derivada de la sigmoide se cancela con la del logaritmo; lo veremos con la retropropagación.
 
-Historia: estás en una montaña con niebla y quieres llegar al fondo del valle (el **error mínimo**). No ves nada, solo sientes la **pendiente** bajo tus pies.
+## Paso 3 · Entrenar 3 vs 5 (30 min)
+**Haz:** Ejercicio 3: predecir, calcular pendientes, dar el paso.
+**Deben ver:** la curva de error bajando **suave, sin saltos**, y **~96 %** de precisión. (El perceptrón sacaba ~95 %, pero sin calmarse nunca y sin decir qué tan seguro estaba.)
+**Preguntas:** *¿por qué baja rápido al principio y lento al final?* (cerca del fondo la pendiente es chica). *¿Qué pasa con `eta=5`?*
+**Errores típicos:** `X @ (p - y)` sin `.T` (error de tamaños); no dividir por `len(X)` (explota).
 
-- Si la pendiente es positiva (el suelo sube hacia la derecha), da un paso a la **izquierda**, y al revés.
-- Regla: `w ← w − η · pendiente`.
-- La **pendiente** es la **derivada**. Basta saber que dice hacia dónde sube la función y qué tan empinada está. Ejemplo: para $E(w) = (w-3)^2$, la pendiente es $2(w-3)$: negativa a la izquierda de 3, positiva a la derecha, cero en el fondo.
+## Paso 4 · ¿Cuándo duda? (15 min)
+**Haz:** sección 4: las imágenes con probabilidad cerca de 50 %.
+**Comenten:** casi siempre son 3 y 5 que **también harían dudar a una persona**. La red sabe cuándo no sabe.
 
-## 4. Práctica: descenso con un número (20 min)
-
-Sección 2 del notebook. Las tres gráficas son la clase:
-
-| `eta` | Qué pasa |
-|---|---|
-| 0.1 | Baja suave hasta 3 |
-| 0.5 | Llega en **un solo paso** (casualidad de esta función) |
-| 1.05 | **Rebota y se aleja**: diverge |
-
-Que prueben `0.01` (lentísimo) y `0.9` (zigzag pero llega). Conclusión: **la tasa de aprendizaje es la decisión más importante al entrenar**.
-
-## 5. Error medible y pendiente de la neurona (15 min)
-
-- **Error (entropía cruzada):** castiga mucho estar muy seguro y equivocado. Se da hecha; lo importante es que es **un solo número que queremos bajar**.
-- La pendiente para la neurona sigmoide con este error resulta muy simple:
-
-$$\text{grad}_w = \frac{1}{n} X^\top (p - y) \qquad \text{grad}_b = \text{promedio}(p - y)$$
-
-- Léanla en voz alta: **(lo que dijo − lo correcto) × entrada**. ¡Es casi la regla de Rosenblatt! La diferencia: `p − y` ya no es solo +1/−1, es **cuánto** se equivocó.
-- `X.T @ (p - y)` hace el cálculo para todas las imágenes a la vez y las suma.
-
-*Para alumnos curiosos:* la deducción usa la regla de la cadena; la derivada de la sigmoide se cancela con la del logaritmo. Si alguien pregunta, se ve en la Clase 5 con la retropropagación.
-
-## 6. Práctica: entrenar 3 vs 5 (30 min)
-
-Ejercicio 3. Resultado esperado: la curva de error baja suave (sin saltos) y la precisión llega a **~96 %**. El perceptrón sacaba ~95 %, pero sin calmarse nunca y sin decir qué tan seguro estaba: la mejora de hoy es sobre todo **estabilidad y probabilidades**, que es lo que permitirá apilar capas.
-
-Preguntas para la clase:
-- *¿Por qué la curva baja rápido al principio y luego despacio?* Cerca del fondo la pendiente es chica → pasos chicos.
-- *¿Qué pasa con `eta=5`?* Que lo prueben.
-
-**Errores típicos:** `grad_w = X @ (p - y)` (falta la `.T`: da error de tamaños); olvidar dividir por `len(X)` (con `eta=0.5` explota).
-
-## 7. ¿Cuándo duda? (15 min)
-
-Sección 4: las imágenes con probabilidad cercana a 50 %. Casi siempre son 3 y 5 que **también harían dudar a una persona**. Eso es una ventaja enorme: la red sabe cuándo no sabe.
-
-## 8. Cierre (10 min)
-
-- **Sigmoide** → probabilidades. **Error medible** + **descenso por gradiente** → aprender bajando el error poco a poco.
-- La **curva de aprendizaje** se mira siempre.
-
-**Tarea:** terminar `P3`; probar con otros pares de dígitos (4 vs 9, 1 vs 7). ¿Cuál es el más difícil?
-**Refuerzo opcional:** `notebooks/1_04_red_neuronal_simple` y `1_05_descenso_por_gradiente_1D`.
-**Próxima clase:** 10 neuronas, una por dígito… y **dibujarán sus propios números**.
+## Cierre (10 min)
+- Sigmoide → probabilidades. Error medible + descenso por gradiente → aprender poco a poco. La curva de aprendizaje se mira siempre.
+- **Tarea:** terminar `P3`; probar 4 vs 9 y 1 vs 7. ¿Cuál es el más difícil?
+- **Refuerzo opcional:** `1_04`, `1_05`.
+- **Próxima clase:** 10 neuronas… y van a dibujar sus números.
 
 ---
 
