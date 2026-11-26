@@ -477,6 +477,10 @@ details.sol.bloqueada > summary{color:var(--muted); cursor:not-allowed}
       </div>
       <div class="fb" id="doc-fb"></div>
     </div>
+    <div>
+      <h4>Avance en vivo <span id="doc-reloj" style="text-transform:none;letter-spacing:0;font-weight:400"></span></h4>
+      <div id="doc-avance"><p class="note">Escribe la clave para ver el avance de cada alumno (se actualiza solo cada 8 segundos).</p></div>
+    </div>
     <div id="doc-lista"></div>
   </div>
 
@@ -1508,7 +1512,7 @@ let ST = { done: {}, log: [], quiz: null, team: "", abierta: "", tiempo: "", fas
 function cargar() {
   try { const raw = localStorage.getItem(KEY); if (raw) ST = Object.assign(ST, JSON.parse(raw)); } catch (e) { /* modo privado: sigue igual */ }
 }
-function guardar() { try { localStorage.setItem(KEY, JSON.stringify(ST)); } catch (e) { } }
+function guardar() { try { localStorage.setItem(KEY, JSON.stringify(ST)); } catch (e) { } avisarAvance(); }
 
 /* ===================== progreso ===================== */
 function totalEjercicios() { return $$(".ex").length; }
@@ -2711,6 +2715,7 @@ function scrollspy() {
   // la fase de trabajo la marca el bloque en pantalla: solo → pares → tríos → grupo de 4
   const sec = document.getElementById(act), f = sec && sec.getAttribute("data-fase");
   if (f && f !== ST.fase) ponerFase(f);
+  if (act !== BLOQUE_ACTUAL) { BLOQUE_ACTUAL = act; avisarAvance(); }
 }
 
 /* ===================== registro y grupos (servidor /api/) ===================== */
@@ -2806,6 +2811,7 @@ async function accionDocente(ruta, extra) {
   try {
     SALA_DATOS = await api(ruta, Object.assign({ clave: clave }, extra || {}));
     pintarSala();
+    refrescarPanel();
     fb.className = "fb show good"; fb.textContent = ruta === "armar" ? "Grupos armados. Los alumnos los ven en su pantalla en unos segundos." : "Hecho.";
   } catch (e) { fb.className = "fb show bad"; fb.textContent = e.message; }
 }
@@ -2824,6 +2830,78 @@ function iniciarRegistro() {
   }
   refrescarSala();
   if (EN_LINEA) setInterval(function () { if (!document.hidden) refrescarSala(); }, 12000);
+  if (EN_LINEA) setInterval(function () { if (!document.hidden) enviarAvance(); }, 60000);   // «sigue conectado»
+  if (PARAMS.has("docente")) {
+    $("#doc-clave").addEventListener("change", refrescarPanel);
+    refrescarPanel();
+    setInterval(function () { if (!document.hidden) refrescarPanel(); }, 8000);
+  }
+}
+
+/* ===================== avance en vivo ===================== */
+let BLOQUE_ACTUAL = "inicio", timerAvance = null, PANEL = null;
+function avisarAvance() {
+  if (typeof EN_LINEA === "undefined" || !EN_LINEA || !ST.yo) return;
+  clearTimeout(timerAvance); timerAvance = setTimeout(enviarAvance, 1500);
+}
+function enviarAvance() {
+  if (!EN_LINEA || !ST.yo) return;
+  api("avance", {
+    id: ST.yo.id,
+    hechos: Object.keys(ST.done).filter(function (k) { return ST.done[k]; }),
+    intentos: ST.intentos || {},
+    bloque: BLOQUE_ACTUAL,
+    repaso: ST.quiz ? { aciertos: ST.quiz.aciertos, total: ST.quiz.total } : null
+  }).catch(function () { });
+}
+const NOMBRE_BLOQUE = { inicio: "Inicio", b0: "Bloque 0", b1: "Bloque 1", b2: "Bloque 2", b3: "Bloque 3", b4: "Bloque 4", ex: "Repaso", equipo: "Tarjeta", uso: "Guía" };
+async function refrescarPanel() {
+  const clave = ($("#doc-clave").value || "").trim();
+  if (!clave || !EN_LINEA) return;
+  try {
+    PANEL = await api("panel", { clave: clave });
+    try { sessionStorage.setItem("lab_clave", clave); } catch (e) { }
+    pintarAvance();
+  } catch (e) { $("#doc-avance").innerHTML = "<p class='note'>" + esc(e.message) + "</p>"; }
+}
+function hace(seg) {
+  if (seg < 60) return "hace " + Math.round(seg) + " s";
+  if (seg < 3600) return "hace " + Math.round(seg / 60) + " min";
+  return "hace " + Math.round(seg / 3600) + " h";
+}
+function pintarAvance() {
+  if (!PANEL) return;
+  const ejs = $$(".ex[data-id]").map(function (e) { return e.dataset.id; });
+  const T = ejs.length;
+  const filas = PANEL.alumnos.map(function (a) {
+    const av = PANEL.avance[a.id] || null;
+    const hechos = av ? av.hechos.filter(function (h) { return ejs.indexOf(h) >= 0; }) : [];
+    const trabado = av ? Object.keys(av.intentos).filter(function (k) { return av.intentos[k] >= 2 && hechos.indexOf(k) < 0; }) : [];
+    return { a: a, av: av, n: hechos.length, hechos: hechos, trabado: trabado, seg: av ? PANEL.ahora - av.t : null };
+  }).sort(function (x, y) { return y.n - x.n || x.a.nombre.localeCompare(y.a.nombre); });
+  const activos = filas.filter(function (f) { return f.seg !== null && f.seg < 150; }).length;
+  const media = filas.length ? filas.reduce(function (s, f) { return s + f.n; }, 0) / filas.length : 0;
+  let h = "<p><b>" + activos + "</b> de " + filas.length + " conectados ahora · media <b>" + media.toFixed(1) + " / " + T + "</b> ejercicios resueltos.</p>";
+  // cuántos resolvieron cada ejercicio y cuántos están trabados en él
+  h += "<div style='display:flex;flex-wrap:wrap;gap:4px;margin:8px 0 14px'>" + ejs.map(function (id) {
+    const ok = filas.filter(function (f) { return f.hechos.indexOf(id) >= 0; }).length;
+    const tr = filas.filter(function (f) { return f.trabado.indexOf(id) >= 0; }).length;
+    const p = filas.length ? ok / filas.length : 0;
+    return "<div title='" + ok + " lo resolvieron · " + tr + " trabados' style='min-width:46px;text-align:center;padding:4px 6px;border-radius:8px;font-size:12px;background:rgba(16,185,129," + (0.08 + p * 0.6).toFixed(2) + ");" + (tr ? "outline:2px solid #f43f5e;" : "") + "'><b>" + id + "</b><br>" + ok + (tr ? " · <span style='color:#be123c'>" + tr + "⚠</span>" : "") + "</div>";
+  }).join("") + "</div>";
+  h += "<div style='overflow-x:auto'><table class='acta'><tr><th>Alumno</th><th>Dónde está</th><th>Resueltos</th><th>Trabado en</th><th>Repaso</th><th>Última actividad</th></tr>";
+  filas.forEach(function (f) {
+    const inactivo = f.seg === null || f.seg > 150;
+    h += "<tr style='" + (inactivo ? "opacity:.55" : "") + "'><td><b>" + esc(f.a.nombre) + "</b></td>"
+      + "<td>" + (f.av ? (NOMBRE_BLOQUE[f.av.bloque] || "—") : "—") + "</td>"
+      + "<td style='min-width:130px'><div style='display:flex;align-items:center;gap:6px'><div style='flex:1;height:7px;border-radius:4px;background:var(--line)'><div style='height:7px;border-radius:4px;background:var(--accent);width:" + Math.round(f.n / T * 100) + "%'></div></div><span class='n'>" + f.n + "/" + T + "</span></div></td>"
+      + "<td>" + (f.trabado.length ? "<span style='color:#be123c;font-weight:600'>" + esc(f.trabado.join(", ")) + "</span>" : "—") + "</td>"
+      + "<td>" + (f.av && f.av.repaso ? f.av.repaso.aciertos + "/" + f.av.repaso.total : "—") + "</td>"
+      + "<td>" + (f.seg === null ? "sin datos" : hace(f.seg)) + "</td></tr>";
+  });
+  h += "</table></div><p class='note'>«Trabado en»: falló 2 veces o más y todavía no lo resolvió. En gris: sin actividad hace más de 2 min.</p>";
+  $("#doc-avance").innerHTML = h;
+  const r = $("#doc-reloj"); if (r) r.textContent = "· actualizado " + new Date().toLocaleTimeString().slice(0, 5);
 }
 
 /* ===================== arranque ===================== */

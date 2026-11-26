@@ -78,6 +78,22 @@ def limpiar_nombre(s):
     return s[:40]
 
 
+def limpiar_avance(b):
+    """Solo se guarda lo que el panel necesita, con tamaños acotados."""
+    corto = lambda s, n: re.sub(r"[^\w.\-]", "", str(s))[:n]
+    hechos = b.get("hechos") if isinstance(b.get("hechos"), list) else []
+    intentos = b.get("intentos") if isinstance(b.get("intentos"), dict) else {}
+    rep = b.get("repaso") if isinstance(b.get("repaso"), dict) else None
+    return {
+        "hechos": sorted({corto(h, 6) for h in hechos[:60]}),
+        "intentos": {corto(k, 6): min(int(v), 99) for k, v in list(intentos.items())[:60]
+                     if isinstance(v, (int, float))},
+        "bloque": corto(b.get("bloque") or "", 10),
+        "repaso": {"aciertos": int(rep.get("aciertos", 0)), "total": int(rep.get("total", 0))} if rep else None,
+        "t": time.time(),
+    }
+
+
 def vista(sala):
     nombres = {a["id"]: a["nombre"] for a in sala["alumnos"]}
     grupos = None
@@ -127,7 +143,7 @@ class H(BaseHTTPRequestHandler):
             return self.responder(400, {"error": "json inválido"})
         sid = self.sala_id(body.get("sala"))
         ruta = self.path.split("?")[0]
-        docente = ruta in ("/api/armar", "/api/reiniciar", "/api/quitar")
+        docente = ruta in ("/api/armar", "/api/reiniciar", "/api/quitar", "/api/panel")
         if docente and (not CLAVE or body.get("clave") != CLAVE):
             return self.responder(403, {"error": "clave incorrecta"})
         with LOCK:
@@ -135,6 +151,19 @@ class H(BaseHTTPRequestHandler):
             if sid not in salas and len(salas) >= 50:
                 return self.responder(409, {"error": "Demasiadas salas abiertas."})
             sala = salas.setdefault(sid, sala_nueva())
+            if ruta == "/api/panel":                # docente: lista + avance de cada alumno
+                return self.responder(200, {**vista(sala), "avance": {a["id"]: a.get("avance") for a in sala["alumnos"]},
+                                            "ahora": time.time()})
+            if ruta == "/api/avance":               # alumno: manda lo que lleva resuelto
+                yo = next((a for a in sala["alumnos"] if a["id"] == str(body.get("id") or "")), None)
+                if not yo:
+                    return self.responder(404, {"error": "no registrado"})
+                try:
+                    yo["avance"] = limpiar_avance(body)
+                except (ValueError, TypeError, OverflowError, AttributeError):
+                    return self.responder(400, {"error": "avance inválido"})
+                guardar(salas)
+                return self.responder(200, {"ok": True})
             if ruta == "/api/registro":
                 nombre = limpiar_nombre(body.get("nombre"))
                 if len(nombre) < 2:
@@ -188,6 +217,9 @@ def _test():
         for k in TAMANOS:
             t = tamanos_grupos(n, k)
             assert sum(t) == n and max(t) - min(t) <= 1, (n, k, t)
+    av = limpiar_avance({"hechos": ["0.1", "<x>", "0.1"], "intentos": {"1.1": 3, "z": "no"},
+                         "bloque": "b1", "repaso": {"aciertos": 5, "total": 12}})
+    assert av["hechos"] == ["0.1", "x"] and av["intentos"] == {"1.1": 3} and av["repaso"]["total"] == 12
     g = armar(list("abcdefg"), 4, random.Random(1))
     assert sorted(sum(g, [])) == list("abcdefg") and [len(x) for x in g] == [4, 3]
     print("ok")
