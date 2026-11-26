@@ -1,9 +1,9 @@
 """Arma los paquetes para repartir, a partir de entregables/ y proyecto/.
 
 Uso (desde la raíz del repo, después de generar notebooks, diapositivas y PDF):
-    python tools/build_paquetes.py
+    python tools/build_paquetes.py --clase 1
 Salida:
-    PARA_ALUMNOS/ y PARA_ALUMNOS_curso_redes_neuronales.zip          (sin soluciones)
+    PARA_ALUMNOS_Clase1/ y PARA_ALUMNOS_Clase1.zip   (solo esa clase: diapositivas + notebook, sin guías ni soluciones)
     MATERIAL_DOCENTE/ y MATERIAL_DOCENTE_curso_redes_neuronales.zip  (con soluciones: no publicar)
 MATERIAL_DOCENTE/00_EMPIEZA_AQUI_Guia_del_docente.md se escribe a mano y se conserva.
 """
@@ -12,29 +12,41 @@ import os
 import shutil
 import sys
 
-LEEME = """CURSO: INTRODUCCIÓN A LAS REDES NEURONALES
-==========================================
+LEEME = """CURSO: INTRODUCCIÓN A LAS REDES NEURONALES · CLASE {n}
+================================================
 
 En este curso vas a construir desde cero, en Python, una red neuronal que
 reconoce números escritos a mano. Cada clase agrega una pieza.
 
-1_Guias            -> una guía por clase (Clase_1 a Clase_7).
-2_Presentaciones   -> las diapositivas de cada clase.
-3_Proyecto         -> TU PROYECTO: un notebook por clase (P1 a P7).
-                      IMPORTANTE: abre la carpeta 3_Proyecto COMPLETA en VS Code.
-                      No saques los notebooks de ahí: necesitan digitos.py y la carpeta datos/.
-                      Las celdas con ... son tuyas; después de cada ejercicio una celda
-                      te dice si está bien (✅) o te da una pista (❌).
-                      Desde la Clase 4:  python dibujar.py  -> dibuja un número y tu red lo adivina.
-4_Apoyo_opcional   -> ejercicios extra para reforzar (no son obligatorios).
+Clase_{n}_Presentacion.pdf  -> las diapositivas de hoy.
+Proyecto/                   -> tu notebook de hoy: {nb}
+{como}
+Dentro del notebook, las celdas con ... son tuyas. Después de cada ejercicio,
+una celda te dice si está bien (✅) o te da una pista (❌).
 
-Cómo instalar todo: 1_Guias/Clase_1_Guia.pdf, Parte A.
-Para instalar los paquetes, dentro de 3_Proyecto:   pip install -r requirements.txt
+¿No puedes instalar Python? Usa Google Colab (solo necesitas cuenta de Google):
+colab.research.google.com → Archivo → Abrir cuaderno → GitHub →
+datahuba/curso-redes-neuronales → proyecto/{nb}
+Para guardar tu trabajo: Archivo → Guardar una copia en Drive.
 
-Clase 1: P1  ·  Clase 2: P2  ·  Clase 3: P3  ·  Clase 4: P4  ·  Clase 5: P5  ·  Clase 6: P6  ·  Clase 7: P7
-
+{lab}
 Material basado en el curso del Dr. J. Irving Vasquez (jivg.org).
-Repositorio: https://github.com/datahuba/curso-redes-neuronales
+"""
+LAB = "docs/lab/LABORATORIO_TEMA3.html"
+LAB_NOMBRE = "LABORATORIO_INTERACTIVO.html"
+
+COMO_1 = """
+Cómo abrirlo (en tu computadora, con Python instalado en clase):
+  1. Descomprime este zip (clic derecho → Extraer todo).
+  2. En VS Code: File → Open Folder → elige la carpeta Proyecto (¡la carpeta completa!).
+  3. Abre {nb}, elige el kernel nni (arriba a la derecha) y ejecuta las celdas con Shift + Enter.
+"""
+COMO_N = """
+Cómo abrirlo:
+  1. Descomprime este zip (clic derecho → Extraer todo).
+  2. Copia {nb} a TU carpeta Proyecto (la de la Clase 1), junto a tus otros notebooks.
+     (Si no la tienes, usa la carpeta Proyecto de este zip completa.)
+  3. En VS Code: File → Open Folder → tu carpeta Proyecto → abre {nb} → kernel nni.
 """
 
 
@@ -56,18 +68,28 @@ def apoyo(destino):
     cp("entregables/Guias_de_los_notebooks.pdf", os.path.join(destino, "Guias_de_los_notebooks.pdf"))
 
 
-def alumnos(A="PARA_ALUMNOS"):
+def alumnos(n, con_lab=False):
+    """Paquete de UNA clase para los alumnos: sus diapositivas y su notebook (sin guías ni soluciones)."""
+    A = f"PARA_ALUMNOS_Clase{n}"
     shutil.rmtree(A, ignore_errors=True)
-    for n in range(1, 8):
-        cp(f"entregables/Clase{n}_Guia.pdf", f"{A}/1_Guias/Clase_{n}_Guia.pdf")
-        cp(f"entregables/Clase{n}_Diapositivas.pdf", f"{A}/2_Presentaciones/Clase_{n}_Presentacion.pdf")
-    proyecto("proyecto", f"{A}/3_Proyecto")
-    apoyo(f"{A}/4_Apoyo_opcional")
-    open(f"{A}/LEEME.txt", "w", encoding="utf-8").write(LEEME)
-    # nunca soluciones en el paquete de alumnos
-    for f in glob.glob(A + "/3_Proyecto/*.ipynb"):
-        t = open(f, encoding="utf-8").read()
-        assert "X[y_train == d].mean(axis=0)" not in t and "dA1 = dZ2 @" not in t, f"¡solución en {f}!"
+    cp(f"entregables/Clase{n}_Diapositivas.pdf", f"{A}/Clase_{n}_Presentacion.pdf")
+    nb = os.path.basename(glob.glob(f"proyecto/P{n}_*.ipynb")[0])
+    for f in [nb, "digitos.py"] + (["dibujar.py"] if n >= 4 else []):
+        cp(os.path.join("proyecto", f), f"{A}/Proyecto/{f}")
+    cp("proyecto/datos/mnist.npz", f"{A}/Proyecto/datos/mnist.npz")       # para aulas sin internet
+    cp("requirements.txt", f"{A}/Proyecto/requirements.txt")
+    texto_lab = ""
+    if con_lab and os.path.exists(LAB):
+        cp(LAB, f"{A}/{LAB_NOMBRE}")
+        texto_lab = (f"{LAB_NOMBRE}   -> el laboratorio de hoy: una pagina web con los ejercicios,\n"
+                     "  los simuladores y los datos. Abrela con doble clic: no necesita internet\n"
+                     "  ni instalar nada. Se trabaja en equipos de 3.\n")
+    como = (COMO_1 if n == 1 else COMO_N).format(nb=nb)
+    open(f"{A}/LEEME.txt", "w", encoding="utf-8").write(LEEME.format(n=n, nb=nb, como=como, lab=texto_lab))
+    t = open(f"{A}/Proyecto/{nb}", encoding="utf-8").read()                # nunca soluciones
+    assert "X[y_train == d].mean(axis=0)" not in t and "dA1 = dZ2 @" not in t and "beta * v - eta" not in t, nb
+    shutil.make_archive(A, "zip", ".", A)
+    return A + ".zip"
 
 
 def docente(D="MATERIAL_DOCENTE"):
@@ -85,10 +107,10 @@ def docente(D="MATERIAL_DOCENTE"):
 
 if __name__ == "__main__":
     sys.stdout.reconfigure(encoding="utf-8")
-    alumnos()
-    shutil.make_archive("PARA_ALUMNOS_curso_redes_neuronales", "zip", ".", "PARA_ALUMNOS")
+    clase = int(sys.argv[sys.argv.index("--clase") + 1]) if "--clase" in sys.argv else 1
+    z_alumnos = alumnos(clase, con_lab="--lab" in sys.argv)
     docente()
-    cp("PARA_ALUMNOS_curso_redes_neuronales.zip", "MATERIAL_DOCENTE/PARA_ALUMNOS.zip")
+    cp(z_alumnos, f"MATERIAL_DOCENTE/{z_alumnos}")
     shutil.make_archive("MATERIAL_DOCENTE_curso_redes_neuronales", "zip", ".", "MATERIAL_DOCENTE")
-    for z in ["PARA_ALUMNOS_curso_redes_neuronales.zip", "MATERIAL_DOCENTE_curso_redes_neuronales.zip"]:
+    for z in [z_alumnos, "MATERIAL_DOCENTE_curso_redes_neuronales.zip"]:
         print(z, f"{os.path.getsize(z) / 1e6:.1f} MB")
