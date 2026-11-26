@@ -105,6 +105,26 @@ def limpiar_avance(b):
     }
 
 
+def resueltos_grupo(sala, yo):
+    """Para cada tamaño (2, 3, 4): qué ejercicios ya resolvió alguien de MI grupo y quién.
+    La página marca esos ejercicios como resueltos también para mí (en la fase de ese tamaño)."""
+    if not yo or not sala["grupos"]:
+        return None
+    por_id = {a["id"]: a for a in sala["alumnos"]}
+    out = {}
+    for k, gs in sala["grupos"].items():
+        mio = next((g for g in gs if yo in g), None)
+        hechos = {}
+        for i in mio or []:
+            a = por_id.get(i)
+            if i == yo or not a:
+                continue
+            for h in (a.get("avance") or {}).get("hechos", []):
+                hechos.setdefault(h, a["nombre"])
+        out[k] = hechos
+    return out
+
+
 def vista(sala):
     nombres = {a["id"]: a["nombre"] for a in sala["alumnos"]}
     grupos = None
@@ -142,7 +162,7 @@ class H(BaseHTTPRequestHandler):
         sid = self.sala_id(q.get("sala"))
         with LOCK:
             sala = cargar().get(sid) or sala_nueva()
-        self.responder(200, vista(sala))
+        self.responder(200, {**vista(sala), "grupo": resueltos_grupo(sala, q.get("id", ""))})
 
     def do_POST(self):
         try:
@@ -231,6 +251,11 @@ def _test():
     av = limpiar_avance({"hechos": ["0.1", "<x>", "0.1"], "intentos": {"1.1": 3, "z": "no"},
                          "bloque": "b1", "repaso": {"aciertos": 5, "total": 12}})
     assert av["hechos"] == ["0.1", "x"] and av["intentos"] == {"1.1": 3} and av["repaso"]["total"] == 12
+    s = {"alumnos": [{"id": "a", "nombre": "Ana", "avance": {"hechos": ["1.1"]}}, {"id": "b", "nombre": "Luis"},
+                     {"id": "c", "nombre": "Sara", "avance": {"hechos": ["1.2"]}}],
+         "grupos": {"2": [["a", "b"], ["c"]], "4": [["a", "b", "c"]]}}
+    assert resueltos_grupo(s, "b") == {"2": {"1.1": "Ana"}, "4": {"1.1": "Ana", "1.2": "Sara"}}
+    assert resueltos_grupo(s, "") is None
     g = armar(list("abcdefg"), 4, random.Random(1))
     assert sorted(sum(g, [])) == list("abcdefg") and [len(x) for x in g] == [4, 3]
     print("ok")

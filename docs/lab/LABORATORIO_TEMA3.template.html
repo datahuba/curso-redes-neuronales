@@ -2789,10 +2789,32 @@ async function revisarVersion() {
     }
   } catch (err) { }
 }
+/* Respuesta de grupo: si alguien de tu grupo (el de la fase de ese bloque) resolvió un ejercicio,
+   cuenta como resuelto para todos. Bloque 0 es individual: ahí no se comparte. */
+const TAM_DE_FASE = { pares: "2", trios: "3", cuartos: "4" };
+function textoPorGrupo(quien) {
+  return "✓ Lo resolvió <b>" + esc(quien) + "</b>, de tu grupo: ya cuenta para todos. Abran la explicación y revísenla juntos.";
+}
+function aplicarGrupo() {
+  const g = SALA_DATOS && SALA_DATOS.grupo; if (!g) return;
+  $$(".ex[data-id]").forEach(function (ex) {
+    const id = ex.dataset.id, sec = ex.closest("section[data-fase]");
+    const k = sec && TAM_DE_FASE[sec.getAttribute("data-fase")];
+    const quien = k && g[k] && g[k][id];
+    if (!quien || ST.done[id]) return;
+    ST.porGrupo = ST.porGrupo || {}; ST.porGrupo[id] = quien;
+    marcar(id, true); pintarCandado(id);
+    feedback(id, true, textoPorGrupo(quien), "good");
+    registrarLog("Ejercicio " + id + " ✓ (lo resolvió " + quien + ")");
+  });
+}
 async function refrescarSala() {
   if (EN_LINEA) revisarVersion();
   if (!EN_LINEA) return pintarSala();
-  try { SALA_DATOS = await api("sala?sala=" + encodeURIComponent(SALA)); pintarSala(); }
+  try {
+    SALA_DATOS = await api("sala?sala=" + encodeURIComponent(SALA) + (ST.yo ? "&id=" + encodeURIComponent(ST.yo.id) : ""));
+    pintarSala(); aplicarGrupo();
+  }
   catch (e) { $("#reg-estado").textContent = "No se pudo cargar la lista (" + e.message + "). Puedes seguir con los ejercicios."; }
 }
 async function registrarme() {
@@ -2894,7 +2916,7 @@ function restaurarCampos() {
   });
   // los que ya estaban resueltos muestran su aviso otra vez
   Object.keys(ST.done).forEach(function (id) {
-    if (ST.done[id]) feedback(id, true, "✓ Ya lo resolviste. Tu respuesta quedó guardada.", "good");
+    if (ST.done[id]) feedback(id, true, (ST.porGrupo || {})[id] ? textoPorGrupo(ST.porGrupo[id]) : "✓ Ya lo resolviste. Tu respuesta quedó guardada.", "good");
   });
 }
 
