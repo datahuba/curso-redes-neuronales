@@ -366,6 +366,10 @@ body.examen .nav a:not([href="#ex"]){display:none}
 .guia-ej code,.guia code{font-family:"JetBrains Mono",ui-monospace,monospace; font-size:.92em}
 .guia-ayuda{font-size:13px; color:var(--muted)}
 .guia[hidden],.btn[hidden]{display:none}
+/* en una grilla, un hijo ancho (la tabla del panel) estira la columna y se sale de la tarjeta en el celular */
+.guia > *{min-width:0}
+.guia table{font-size:13px}
+@media (max-width:600px){ #fase-texto{display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden} .guia{padding:16px 14px} .guia table th,.guia table td{padding:6px 6px} }
 details.sol.bloqueada > summary{color:var(--muted); cursor:not-allowed}
 
 @media (max-width:860px){
@@ -1882,7 +1886,7 @@ function pintarFase() {
   const f = FASES[faseActual()];
   const pill = $("#fase-pill"), txt = $("#fase-texto");
   if (pill) pill.textContent = f.pill;
-  if (txt) txt.innerHTML = f.texto + textoMiGrupo(faseActual());
+  if (txt) txt.innerHTML = textoMiGrupo(faseActual()) + f.texto;
   $$("#fases button").forEach(b => b.classList.toggle("on", b.getAttribute("data-fase") === faseActual()));
 }
 function ponerFase(f) { if (!FASES[f]) return; ST.fase = f; guardar(); pintarFase(); }
@@ -2750,7 +2754,7 @@ function textoMiGrupo(fase) {
   const g = miGrupo(TAM_FASE[fase]);
   if (!g) return "";
   const otros = g.gente.filter(function (a) { return a.id !== ST.yo.id; }).map(function (a) { return esc(a.nombre); });
-  return " <b style='margin-left:6px'>Tu grupo " + g.n + ":</b> " + (otros.length ? otros.join(", ") : "trabajas solo");
+  return "<b style='color:var(--accent)'>Tu grupo " + g.n + ": " + (otros.length ? otros.join(", ") : "trabajas solo") + ".</b> ";
 }
 function pintarSala() {
   const est = $("#reg-estado"), cont = $("#reg-grupos");
