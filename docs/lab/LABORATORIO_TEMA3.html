@@ -465,6 +465,7 @@ details.sol.bloqueada > summary{color:var(--muted); cursor:not-allowed}
         <button class="btn" id="reg-btn">Registrarme</button>
       </div>
       <div class="fb" id="reg-fb"></div>
+      <p class="guia-ayuda" style="margin-top:8px">🔎 Durante la clase la página registra si sales de la pestaña, si pegas o copias texto y si hay extensiones (IA, bloqueadores) leyendo la página. Tu docente lo ve en su panel. Pegar respuestas está desactivado: escríbelas tú.</p>
     </div>
     <div class="readout" id="reg-estado">Cargando la lista de la clase…</div>
     <div id="reg-grupos"></div>
@@ -2905,6 +2906,75 @@ function restaurarCampos() {
   });
 }
 
+/* ===================== atención: salidas, pegado, extensiones ===================== */
+/* Una página web no puede impedir que alguien use otra app o el celular. Lo que sí hace:
+   bloquea pegar y copiar, y deja constancia de las salidas y de las extensiones que se meten en la página. */
+function integ() { ST.integ = ST.integ || { salidas: 0, fuera: 0, pegados: 0, copias: 0, ext: [], adblock: false }; return ST.integ; }
+let salioEn = null;
+window.addEventListener("blur", function () { salioEn = Date.now(); });
+window.addEventListener("focus", function () {
+  if (!salioEn) return;
+  const seg = (Date.now() - salioEn) / 1000; salioEn = null;
+  if (seg < 2) return;                       // un diálogo o un clic en la barra del navegador
+  const g = integ(); g.salidas++; g.fuera += Math.round(seg); guardar();
+});
+document.addEventListener("paste", function (e) {
+  if (!e.target.closest || !e.target.closest("main") || e.target.closest("#registro, #panel-docente, #equipo")) return;
+  e.preventDefault(); integ().pegados++; guardar();
+  const ex = e.target.closest(".ex"); const id = ex && ex.dataset.id;
+  if (id) feedback(id, false, "Pegar está desactivado en los ejercicios: escribe tu respuesta.", "info");
+});
+["copy", "cut"].forEach(function (tipo) {
+  document.addEventListener(tipo, function (e) {
+    const el = e.target.nodeType === 1 ? e.target : e.target.parentElement;
+    if (!el || !el.closest("main") || el.closest("#registro, #panel-docente, #equipo")) return;
+    e.preventDefault(); integ().copias++; guardar();
+  });
+});
+// extensiones: casi todas (IA de barra lateral, correctores, traductores) meten sus propios elementos en la página
+const PROPIOS = /^(HEADER|NAV|MAIN|FOOTER|SCRIPT|STYLE|NOSCRIPT|LINK|META|A|TEXTAREA)$/;
+const SOSPECHA = /grammarly|monica|merlin|sider|maxai|harpa|chatgpt|openai|copilot|gemini|perplexity|claude|glasp|wiseone|quillbot|compose|superpower|translat|immersive|extension/i;
+function anotarExt(nombre) {
+  const g = integ(); nombre = String(nombre).toLowerCase().slice(0, 40);
+  if (g.ext.indexOf(nombre) < 0 && g.ext.length < 8) { g.ext.push(nombre); guardar(); }
+}
+function revisarNodo(n) {
+  if (!n || n.nodeType !== 1 || n.id === "aviso-version" || n.classList.contains("modal") || n.classList.contains("adsbox")) return;
+  const tag = n.tagName, firma = tag + " " + (n.id || "") + " " + (typeof n.className === "string" ? n.className : "");
+  if (tag.indexOf("-") > 0 || SOSPECHA.test(firma)) return anotarExt(tag.indexOf("-") > 0 ? tag : (n.id || tag));
+  if (tag === "IFRAME" && /^(chrome|moz|safari-web|ms-browser)-extension:/.test(n.src || "")) return anotarExt("iframe de extensión");
+  if (!PROPIOS.test(tag) && n.parentElement === document.body) anotarExt(tag + (n.id ? "#" + n.id : ""));
+}
+function vigilarExtensiones() {
+  Array.prototype.forEach.call(document.body.children, revisarNodo);
+  Array.prototype.forEach.call(document.documentElement.children, function (n) { if (n !== document.head && n !== document.body) revisarNodo(n); });
+  const mo = new MutationObserver(function (ms) { ms.forEach(function (m) { Array.prototype.forEach.call(m.addedNodes, revisarNodo); }); });
+  mo.observe(document.body, { childList: true });
+  mo.observe(document.documentElement, { childList: true });
+  // bloqueador de anuncios: un «anuncio» señuelo que los bloqueadores esconden
+  const cebo = document.createElement("div");
+  cebo.className = "adsbox ad-banner adsbygoogle"; cebo.style.cssText = "position:absolute;left:-9999px;height:8px;width:8px";
+  cebo.innerHTML = "&nbsp;";
+  document.body.appendChild(cebo);
+  setTimeout(function () {
+    const oculto = !cebo.offsetHeight || getComputedStyle(cebo).display === "none";
+    cebo.remove();
+    if (oculto !== integ().adblock) { integ().adblock = oculto; guardar(); }
+  }, 1500);
+}
+function textoAtencion(g) {
+  if (!g) return "—";
+  const p = [];
+  if (g.salidas) p.push(g.salidas + " salida" + (g.salidas > 1 ? "s" : "") + " (" + (g.fuera >= 60 ? Math.round(g.fuera / 60) + " min" : g.fuera + " s") + ")");
+  if (g.pegados) p.push(g.pegados + " pegado" + (g.pegados > 1 ? "s" : ""));
+  if (g.copias) p.push(g.copias + " copia" + (g.copias > 1 ? "s" : ""));
+  if (g.ext && g.ext.length) p.push("ext: " + esc(g.ext.join(", ")));
+  if (g.adblock) p.push("bloqueador");
+  if (!p.length) return "<span style='color:var(--accent)'>✓</span>";
+  const grave = g.pegados || (g.ext && g.ext.length) || g.fuera > 120;
+  return "<span style='color:" + (grave ? "#be123c" : "#b45309") + ";font-weight:600'>" + p.join(" · ") + "</span>";
+}
+
 /* ===================== avance en vivo ===================== */
 let BLOQUE_ACTUAL = "inicio", timerAvance = null, PANEL = null;
 function avisarAvance() {
@@ -2918,7 +2988,8 @@ function enviarAvance() {
     hechos: Object.keys(ST.done).filter(function (k) { return ST.done[k]; }),
     intentos: ST.intentos || {},
     bloque: BLOQUE_ACTUAL,
-    repaso: ST.quiz ? { aciertos: ST.quiz.aciertos, total: ST.quiz.total } : null
+    repaso: ST.quiz ? { aciertos: ST.quiz.aciertos, total: ST.quiz.total } : null,
+    integ: ST.integ || null
   }).catch(function () { });
 }
 const NOMBRE_BLOQUE = { inicio: "Inicio", b0: "Bloque 0", b1: "Bloque 1", b2: "Bloque 2", b3: "Bloque 3", b4: "Bloque 4", ex: "Repaso", equipo: "Tarjeta", uso: "Guía" };
@@ -2956,7 +3027,7 @@ function pintarAvance() {
     const p = filas.length ? ok / filas.length : 0;
     return "<div title='" + ok + " lo resolvieron · " + tr + " trabados' style='min-width:46px;text-align:center;padding:4px 6px;border-radius:8px;font-size:12px;background:rgba(16,185,129," + (0.08 + p * 0.6).toFixed(2) + ");" + (tr ? "outline:2px solid #f43f5e;" : "") + "'><b>" + id + "</b><br>" + ok + (tr ? " · <span style='color:#be123c'>" + tr + "⚠</span>" : "") + "</div>";
   }).join("") + "</div>";
-  h += "<div style='overflow-x:auto'><table class='acta'><tr><th>Alumno</th><th>Dónde está</th><th>Resueltos</th><th>Trabado en</th><th>Repaso</th><th>Última actividad</th></tr>";
+  h += "<div style='overflow-x:auto'><table class='acta'><tr><th>Alumno</th><th>Dónde está</th><th>Resueltos</th><th>Trabado en</th><th>Repaso</th><th>Atención</th><th>Última actividad</th></tr>";
   filas.forEach(function (f) {
     const inactivo = f.seg === null || f.seg > 150;
     h += "<tr style='" + (inactivo ? "opacity:.55" : "") + "'><td><b>" + esc(f.a.nombre) + "</b></td>"
@@ -2964,9 +3035,10 @@ function pintarAvance() {
       + "<td style='min-width:130px'><div style='display:flex;align-items:center;gap:6px'><div style='flex:1;height:7px;border-radius:4px;background:var(--line)'><div style='height:7px;border-radius:4px;background:var(--accent);width:" + Math.round(f.n / T * 100) + "%'></div></div><span class='n'>" + f.n + "/" + T + "</span></div></td>"
       + "<td>" + (f.trabado.length ? "<span style='color:#be123c;font-weight:600'>" + esc(f.trabado.join(", ")) + "</span>" : "—") + "</td>"
       + "<td>" + (f.av && f.av.repaso ? f.av.repaso.aciertos + "/" + f.av.repaso.total : "—") + "</td>"
+      + "<td>" + textoAtencion(f.av && f.av.integ) + "</td>"
       + "<td>" + (f.seg === null ? "sin datos" : hace(f.seg)) + "</td></tr>";
   });
-  h += "</table></div><p class='note'>«Trabado en»: falló 2 veces o más y todavía no lo resolvió. En gris: sin actividad hace más de 2 min.</p>";
+  h += "</table></div><p class='note'>«Trabado en»: falló 2 veces o más y todavía no lo resolvió. En gris: sin actividad hace más de 2 min. «Atención»: salidas de la pestaña (y tiempo fuera), pegados y copias bloqueados, extensiones detectadas y bloqueador de anuncios.</p>";
   $("#doc-avance").innerHTML = h;
   const r = $("#doc-reloj"); if (r) r.textContent = "· actualizado " + new Date().toLocaleTimeString().slice(0, 5);
 }
@@ -3055,6 +3127,7 @@ function init() {
   Object.keys(ST.done).forEach(function (id) { if (ST.done[id]) marcar(id, true); });
   $$("details.sol").forEach(function (d) { pintarCandado(d.getAttribute("data-sol")); });
   restaurarCampos();
+  vigilarExtensiones();
   if (ST.tamano) $("#team-size").value = ST.tamano;
   pintarMiembros(); pintarGen(); pintarFase(); iniciarRegistro();
   pintarProgreso(); pintarTarjeta(); pintarLog(); scrollspy();

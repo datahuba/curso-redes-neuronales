@@ -78,6 +78,16 @@ def limpiar_nombre(s):
     return s[:40]
 
 
+def limpiar_integ(g):
+    """Señales de atención: salidas de la pestaña, texto pegado/copiado, extensiones, bloqueador."""
+    if not isinstance(g, dict):
+        return None
+    n = lambda k: max(0, min(int(g.get(k) or 0), 10 ** 6))
+    ext = g.get("ext") if isinstance(g.get("ext"), list) else []
+    return {"salidas": n("salidas"), "fuera": n("fuera"), "pegados": n("pegados"), "copias": n("copias"),
+            "ext": [re.sub(r"[^\w\-:.]", "", str(e))[:40] for e in ext[:8]], "adblock": bool(g.get("adblock"))}
+
+
 def limpiar_avance(b):
     """Solo se guarda lo que el panel necesita, con tamaños acotados."""
     corto = lambda s, n: re.sub(r"[^\w.\-]", "", str(s))[:n]
@@ -90,6 +100,7 @@ def limpiar_avance(b):
                      if isinstance(v, (int, float))},
         "bloque": corto(b.get("bloque") or "", 10),
         "repaso": {"aciertos": int(rep.get("aciertos", 0)), "total": int(rep.get("total", 0))} if rep else None,
+        "integ": limpiar_integ(b.get("integ")),
         "t": time.time(),
     }
 
