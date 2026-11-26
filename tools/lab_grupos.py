@@ -85,7 +85,8 @@ def limpiar_integ(g):
     n = lambda k: max(0, min(int(g.get(k) or 0), 10 ** 6))
     ext = g.get("ext") if isinstance(g.get("ext"), list) else []
     return {"salidas": n("salidas"), "fuera": n("fuera"), "pegados": n("pegados"), "copias": n("copias"),
-            "ext": [re.sub(r"[^\w\-:.]", "", str(e))[:40] for e in ext[:8]], "adblock": bool(g.get("adblock"))}
+            "ext": [re.sub(r"[^\w\-:.]", "", str(e))[:40] for e in ext[:8]], "adblock": bool(g.get("adblock")),
+            "paneles": n("paneles"), "panelSeg": n("panelSeg")}
 
 
 def limpiar_avance(b):

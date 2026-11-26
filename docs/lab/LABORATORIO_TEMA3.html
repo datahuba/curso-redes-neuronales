@@ -366,6 +366,9 @@ body.examen .nav a:not([href="#ex"]){display:none}
 .guia-ej code,.guia code{font-family:"JetBrains Mono",ui-monospace,monospace; font-size:.92em}
 .guia-ayuda{font-size:13px; color:var(--muted)}
 .guia[hidden],.btn[hidden]{display:none}
+/* panel lateral abierto (asistente de IA, DevTools): el contenido desaparece hasta cerrarlo */
+body.panel-lateral main, body.panel-lateral footer{display:none !important}
+body.panel-lateral::after{content:"Cierra el panel lateral del navegador (asistente de IA, Gemini, Copilot, extensiones o herramientas) para seguir con la clase. Queda registrado en el panel del docente."; position:fixed; inset:0; z-index:80; display:flex; align-items:center; justify-content:center; padding:32px; text-align:center; font-size:20px; line-height:1.5; font-weight:600; color:#fff; background:#14171e}
 /* en una grilla, un hijo ancho (la tabla del panel) estira la columna y se sale de la tarjeta en el celular */
 .guia > *{min-width:0}
 .guia table{font-size:13px}
@@ -2984,6 +2987,30 @@ function vigilarExtensiones() {
     if (oculto !== integ().adblock) { integ().adblock = oculto; guardar(); }
   }, 1500);
 }
+/* Panel lateral del navegador (Gemini en Chrome, Copilot en Edge, barras de IA de extensiones, DevTools):
+   al abrirse, el área de la página se achica sin que cambie el tamaño de la ventana ni el zoom.
+   Mientras esté abierto, el contenido se OCULTA (no solo se tapa): el asistente no tiene nada que leer. */
+let VENTANA = null, panelDesde = null;
+function medirVentana() { return { ow: window.outerWidth, dpr: window.devicePixelRatio, iw: window.innerWidth }; }
+function vigilarPanelLateral() {
+  if (PARAMS.has("docente")) return;
+  VENTANA = medirVentana();
+  window.addEventListener("resize", function () {
+    const m = medirVentana();
+    if (!VENTANA.ow) { VENTANA = m; return; }   // la pestaña abrió en segundo plano: se mide al mostrarse
+    if (m.ow !== VENTANA.ow || m.dpr !== VENTANA.dpr) { VENTANA = m; return ponerPanel(false); }   // cambió la ventana o el zoom
+    if (m.iw > VENTANA.iw) VENTANA.iw = m.iw;
+    ponerPanel(VENTANA.iw - m.iw >= 200);
+  });
+}
+function ponerPanel(abierto) {
+  if (abierto === document.body.classList.contains("panel-lateral")) return;
+  document.body.classList.toggle("panel-lateral", abierto);
+  const g = integ();
+  if (abierto) { panelDesde = Date.now(); g.paneles = (g.paneles || 0) + 1; }
+  else if (panelDesde) { g.panelSeg = (g.panelSeg || 0) + Math.round((Date.now() - panelDesde) / 1000); panelDesde = null; }
+  guardar();
+}
 function textoAtencion(g) {
   if (!g) return "—";
   const p = [];
@@ -2992,8 +3019,9 @@ function textoAtencion(g) {
   if (g.copias) p.push(g.copias + " copia" + (g.copias > 1 ? "s" : ""));
   if (g.ext && g.ext.length) p.push("ext: " + esc(g.ext.join(", ")));
   if (g.adblock) p.push("bloqueador");
+  if (g.paneles) p.push("abrió panel lateral " + g.paneles + "×" + (g.panelSeg ? " (" + (g.panelSeg >= 60 ? Math.round(g.panelSeg / 60) + " min" : g.panelSeg + " s") + ")" : ""));
   if (!p.length) return "<span style='color:var(--accent)'>✓</span>";
-  const grave = g.pegados || (g.ext && g.ext.length) || g.fuera > 120;
+  const grave = g.pegados || (g.ext && g.ext.length) || g.fuera > 120 || g.paneles;
   return "<span style='color:" + (grave ? "#be123c" : "#b45309") + ";font-weight:600'>" + p.join(" · ") + "</span>";
 }
 
@@ -3150,6 +3178,7 @@ function init() {
   $$("details.sol").forEach(function (d) { pintarCandado(d.getAttribute("data-sol")); });
   restaurarCampos();
   vigilarExtensiones();
+  vigilarPanelLateral();
   if (ST.tamano) $("#team-size").value = ST.tamano;
   pintarMiembros(); pintarGen(); pintarFase(); iniciarRegistro();
   pintarProgreso(); pintarTarjeta(); pintarLog(); scrollspy();
