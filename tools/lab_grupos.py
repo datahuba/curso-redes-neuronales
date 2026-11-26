@@ -102,6 +102,7 @@ def limpiar_avance(b):
         "bloque": corto(b.get("bloque") or "", 10),
         "repaso": {"aciertos": int(rep.get("aciertos", 0)), "total": int(rep.get("total", 0))} if rep else None,
         "integ": limpiar_integ(b.get("integ")),
+        "v": re.sub(r"\D", "", str(b.get("v") or ""))[:14],
         "t": time.time(),
     }
 

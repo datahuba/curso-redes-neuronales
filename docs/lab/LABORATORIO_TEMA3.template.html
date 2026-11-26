@@ -2776,7 +2776,7 @@ function pintarSala() {
   pintarFase(); pintarDocente();
 }
 /* aviso de versión nueva: si la página publicada cambia (ETag de nginx), se ofrece recargar */
-let ETAG_INICIAL = null;
+let ETAG_INICIAL = null, NUEVA_DESDE = null;
 async function revisarVersion() {
   try {
     const e = (await fetch("./", { method: "HEAD", cache: "no-store" })).headers.get("ETag");
@@ -2785,7 +2785,8 @@ async function revisarVersion() {
     // versión nueva: se recarga sola (lo escrito y lo resuelto se guardan, no se pierde nada).
     // Espera a que no esté escribiendo ni en medio del repaso; si no, lo intenta en la próxima vuelta (12 s).
     const ocupado = Q.activo || (document.activeElement && /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName) && !document.hidden);
-    if (e !== ETAG_INICIAL && !ocupado) {
+    if (e !== ETAG_INICIAL && !NUEVA_DESDE) NUEVA_DESDE = Date.now();
+    if (e !== ETAG_INICIAL && (!ocupado || Date.now() - NUEVA_DESDE > 60000)) {
       try { sessionStorage.setItem("lab_actualizada", "1"); } catch (err) { }
       location.reload();
     }
@@ -3041,7 +3042,8 @@ function enviarAvance() {
     intentos: ST.intentos || {},
     bloque: BLOQUE_ACTUAL,
     repaso: ST.quiz ? { aciertos: ST.quiz.aciertos, total: ST.quiz.total } : null,
-    integ: ST.integ || null
+    integ: ST.integ || null,
+    v: LAB_VERSION
   }).catch(function () { });
 }
 const NOMBRE_BLOQUE = { inicio: "Inicio", b0: "Bloque 0", b1: "Bloque 1", b2: "Bloque 2", b3: "Bloque 3", b4: "Bloque 4", ex: "Repaso", equipo: "Tarjeta", uso: "Guía" };
@@ -3082,7 +3084,9 @@ function pintarAvance() {
   h += "<div style='overflow-x:auto'><table class='acta'><tr><th>Alumno</th><th>Dónde está</th><th>Resueltos</th><th>Trabado en</th><th>Repaso</th><th>Atención</th><th>Última actividad</th></tr>";
   filas.forEach(function (f) {
     const inactivo = f.seg === null || f.seg > 150;
-    h += "<tr style='" + (inactivo ? "opacity:.55" : "") + "'><td><b>" + esc(f.a.nombre) + "</b></td>"
+    const vieja = f.av && f.av.v !== LAB_VERSION;
+    h += "<tr style='" + (inactivo ? "opacity:.55" : "") + "'><td><b>" + esc(f.a.nombre) + "</b>"
+      + (vieja ? "<br><span style='color:#be123c;font-size:12px;font-weight:600'>⚠ página vieja: que recargue (F5)</span>" : "") + "</td>"
       + "<td>" + (f.av ? (NOMBRE_BLOQUE[f.av.bloque] || "—") : "—") + "</td>"
       + "<td style='min-width:130px'><div style='display:flex;align-items:center;gap:6px'><div style='flex:1;height:7px;border-radius:4px;background:var(--line)'><div style='height:7px;border-radius:4px;background:var(--accent);width:" + Math.round(f.n / T * 100) + "%'></div></div><span class='n'>" + f.n + "/" + T + "</span></div></td>"
       + "<td>" + (f.trabado.length ? "<span style='color:#be123c;font-weight:600'>" + esc(f.trabado.join(", ")) + "</span>" : "—") + "</td>"

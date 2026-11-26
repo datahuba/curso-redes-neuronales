@@ -209,6 +209,9 @@ def main():
         "  n: %d,\n  d: %d,\n  train: %d,\n"
         '  hex: "%s",\n  y: "%s"\n};\n' % (len(X), D, ENTRENAR, hex_datos, etiquetas)
     )
+    # versión de esta compilación: el panel docente marca a quien sigue con una página vieja
+    import time
+    datos_js += 'const LAB_VERSION = "%s";\n' % time.strftime("%Y%m%d%H%M%S")
 
     with open(PLANTILLA, encoding="utf-8") as f:
         html = f.read()
