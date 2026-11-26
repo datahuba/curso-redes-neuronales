@@ -2860,6 +2860,43 @@ function iniciarRegistro() {
   }
 }
 
+/* ===================== lo escrito sobrevive a la recarga ===================== */
+/* Las respuestas de los ejercicios (in-*), las opciones (q25, q35, q42) y los deslizadores
+   se guardan al escribir y se vuelven a poner al abrir la página. */
+const CAMPOS_RANGO = ["and-w1", "and-w2", "and-b", "xor-ang", "xor-pos", "sig-z", "gd-eta", "p01-eta", "p35-eta", "sg-eta", "sm-eta", "xo-eta", "gen-n"];
+function claveCampo(el) {
+  if (!el || !el.closest || !el.closest("main") || el.closest("#quiz-box")) return null;
+  if (el.type === "radio") return /^q\d+$/.test(el.name) ? "r:" + el.name : null;
+  if (/^in-/.test(el.id) || CAMPOS_RANGO.indexOf(el.id) >= 0) return el.id;
+  return null;
+}
+document.addEventListener("input", guardarCampo);
+document.addEventListener("change", guardarCampo);
+function guardarCampo(e) {
+  const k = claveCampo(e.target); if (!k) return;
+  ST.campos = ST.campos || {};
+  ST.campos[k] = e.target.value;
+  guardar();
+}
+function restaurarCampos() {
+  const c = ST.campos || {};
+  Object.keys(c).forEach(function (k) {
+    if (k.indexOf("r:") === 0) {
+      const r = document.querySelector("input[name='" + k.slice(2) + "'][value='" + String(c[k]).replace(/[^\w]/g, "") + "']");
+      if (r) r.checked = true;
+      return;
+    }
+    const el = document.getElementById(k);
+    if (!el) return;
+    el.value = c[k];
+    if (CAMPOS_RANGO.indexOf(k) >= 0) el.dispatchEvent(new Event("input"));   // redibuja el widget
+  });
+  // los que ya estaban resueltos muestran su aviso otra vez
+  Object.keys(ST.done).forEach(function (id) {
+    if (ST.done[id]) feedback(id, true, "✓ Ya lo resolviste. Tu respuesta quedó guardada.", "good");
+  });
+}
+
 /* ===================== avance en vivo ===================== */
 let BLOQUE_ACTUAL = "inicio", timerAvance = null, PANEL = null;
 function avisarAvance() {
@@ -3009,6 +3046,7 @@ function init() {
   // restaurar el estado visual de lo que ya se habia resuelto
   Object.keys(ST.done).forEach(function (id) { if (ST.done[id]) marcar(id, true); });
   $$("details.sol").forEach(function (d) { pintarCandado(d.getAttribute("data-sol")); });
+  restaurarCampos();
   if (ST.tamano) $("#team-size").value = ST.tamano;
   pintarMiembros(); pintarGen(); pintarFase(); iniciarRegistro();
   pintarProgreso(); pintarTarjeta(); pintarLog(); scrollspy();
