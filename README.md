@@ -22,6 +22,7 @@ Material del curso: guías, notas, prácticas y notebooks para entender cómo fu
 | `docs/practica_03.py` … `docs/practica_07.py` | Prácticas de las clases 3 a 7 (añadir `--graficar` para ver las gráficas) |
 | [`notebooks/`](notebooks/) | 17 ejercicios de apoyo en Jupyter (opcionales, para reforzar cada tema) |
 | [`docs/guias_notebooks/`](docs/guias_notebooks/README.md) | **Una guía paso a paso por cada notebook**, con pistas y valores para comprobar (PDF en `entregables/`) |
+| [`docs/lab/`](docs/lab/) | **Laboratorio interactivo (tema 3):** clase práctica guiada en una página web: teoría corta, ejemplo resuelto y 21 ejercicios con simuladores y datos reales de MNIST. Sin internet, sin instalar nada. En línea: https://lab.datahuba.com |
 | [`tools/`](tools/) | Scripts que generan los notebooks del proyecto (`build_proyecto.py`), las diapositivas (`build_decks.py`, `export_pdf.ps1`) y los PDF (`md_to_pdf.py`, `build_curso_pdf.py`) |
 
 ## Inicio rápido

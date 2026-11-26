@@ -1,0 +1,2692 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Laboratorio interactivo del curso de Introducción a las Redes Neuronales: de la primera neurona (perceptrón) a la primera red, con datos reales de MNIST. Funciona sin internet.">
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M12 11 21 15M12 21 21 17' stroke='%2310b981' stroke-width='2' fill='none'/%3E%3Ccircle cx='9' cy='8' r='4' fill='%2310b981'/%3E%3Ccircle cx='23' cy='16' r='4' fill='%2310b981'/%3E%3Ccircle cx='9' cy='24' r='4' fill='%2310b981'/%3E%3C/svg%3E">
+<title>Laboratorio interactivo · De la primera neurona a la primera red</title>
+<style>
+/* Fuentes locales: la pagina no depende de Google Fonts, asi que funciona sin
+   internet y en aulas donde Google esta bloqueado. Si las fuentes no aparecen
+   (copia descargada sin la carpeta /fuentes), cae a Segoe UI sin romper nada. */
+@font-face{font-family:'Outfit';font-style:normal;font-weight:300;font-display:swap;
+  src:url('./fuentes/outfit-latin.woff2') format('woff2');
+  unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;}
+@font-face{font-family:'Outfit';font-style:normal;font-weight:400;font-display:swap;
+  src:url('./fuentes/outfit-latin.woff2') format('woff2');
+  unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;}
+@font-face{font-family:'Outfit';font-style:normal;font-weight:500;font-display:swap;
+  src:url('./fuentes/outfit-latin.woff2') format('woff2');
+  unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;}
+@font-face{font-family:'Outfit';font-style:normal;font-weight:600;font-display:swap;
+  src:url('./fuentes/outfit-latin.woff2') format('woff2');
+  unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;}
+@font-face{font-family:'Outfit';font-style:normal;font-weight:700;font-display:swap;
+  src:url('./fuentes/outfit-latin.woff2') format('woff2');
+  unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;}
+@font-face{font-family:'JetBrains Mono';font-style:normal;font-weight:400;font-display:swap;
+  src:url('./fuentes/jetbrains-mono-latin.woff2') format('woff2');
+  unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;}
+@font-face{font-family:'JetBrains Mono';font-style:normal;font-weight:500;font-display:swap;
+  src:url('./fuentes/jetbrains-mono-latin.woff2') format('woff2');
+  unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;}
+</style>
+<style>
+:root{
+  --bg:#fafaf9; --card:#fff; --line:#e7e5e0; --line-soft:#f2f1ee;
+  --ink:#14171e; --ink2:#3a4256; --muted:#7c7a72;
+  --accent:#10b981; --accent-soft:rgba(16,185,129,.10); --accent-line:rgba(16,185,129,.35);
+  --warn:#f59e0b; --warn-soft:rgba(245,158,11,.12);
+  --bad:#f43f5e; --bad-soft:rgba(244,63,94,.10);
+  --r:16px; --sh:0 2px 8px rgba(0,0,0,.04); --shh:0 4px 16px -2px rgba(0,0,0,.07);
+  --fs:1;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0; background:var(--bg); color:var(--ink);
+  font-family:'Outfit','Segoe UI',system-ui,sans-serif;
+  font-size:calc(15px * var(--fs)); line-height:1.6; -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3{line-height:1.25; margin:0; font-weight:600; letter-spacing:-.01em}
+p{margin:0}
+a{color:inherit}
+.wrap{max-width:1040px; margin:0 auto; padding:0 24px}
+.skip{position:absolute; left:-9999px}
+.skip:focus{left:12px; top:12px; background:var(--card); padding:10px 14px; border-radius:10px; z-index:99}
+
+/* ---------- header ---------- */
+.top{background:var(--card); border-bottom:1px solid var(--line); position:relative; z-index:20}
+.top-in{display:flex; align-items:center; justify-content:space-between; gap:28px; padding:16px 24px; flex-wrap:wrap}
+.brand{display:flex; align-items:center; gap:14px; min-width:0}
+.logo{width:42px; height:42px; border-radius:12px; background:var(--accent-soft); display:grid; place-items:center; color:var(--accent); flex:0 0 auto}
+.brand h1{font-size:calc(19px * var(--fs))}
+.brand p{color:var(--muted); font-size:calc(12.5px * var(--fs)); margin-top:2px}
+.tools{display:flex; align-items:center; gap:10px; flex-wrap:wrap}
+.prog{min-width:172px}
+.prog-top{display:flex; justify-content:space-between; font-size:12px; color:var(--muted); margin-bottom:5px}
+.prog-top strong{color:var(--ink); font-weight:600; font-variant-numeric:tabular-nums}
+.bar{height:7px; background:var(--line-soft); border-radius:99px; overflow:hidden}
+.bar i{display:block; height:100%; width:0%; background:var(--accent); border-radius:99px; transition:width .35s ease}
+
+/* ---------- botones ---------- */
+.btn{
+  font:inherit; font-size:calc(13.5px * var(--fs)); font-weight:500;
+  border:1px solid transparent; border-radius:10px; padding:8px 14px; cursor:pointer;
+  background:var(--accent); color:#fff; display:inline-flex; align-items:center; gap:7px;
+  transition:transform .18s ease, box-shadow .18s ease, background .18s ease;
+}
+.btn:hover{transform:translateY(-1px); box-shadow:var(--shh)}
+.btn:active{transform:translateY(0)}
+.btn.ghost{background:var(--card); color:var(--ink2); border-color:var(--line)}
+.btn.ghost:hover{border-color:var(--accent-line); color:var(--accent)}
+.btn.sm{padding:5px 11px; font-size:calc(12.5px * var(--fs))}
+.btn svg{width:16px; height:16px; flex:0 0 auto}
+.btn[disabled]{opacity:.45; cursor:not-allowed; transform:none; box-shadow:none}
+:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+
+/* ---------- nav ---------- */
+.nav{position:sticky; top:0; background:rgba(250,250,249,.92); backdrop-filter:blur(8px); border-bottom:1px solid var(--line); z-index:15}
+.nav-in{display:flex; gap:4px; overflow-x:auto; padding:8px 24px; scrollbar-width:none}
+.nav-in::-webkit-scrollbar{display:none}
+.fase-line{display:flex; gap:10px; align-items:center; padding:0 24px 9px; font-size:calc(12.5px * var(--fs)); color:var(--ink2)}
+.fase-line b{color:var(--ink); font-weight:600}
+@media (max-width:860px){ .fase-line{padding:0 20px 9px} }
+.nav a{
+  display:flex; align-items:center; gap:8px; padding:7px 13px; border-radius:99px;
+  text-decoration:none; color:var(--ink2); font-size:calc(13.5px * var(--fs)); font-weight:500; white-space:nowrap;
+}
+.nav a:hover{background:var(--accent-soft); color:var(--accent)}
+.nav a.on{background:var(--ink); color:#fff}
+.nav .n{
+  width:20px; height:20px; border-radius:50%; background:var(--line-soft); color:var(--ink2);
+  display:grid; place-items:center; font-size:11px; font-weight:600; flex:0 0 auto
+}
+.nav a.on .n{background:rgba(255,255,255,.22); color:#fff}
+.nav a.done .n{background:var(--accent); color:#fff}
+
+/* ---------- bloques ---------- */
+.bloque{padding:52px 0 12px; scroll-margin-top:64px}
+.bloque-head{display:grid; grid-template-columns:44px 1fr auto; gap:16px; align-items:start; margin-bottom:26px}
+.bloque-num{
+  width:44px; height:44px; border-radius:14px; background:var(--ink); color:#fff;
+  display:grid; place-items:center; font-weight:600; font-size:18px
+}
+.bloque-head h2{font-size:calc(23px * var(--fs))}
+.bloque-head .sub{color:var(--muted); font-size:calc(13.5px * var(--fs)); margin-top:3px}
+.bloque-time{display:flex; align-items:center; gap:6px; color:var(--muted); font-size:calc(12.5px * var(--fs)); border:1px solid var(--line); border-radius:99px; padding:5px 12px; background:var(--card)}
+.bloque-time svg{width:14px; height:14px}
+
+/* ---------- ejercicio ---------- */
+.ex{
+  background:var(--card); border:1px solid var(--line); border-radius:var(--r);
+  padding:22px; margin-bottom:16px; box-shadow:var(--sh);
+  transition:box-shadow .2s ease, border-color .2s ease;
+}
+.ex:hover{box-shadow:var(--shh)}
+.ex.ok{border-color:var(--accent-line)}
+.ex-head{display:flex; align-items:center; gap:11px; margin-bottom:10px; flex-wrap:wrap}
+.ex-num{
+  font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:500; color:var(--accent);
+  background:var(--accent-soft); padding:3px 9px; border-radius:7px
+}
+.ex-head h3{font-size:calc(16.5px * var(--fs)); flex:1 1 260px}
+.chip{font-size:11.5px; font-weight:600; padding:3px 10px; border-radius:99px; background:var(--line-soft); color:var(--muted); letter-spacing:.02em}
+.chip.ok{background:var(--accent-soft); color:#047857}
+.chip.no{background:var(--bad-soft); color:#be123c}
+.ex-text{color:var(--ink2); font-size:calc(14px * var(--fs)); margin-bottom:14px}
+.ex-text b{color:var(--ink); font-weight:600}
+.ver{
+  display:flex; gap:9px; align-items:flex-start; background:var(--accent-soft);
+  border-radius:11px; padding:11px 14px; margin:12px 0 0; font-size:calc(13px * var(--fs)); color:#065f46
+}
+.ver svg{width:16px; height:16px; flex:0 0 auto; margin-top:2px}
+.ver b{font-weight:600}
+.ex-actions{display:flex; gap:9px; margin-top:14px; flex-wrap:wrap; align-items:center}
+.fb{margin-top:12px; border-radius:11px; padding:0; font-size:calc(13.5px * var(--fs)); display:none}
+.fb.show{display:block; animation:pop .25s ease}
+.fb.good{background:var(--accent-soft); color:#065f46; padding:11px 14px}
+.fb.bad{background:var(--bad-soft); color:#9f1239; padding:11px 14px}
+.fb.info{background:var(--warn-soft); color:#92400e; padding:11px 14px}
+@keyframes pop{from{opacity:0; transform:translateY(-4px)}to{opacity:1; transform:none}}
+details.sol{margin-top:12px; border-top:1px dashed var(--line); padding-top:11px}
+details.sol summary{cursor:pointer; font-size:calc(13px * var(--fs)); color:var(--muted); font-weight:500; list-style:none; display:flex; align-items:center; gap:7px}
+details.sol summary::-webkit-details-marker{display:none}
+details.sol summary::before{content:""; width:0; height:0; border-left:5px solid currentColor; border-top:4px solid transparent; border-bottom:4px solid transparent; transition:transform .2s}
+details.sol[open] summary::before{transform:rotate(90deg)}
+details.sol summary:hover{color:var(--accent)}
+.sol-body{margin-top:10px; font-size:calc(13.5px * var(--fs)); color:var(--ink2)}
+.sol-body code{font-family:'JetBrains Mono',monospace; font-size:.92em; background:var(--line-soft); padding:1px 6px; border-radius:5px}
+
+/* ---------- inputs ---------- */
+.field{display:inline-flex; align-items:center; gap:7px; font-size:calc(13px * var(--fs)); color:var(--ink2)}
+.field b{font-weight:600}
+input[type=text],input[type=number],select,textarea{
+  font:inherit; font-size:calc(13.5px * var(--fs)); color:var(--ink);
+  border:1px solid var(--line); border-radius:9px; padding:7px 11px; background:var(--card);
+  transition:border-color .18s ease, box-shadow .18s ease; width:100%;
+}
+input[type=number]{width:92px; font-family:'JetBrains Mono',monospace}
+textarea{resize:vertical; min-height:76px; font-family:'Outfit',sans-serif; line-height:1.55}
+input:focus,select:focus,textarea:focus{outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft)}
+input.ok{border-color:var(--accent); background:var(--accent-soft)}
+input.no{border-color:var(--bad); background:var(--bad-soft)}
+input[type=range]{
+  -webkit-appearance:none; appearance:none; width:100%; height:4px; border-radius:99px;
+  background:var(--line); outline:none; cursor:pointer; margin:9px 0;
+}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none; appearance:none; width:17px; height:17px; border-radius:50%;
+  background:var(--accent); border:3px solid #fff; box-shadow:0 1px 5px rgba(0,0,0,.18); cursor:pointer;
+}
+input[type=range]::-moz-range-thumb{
+  width:13px; height:13px; border-radius:50%; background:var(--accent);
+  border:3px solid #fff; box-shadow:0 1px 5px rgba(0,0,0,.18); cursor:pointer;
+}
+input[type=range]:focus-visible{outline:2px solid var(--accent); outline-offset:4px}
+.opts{display:grid; gap:8px; margin:4px 0 2px}
+.opt{
+  display:flex; gap:10px; align-items:flex-start; padding:10px 13px; border:1px solid var(--line);
+  border-radius:11px; cursor:pointer; font-size:calc(13.5px * var(--fs)); background:var(--card);
+  transition:border-color .18s ease, background .18s ease
+}
+.opt:hover{border-color:var(--accent-line); background:var(--accent-soft)}
+.opt input{margin:3px 0 0; accent-color:var(--accent)}
+.opt.sel{border-color:var(--accent); background:var(--accent-soft)}
+.opt.ok{border-color:var(--accent); background:var(--accent-soft)}
+.opt.no{border-color:var(--bad); background:var(--bad-soft)}
+.opts.locked .opt{cursor:default}
+
+/* ---------- widget ---------- */
+.widget{background:var(--line-soft); border-radius:13px; padding:15px; margin:4px 0 2px}
+.widget-bar{display:flex; gap:9px; align-items:center; flex-wrap:wrap; margin-bottom:13px}
+.grid-2{display:grid; grid-template-columns:1.35fr 1fr; gap:14px; align-items:start}
+.grid-2.rev{grid-template-columns:1fr 1.35fr}
+.chart{background:var(--card); border:1px solid var(--line); border-radius:11px; padding:10px}
+.chart svg{display:block; width:100%; height:auto}
+.readout{background:var(--card); border:1px solid var(--line); border-radius:11px; padding:13px; font-size:calc(13px * var(--fs)); color:var(--ink2)}
+.readout h4{font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); font-weight:600; margin:0 0 8px}
+.kv{display:grid; grid-template-columns:auto 1fr; gap:6px 14px}
+.kv dt{color:var(--muted)}
+.kv dd{margin:0; font-family:'JetBrains Mono',monospace; color:var(--ink); font-variant-numeric:tabular-nums}
+.big{font-size:calc(26px * var(--fs)); font-weight:600; letter-spacing:-.02em; font-variant-numeric:tabular-nums; line-height:1.1}
+.big small{font-size:.5em; font-weight:500; color:var(--muted)}
+.tag{display:inline-flex; align-items:center; gap:6px; font-size:11.5px; font-weight:600; padding:3px 10px; border-radius:99px}
+.tag.ok{background:var(--accent-soft); color:#047857}
+.tag.no{background:var(--bad-soft); color:#be123c}
+.tag.mid{background:var(--warn-soft); color:#92400e}
+.mono{font-family:'JetBrains Mono',monospace}
+.digits{display:flex; gap:9px; flex-wrap:wrap; margin-top:10px}
+.dig{text-align:center}
+.dig canvas{width:56px; height:56px; border-radius:8px; border:1px solid var(--line); image-rendering:pixelated; background:#fff; display:block}
+.dig span{display:block; font-size:11px; color:var(--muted); margin-top:4px; font-family:'JetBrains Mono',monospace}
+.dig b{color:var(--ink); font-size:11.5px}
+.dig.ok b{color:#047857}
+.dig.no b{color:#be123c}
+.matrix{border-collapse:collapse; font-family:'JetBrains Mono',monospace; font-size:12.5px}
+.matrix th,.matrix td{border:1px solid var(--line); padding:5px 9px; text-align:center}
+.matrix th{background:var(--line-soft); color:var(--muted); font-weight:600}
+.matrix td.diag{background:var(--accent-soft); color:#047857; font-weight:600}
+.matrix td.off{color:#be123c}
+.note{font-size:12.5px; color:var(--muted); margin-top:9px; line-height:1.5}
+.code{
+  font-family:'JetBrains Mono',monospace; font-size:12.5px; background:#1b1c22; color:#e6e6e6;
+  border-radius:10px; padding:13px 15px; overflow-x:auto; line-height:1.65; white-space:pre
+}
+.code .c{color:#7d8590}
+.code .k{color:#7ee2b8}
+.code .n{color:#f0b67f}
+.code .s{color:#9ecbff}
+
+/* ---------- quiz ---------- */
+.qbox{background:var(--card); border:1px solid var(--line); border-radius:var(--r); padding:24px; box-shadow:var(--sh)}
+.qhead{display:flex; justify-content:space-between; align-items:center; gap:14px; margin-bottom:18px; flex-wrap:wrap}
+.qmeta{display:flex; gap:8px; align-items:center; color:var(--muted); font-size:13px}
+.qnum{font-family:'JetBrains Mono',monospace; color:var(--accent); font-weight:500}
+.qtext{font-size:calc(16px * var(--fs)); color:var(--ink); margin-bottom:14px; font-weight:500}
+.qres{margin-top:16px; padding-top:16px; border-top:1px dashed var(--line)}
+table.resp{width:100%; border-collapse:collapse; font-size:13.5px}
+table.resp th{text-align:left; color:var(--muted); font-weight:600; padding:8px 10px; border-bottom:1px solid var(--line)}
+table.resp td{padding:9px 10px; border-bottom:1px solid var(--line-soft); vertical-align:top}
+table.resp td.r{font-family:'JetBrains Mono',monospace}
+
+/* ---------- generalizacion (bloque 3.6) ---------- */
+.gen{display:grid; gap:10px; margin-top:4px}
+.gen-row{display:grid; grid-template-columns:78px 1fr 1fr; gap:12px; align-items:center; font-size:calc(12.5px * var(--fs))}
+.gen-n{font-family:'JetBrains Mono',monospace; font-weight:500; color:var(--ink)}
+.gen-bar{height:16px; background:var(--line-soft); border-radius:6px; overflow:hidden; position:relative}
+.gen-bar i{display:block; height:100%; border-radius:6px; transition:width .5s ease}
+.gen-bar.tren i{background:var(--accent)}
+.gen-bar.exa i{background:#f59e0b}
+.gen-bar span{position:absolute; right:6px; top:-1px; font-size:11px; font-family:'JetBrains Mono',monospace; color:var(--ink2)}
+.gen-head{display:grid; grid-template-columns:78px 1fr 1fr; gap:12px; font-size:11px; text-transform:uppercase; letter-spacing:.05em; color:var(--muted)}
+.gen-gap{margin-top:10px; font-size:calc(12.5px * var(--fs)); color:var(--ink2)}
+
+/* ---------- modo prueba final ---------- */
+body.examen main > .bloque:not(#ex){display:none}
+body.examen .nav a:not([href="#ex"]){display:none}
+.exam-banner{
+  background:var(--ink); color:#fff; border-radius:var(--r); padding:18px 22px; margin-bottom:20px;
+  display:flex; gap:16px; align-items:center; flex-wrap:wrap
+}
+.exam-banner .tag-big{
+  font-size:11px; font-weight:700; letter-spacing:.1em; text-transform:uppercase;
+  background:rgba(255,255,255,.14); padding:5px 11px; border-radius:99px
+}
+.exam-banner h3{font-size:calc(19px * var(--fs)); margin:0}
+.exam-banner p{font-size:calc(13px * var(--fs)); color:rgba(255,255,255,.72); margin-top:3px}
+.exam-banner .spacer{flex:1}
+.nota-grande{font-size:calc(42px * var(--fs)); font-weight:600; letter-spacing:-.03em; line-height:1; font-variant-numeric:tabular-nums}
+.comprobante{
+  background:var(--line-soft); border:1px solid var(--line); border-radius:11px; padding:14px 16px;
+  font-family:'JetBrains Mono',monospace; font-size:12px; white-space:pre-wrap; line-height:1.6; color:var(--ink2)
+}
+.acta{width:100%; border-collapse:collapse; font-size:13px; margin-top:10px}
+.acta th{text-align:left; color:var(--muted); font-weight:600; font-size:11.5px; text-transform:uppercase; letter-spacing:.04em; padding:8px 10px; border-bottom:1px solid var(--line)}
+.acta td{padding:8px 10px; border-bottom:1px solid var(--line-soft)}
+.acta td.n{font-family:'JetBrains Mono',monospace}
+.acta .ok{color:#047857; font-weight:600}
+.acta .no{color:#be123c; font-weight:600}
+
+/* ---------- fases de trabajo (1 → 2 → 3 → 4) ---------- */
+.fases{display:flex; border:1px solid var(--line); border-radius:11px; overflow:hidden; background:var(--card)}
+.fases button{
+  font:inherit; font-size:calc(12px * var(--fs)); font-weight:600; letter-spacing:.01em;
+  border:0; border-right:1px solid var(--line); background:transparent; color:var(--muted);
+  padding:8px 12px; cursor:pointer; transition:background .18s, color .18s; white-space:nowrap
+}
+.fases button:last-child{border-right:0}
+.fases button:hover{background:var(--accent-soft); color:var(--accent)}
+.fases button.on{background:var(--ink); color:#fff}
+.fase-badge{
+  font-size:10px; font-weight:700; letter-spacing:.05em; text-transform:uppercase;
+  padding:3px 9px; border-radius:99px; background:var(--line-soft); color:var(--muted); white-space:nowrap
+}
+.fase-badge.solo{background:rgba(20,23,30,.07); color:var(--ink2)}
+.fase-badge.pares{background:rgba(16,185,129,.13); color:#047857}
+.fase-badge.trios{background:rgba(245,158,11,.16); color:#b45309}
+.fase-badge.cuartos{background:rgba(244,63,94,.11); color:#be123c}
+.fase-guide{
+  display:flex; gap:10px; align-items:flex-start; background:var(--line-soft);
+  border-radius:11px; padding:10px 13px; margin:10px 0 0; font-size:calc(12.5px * var(--fs)); color:var(--ink2)
+}
+.fase-guide b{color:var(--ink); font-weight:600}
+.fase-pill{
+  font-size:10.5px; font-weight:700; letter-spacing:.06em; text-transform:uppercase;
+  padding:3px 8px; border-radius:6px; background:var(--ink); color:#fff; flex:0 0 auto
+}
+
+/* ---------- tarjeta de equipo ---------- */
+.card-team{
+  background:linear-gradient(180deg,#fff, #fbfbfa); border:1px solid var(--line);
+  border-radius:var(--r); padding:26px; box-shadow:var(--sh)
+}
+.card-team h3{font-size:calc(19px * var(--fs)); margin-bottom:4px}
+.card-team .team-name{font-size:calc(24px * var(--fs)); font-weight:600; color:var(--accent); letter-spacing:-.02em; margin-bottom:16px}
+.grid-stats{display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:14px; margin:18px 0}
+.stat{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px}
+.stat .v{font-size:calc(22px * var(--fs)); font-weight:600; letter-spacing:-.02em; font-variant-numeric:tabular-nums}
+.stat .l{font-size:12px; color:var(--muted); margin-top:1px}
+
+/* ---------- modal ---------- */
+.modal{position:fixed; inset:0; background:rgba(20,23,30,.45); display:grid; place-items:center; padding:20px; z-index:60; backdrop-filter:blur(3px)}
+.modal[hidden]{display:none}
+.sheet{background:var(--card); border-radius:18px; max-width:520px; width:100%; padding:26px; box-shadow:0 20px 60px rgba(0,0,0,.22); max-height:86vh; overflow:auto}
+.sheet h3{font-size:18px; margin-bottom:8px}
+.sheet p{color:var(--ink2); font-size:14px; margin-bottom:14px}
+.sheet .row{display:flex; gap:9px; justify-content:flex-end; margin-top:16px; flex-wrap:wrap}
+
+/* ---------- footer ---------- */
+.foot{border-top:1px solid var(--line); margin-top:60px; padding:28px 0 44px; color:var(--muted); font-size:13px}
+.foot strong{color:var(--ink2); font-weight:600}
+.foot-grid{display:grid; grid-template-columns:1.4fr 1fr 1fr; gap:26px; margin-bottom:22px}
+.foot h4{font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin:0 0 8px; font-weight:600}
+.foot ul{list-style:none; padding:0; margin:0; display:grid; gap:5px}
+.foot a{color:var(--ink2); text-decoration:none}
+.foot a:hover{color:var(--accent)}
+
+/* ---------- guía de cada bloque (clase guiada) ---------- */
+.guia{border:1px solid var(--line); border-radius:16px; background:var(--card,#fff); padding:20px 22px; margin:0 0 22px; display:grid; gap:16px}
+.guia h4{font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin:0 0 8px; font-weight:600}
+.guia p,.guia li{font-size:calc(14.5px * var(--fs,1)); line-height:1.6; color:var(--ink2)}
+.guia p{margin:0 0 6px}
+.guia ul,.guia ol{margin:0; padding-left:20px; display:grid; gap:4px}
+.guia-fase{border-radius:12px; padding:12px 14px; background:rgba(20,23,30,.05)}
+.guia-fase.pares{background:rgba(16,185,129,.10)}
+.guia-fase.trios{background:rgba(245,158,11,.12)}
+.guia-fase.cuartos{background:rgba(244,63,94,.09)}
+.guia-ej{border-left:3px solid var(--accent,#10b981); padding:4px 0 4px 14px}
+.guia-ej code,.guia code{font-family:"JetBrains Mono",ui-monospace,monospace; font-size:.92em}
+.guia-ayuda{font-size:13px; color:var(--muted)}
+details.sol.bloqueada > summary{color:var(--muted); cursor:not-allowed}
+
+@media (max-width:860px){
+  .grid-2,.grid-2.rev{grid-template-columns:1fr}
+  .foot-grid{grid-template-columns:1fr}
+  .bloque-head{grid-template-columns:44px 1fr; }
+  .bloque-time{grid-column:2}
+  .top-in{padding:14px 20px}
+  .wrap{padding:0 20px}
+  .ex{padding:18px}
+}
+@media print{
+  .top,.nav,.ex-actions,.widget-bar,.btn,.foot a{display:none !important}
+  body{background:#fff}
+  .ex{break-inside:avoid; box-shadow:none}
+}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Saltar al contenido</a>
+
+<header class="top">
+  <div class="wrap top-in">
+    <div class="brand">
+      <span class="logo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="22" height="22">
+          <circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="12" r="2.5"/><circle cx="6" cy="18" r="2.5"/>
+          <path d="M8.2 7.3 15.6 11M8.2 16.7 15.6 13"/>
+        </svg>
+      </span>
+      <div>
+        <h1>Laboratorio interactivo</h1>
+        <p>De la primera neurona a la primera red · clase práctica guiada</p>
+      </div>
+    </div>
+    <div class="tools">
+      <div class="prog">
+        <div class="prog-top"><span>Avance del equipo</span><strong id="progTxt">0 / 0</strong></div>
+        <div class="bar"><i id="progBar"></i></div>
+      </div>
+      <button class="btn ghost sm" id="btnDescargar" title="Guarda esta pagina en tu compu para trabajar sin internet">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 11 5 5 5-5"/><path d="M5 21h14"/></svg>
+        Descargar
+      </button>
+      <button class="btn ghost sm" id="btnTimer" title="Temporizador de bloque">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9 2h6"/></svg>
+        Cronómetro
+      </button>
+    </div>
+  </div>
+</header>
+
+<nav class="nav">
+  <div class="wrap nav-in">
+    <a href="#inicio"><span class="n">★</span> Cómo funciona</a>
+    <a href="#b0"><span class="n">0</span> La neurona</a>
+    <a href="#b1"><span class="n">1</span> La sigmoide</a>
+    <a href="#b2"><span class="n">2</span> Bajar la montaña</a>
+    <a href="#b3"><span class="n">3</span> Tu primera red</a>
+    <a href="#b4"><span class="n">4</span> Reto XOR</a>
+    <a href="#ex"><span class="n">5</span> Repaso final</a>
+    <a href="#equipo"><span class="n">6</span> Tarjeta de equipo</a>
+  </div>
+  <div class="wrap fase-line">
+    <span class="fase-pill" id="fase-pill">SOLO</span>
+    <span id="fase-texto"><b>Cada uno por su lado.</b> Resuelve y anota tu respuesta antes de hablar con nadie.</span>
+  </div>
+</nav>
+
+<main id="main" class="wrap">
+
+<!-- ===================== CÓMO FUNCIONA ===================== -->
+<section id="inicio" class="bloque" data-fase="solo">
+  <header class="bloque-head">
+    <div class="bloque-num">★</div>
+    <div>
+      <h2>Cómo funciona esta clase</h2>
+      <p class="sub">No es un examen: es una clase práctica. La página te explica, te muestra un ejemplo y después lo haces tú.</p>
+    </div>
+  </header>
+  <div class="guia">
+    <div>
+      <h4>El camino de hoy: de una neurona a una red, y de trabajar solo a trabajar en equipo</h4>
+      <ol>
+        <li><b>Bloque 0 · Solo</b> (35 min): la neurona y el perceptrón. Cada uno en su laptop, sin hablar.</li>
+        <li><b>Bloque 1 · En pares</b> (30 min): la sigmoide. Comparas lo del bloque 0 con tu pareja y siguen juntos.</li>
+        <li><b>Bloque 2 · En tríos</b> (30 min): descenso por gradiente. Se juntan de a tres.</li>
+        <li><b>Bloques 3 y 4 · En grupos de 4</b> (80 min): tu primera red con dígitos reales y el reto XOR.</li>
+        <li><b>Repaso final · En grupos de 4</b> (15 min): preguntas de todo el tema, sin nota, para ver qué repasar.</li>
+      </ol>
+    </div>
+    <div>
+      <h4>En cada bloque, siempre igual</h4>
+      <ol>
+        <li><b>Lee «Lo que necesitas saber»</b>: la teoría justa, en pocas líneas.</li>
+        <li><b>Mira el ejemplo resuelto</b>: es el mismo tipo de cuenta que vas a hacer.</li>
+        <li><b>Haz los ejercicios en orden</b> y pulsa <b>Comprobar</b>. Si fallas, la página te da una pista para seguir.</li>
+        <li><b>Abre «Respuesta y explicación»</b> cuando quieras: está para aprender, no para hacer trampa.</li>
+      </ol>
+    </div>
+    <p class="guia-ayuda">¿Te trabaste? 1) Relee el ejemplo resuelto. 2) Pulsa <b>Pista</b>. 3) Pregunta a tu grupo. 4) Levanta la mano. El progreso se guarda solo en este navegador.</p>
+  </div>
+</section>
+
+<!-- ===================== BLOQUE 0 ===================== -->
+<section id="b0" class="bloque" data-fase="solo">
+  <header class="bloque-head">
+    <div class="bloque-num">0</div>
+    <div>
+      <h2>La neurona que aprende de sus errores</h2>
+      <p class="sub">McCulloch-Pitts (1943) y el perceptrón de Rosenblatt (1958)</p>
+    </div>
+    <div class="bloque-time"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9 2h6"/></svg><span data-min="b0">35 min</span></div>
+  </header>
+
+  <div class="guia">
+    <div class="guia-fase solo"><b>Fase 1 · Solo.</b> Cada uno en su laptop, sin hablar con nadie. Anota tus respuestas en un papel: en el bloque 1 las vas a comparar con tu pareja. Aquí se trata de pensar por tu cuenta antes de discutir.</div>
+    <div>
+      <h4>Lo que necesitas saber</h4>
+      <ul>
+        <li>Una neurona artificial recibe entradas <code>x₁, x₂, …</code>, multiplica cada una por un <b>peso</b> <code>wᵢ</code>, suma todo y añade un <b>sesgo</b> <code>b</code>: <code>z = w·x + b</code>.</li>
+        <li><b>McCulloch-Pitts (1943):</b> entradas 0 o 1; se activa si la suma llega al <b>umbral θ</b>. Los pesos los pone una persona a mano: no aprende.</li>
+        <li><b>Perceptrón (Rosenblatt, 1958):</b> dice 1 si <code>z &gt; 0</code> y 0 si no. Y <b>aprende solo</b>: cada vez que se equivoca corrige <code>w ← w + η·(y − ŷ)·x</code> y <code>b ← b + η·(y − ŷ)</code>, donde <code>y</code> es la respuesta correcta, <code>ŷ</code> lo que dijo y <code>η</code> el tamaño del paso.</li>
+        <li>Si acierta, <code>y − ŷ = 0</code> y no cambia nada. Si x vale 0 en una entrada, ese peso tampoco cambia.</li>
+      </ul>
+    </div>
+    <div class="guia-ej">
+      <h4>Ejemplo resuelto</h4>
+      <p>Neurona con <code>w = [0.2, 0.2]</code>, <code>b = 0</code>, <code>η = 0.1</code>. Entrada <code>x = [0, 1]</code> y la respuesta correcta es <code>y = 0</code>.</p>
+      <p>1) <code>z = 0.2·0 + 0.2·1 + 0 = 0.2</code> → como 0.2 &gt; 0, dice <code>ŷ = 1</code>. Se equivocó.<br>
+      2) Error: <code>y − ŷ = 0 − 1 = −1</code>.<br>
+      3) <code>w₁ = 0.2 + 0.1·(−1)·0 = 0.2</code> (no cambia: su entrada era 0) · <code>w₂ = 0.2 + 0.1·(−1)·1 = 0.1</code> · <code>b = 0 + 0.1·(−1) = −0.1</code>.<br>
+      4) Comprobación: ahora <code>z = 0.1 − 0.1 = 0</code> → dice 0. Ya acierta.</p>
+    </div>
+  </div>
+
+  <article class="ex" data-id="0.1">
+    <div class="ex-head">
+      <span class="ex-num">0.1</span>
+      <span class="fase-badge solo">Solo</span>
+      <h3>El umbral de McCulloch-Pitts</h3>
+      <span class="chip" data-chip="0.1">pendiente</span>
+    </div>
+    <p class="ex-text">Una neurona de <b>3 entradas</b> (cada una 0 o 1) se activa cuando la suma de sus entradas alcanza un umbral θ. ¿Qué θ necesitas para que se active con <b>«al menos 2 de 3»</b>?</p>
+    <div class="ex-actions">
+      <label class="field">θ = <input type="number" id="in-0.1" step="1" value=""></label>
+      <button class="btn check" data-check="0.1">Comprobar</button>
+      <button class="btn ghost" data-hint="0.1">Pista</button>
+    </div>
+    <div class="fb" data-fb="0.1"></div>
+    <details class="sol" data-sol="0.1"><summary>Respuesta y explicación</summary>
+      <div class="sol-body">θ = <b>2</b>. Con θ=2 la neurona se activa con (1,1,0), (1,0,1), (0,1,1) y (1,1,1), pero no con (0,0,0), (1,0,0) ni (0,1,0). Con θ=1 se activaría con un solo 1 (eso es OR); con θ=3 solo con los tres (eso es AND).</div>
+    </details>
+  </article>
+
+  <article class="ex" data-id="0.2">
+    <div class="ex-head">
+      <span class="ex-num">0.2</span>
+      <span class="fase-badge solo">Solo</span>
+      <h3>Construye tú la compuerta AND</h3>
+      <span class="chip" data-chip="0.2">pendiente</span>
+    </div>
+    <p class="ex-text">Mueve los pesos <b>w₁</b> y <b>w₂</b> y el sesgo <b>b</b> hasta que la tabla de verdad dé 1 <b>solo</b> cuando las dos entradas son 1.</p>
+    <div class="widget">
+      <div class="widget-bar">
+        <label class="field">w₁ <input type="range" id="and-w1" min="-3" max="3" step="0.5" value="0"></label>
+        <label class="field">w₂ <input type="range" id="and-w2" min="-3" max="3" step="0.5" value="0"></label>
+        <label class="field">b <input type="range" id="and-b" min="-3" max="3" step="0.5" value="0"></label>
+        <button class="btn check" data-check="0.2">Comprobar</button>
+      </div>
+      <div class="grid-2">
+        <div class="chart"><table class="matrix" id="and-table"></table></div>
+        <div class="readout">
+          <h4>Regla de decisión</h4>
+          <div class="kv">
+            <dt>w · x + b</dt><dd id="and-z">0</dd>
+            <dt>Salida</dt><dd id="and-out">0</dd>
+          </div>
+          <p class="note" id="and-note">La neurona decide <b>1</b> si w·x + b &gt; 0.</p>
+        </div>
+      </div>
+    </div>
+    <div class="fb" data-fb="0.2"></div>
+    <details class="sol" data-sol="0.2"><summary>Respuesta y explicación</summary>
+      <div class="sol-body">Una solución clásica: <code>w = [1, 1]</code> y <code>b = −1.5</code> (así 1+1−1.5 = 0.5 &gt; 0, y cualquier otro caso es ≤ 0). Sirve cualquier <code>b</code> entre −2 y −1 (excluidos): lo que importa es el <b>signo</b> de z en cada fila, no los números exactos.</div>
+    </details>
+  </article>
+
+  <article class="ex" data-id="0.3">
+    <div class="ex-head">
+      <span class="ex-num">0.3</span>
+      <span class="fase-badge solo">Solo</span>
+      <h3>Un paso de la regla de Rosenblatt</h3>
+      <span class="chip" data-chip="0.3">pendiente</span>
+    </div>
+    <p class="ex-text">Situación: entrada <code>x = [1, 0, 1]</code>, pesos <code>w = [0, 0, 0]</code>, sesgo <code>b = 0</code>, tasa <code>η = 0.1</code>, respuesta correcta <code>y = 1</code>.<br>
+    La neurona dice <b>0</b> (porque 0 &gt; 0 es falso), así que se equivoca. ¿Cómo quedan los pesos <b>después</b> de corregir?</p>
+    <div class="ex-actions">
+      <label class="field">w₁ = <input type="number" id="in-0.3a" step="0.1" value=""></label>
+      <label class="field">w₂ = <input type="number" id="in-0.3b" step="0.1" value=""></label>
+      <label class="field">w₃ = <input type="number" id="in-0.3c" step="0.1" value=""></label>
+      <label class="field">b = <input type="number" id="in-0.3d" step="0.1" value=""></label>
+      <button class="btn check" data-check="0.3">Comprobar</button>
+      <button class="btn ghost" data-hint="0.3">Pista</button>
+    </div>
+    <div class="fb" data-fb="0.3"></div>
+    <details class="sol" data-sol="0.3"><summary>Respuesta y explicación</summary>
+      <div class="sol-body"><code>w ← w + η(y − ŷ)x</code>. Como ŷ=0 y y=1, el error es <b>+1</b>. Entonces w = [0,0,0] + 0.1·1·[1,0,1] = <b>[0.1, 0, 0.1]</b> y b = 0 + 0.1·1 = <b>0.1</b>.<br>
+      Fíjate: <b>solo cambian los pesos de los píxeles encendidos</b> (aquí x₁ y x₃), y hacia el lado que habría evitado el error. En la siguiente pasada z = 0.1+0.1+0.1 = 0.3 &gt; 0 → ya acierta.</div>
+    </details>
+  </article>
+
+  <article class="ex" data-id="0.4">
+    <div class="ex-head">
+      <span class="ex-num">0.4</span>
+      <span class="fase-badge solo">Solo</span>
+      <h3>Intenta separar XOR con una recta</h3>
+      <span class="chip" data-chip="0.4">pendiente</span>
+    </div>
+    <p class="ex-text">XOR tiene cuatro puntos: <b>(0,0)→0</b>, <b>(0,1)→1</b>, <b>(1,0)→1</b>, <b>(1,1)→0</b>. Arrastra la recta y trata de que acierte los cuatro. Tu tarea es <b>descubrir por qué no se puede</b>.</p>
+    <div class="widget">
+      <div class="widget-bar">
+        <label class="field">Giro <input type="range" id="xor-ang" min="0" max="180" step="1" value="45"></label>
+        <label class="field">Posición <input type="range" id="xor-pos" min="-1" max="2" step="0.05" value="0.5"></label>
+        <button class="btn check" data-check="0.4">¿Cuántos acierta?</button>
+      </div>
+      <div class="grid-2">
+        <div class="chart" id="xor-plot"></div>
+        <div class="readout">
+          <h4>Puntos</h4>
+          <div class="kv" id="xor-kv"></div>
+          <p class="note" id="xor-note"></p>
+        </div>
+      </div>
+    </div>
+    <div class="fb" data-fb="0.4"></div>
+    <details class="sol" data-sol="0.4"><summary>Respuesta y explicación</summary>
+      <div class="sol-body">No existe ninguna recta que separe los dos grupos: los puntos 0 y (1,1) están en esquinas opuestas, y los dos 1 en las otras. Si la recta deja a (0,0) y (1,1) del lado del 0, necesariamente deja a (0,1) o (1,0) también de ese lado (o los separa a ambos del 1). <b>XOR no es linealmente separable</b>, y por eso ninguna cantidad de épocas salva al perceptrón. Esto motivó las redes multicapa (Minsky y Papert, 1969).</div>
+    </details>
+  </article>
+</section>
+
+<!-- ===================== BLOQUE 1 ===================== -->
+<section id="b1" class="bloque" data-fase="pares">
+  <header class="bloque-head">
+    <div class="bloque-num">1</div>
+    <div>
+      <h2>La neurona moderna: de 0/1 a probabilidades</h2>
+      <p class="sub">Funciones de activación y la neurona que dice «80 % seguro»</p>
+    </div>
+    <div class="bloque-time"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9 2h6"/></svg><span data-min="b1">30 min</span></div>
+  </header>
+
+  <div class="guia">
+    <div class="guia-fase pares"><b>Fase 2 · En pares.</b> Júntense de a dos (en una mesa de 4: personas 1+2 y 3+4). <b>Primero, 5 minutos:</b> comparen lo que anotaron en el bloque 0; si no coinciden, gana quien lo pueda justificar con la fórmula. Después sigan juntos. Roles: <b>Teclado</b> (maneja la página) y <b>Teoría</b> (lee este recuadro en voz alta). Cambien de rol en cada ejercicio.</div>
+    <div>
+      <h4>Lo que necesitas saber</h4>
+      <ul>
+        <li>El perceptrón salta de 0 a 1 de golpe: no dice <i>cuánto</i> está seguro ni <i>cuánto</i> se equivocó.</li>
+        <li>La <b>sigmoide</b> <code>σ(z) = 1 / (1 + e^(−z))</code> convierte cualquier z en un número entre 0 y 1, que se lee como probabilidad. <code>σ(0) = 0.5</code> («no sé»).</li>
+        <li>Su <b>derivada</b> (la pendiente de la curva) es <code>σ′(z) = σ(z)·(1 − σ(z))</code>. Esa pendiente es la que permitirá corregir los pesos poco a poco (bloque 2).</li>
+        <li>Otras activaciones: <b>tanh</b> (entre −1 y 1) y <b>ReLU</b> = max(0, z).</li>
+      </ul>
+    </div>
+    <div class="guia-ej">
+      <h4>Ejemplo resuelto: σ(2)</h4>
+      <p>1) <code>e^(−2) = 0.1353</code> (en la calculadora: <code>exp(-2)</code>).<br>
+      2) <code>1 + 0.1353 = 1.1353</code>.<br>
+      3) <code>σ(2) = 1 / 1.1353 = 0.8808</code> → la neurona dice «88 % seguro».<br>
+      4) Derivada: <code>σ′(2) = 0.8808 · (1 − 0.8808) = 0.8808 · 0.1192 = 0.1050</code>.</p>
+      <p>Con una neurona completa es igual, solo que antes calculas <code>z = w·x + b</code>.</p>
+    </div>
+  </div>
+
+  <article class="ex" data-id="1.1">
+    <div class="ex-head">
+      <span class="ex-num">1.1</span>
+      <span class="fase-badge pares">En pares</span>
+      <h3>La tabla de las activaciones</h3>
+      <span class="chip" data-chip="1.1">pendiente</span>
+    </div>
+    <p class="ex-text">La <b>sigmoide</b> σ(z) = 1/(1+e<sup>−z</sup>) convierte cualquier número en un valor entre 0 y 1. Su derivada es σ′(z) = σ(z)·(1 − σ(z)). La tabla ya trae calculadas las otras activaciones; completa los cuatro huecos marcados con <b>?</b>:</p>
+    <div class="widget">
+      <div class="grid-2">
+        <div class="chart"><table class="matrix" id="act-table"></table></div>
+        <div>
+          <div class="ex-actions" style="margin-top:0">
+            <label class="field">σ(−1) = <input type="number" id="in-1.1a" step="0.001" value=""></label>
+            <label class="field">σ(0) = <input type="number" id="in-1.1b" step="0.001" value=""></label>
+            <label class="field">σ(1) = <input type="number" id="in-1.1c" step="0.001" value=""></label>
+            <label class="field">σ′(0) = <input type="number" id="in-1.1d" step="0.001" value=""></label>
+          </div>
+          <button class="btn check" data-check="1.1" style="margin-top:12px">Comprobar</button>
+          <button class="btn ghost" data-hint="1.1" style="margin-top:12px">Pista</button>
+        </div>
+      </div>
+    </div>
+    <div class="fb" data-fb="1.1"></div>
+    <details class="sol" data-sol="1.1"><summary>Respuesta y explicación</summary>
+      <div class="sol-body">σ(−1) = <b>0.2689</b>, σ(0) = <b>0.5</b>, σ(1) = <b>0.7311</b>, σ′(0) = <b>0.25</b>.<br>
+      σ(0) = 0.5 porque e⁰ = 1 → 1/(1+1). Y σ′(0) = 0.5·0.5 = 0.25: la derivada es <b>máxima</b> en z=0, o sea que ahí la neurona es la más «sensible» a sus pesos.</div>
+    </details>
+  </article>
+
+  <article class="ex" data-id="1.2">
+    <div class="ex-head">
+      <span class="ex-num">1.2</span>
+      <span class="fase-badge pares">En pares</span>
+      <h3>Explora la sigmoide</h3>
+      <span class="chip" data-chip="1.2">pendiente</span>
+    </div>
+    <p class="ex-text">Mueve <b>z</b> y observa: la curva pasa por (0, 0.5), se acerca a 0 a la izquierda y a 1 a la derecha, y <b>siempre está entre 0 y 1</b>. La línea punteada es la derivada.</p>
+    <div class="widget">
+      <div class="widget-bar">
+        <label class="field" style="flex:1 1 240px">z = <input type="range" id="sig-z" min="-8" max="8" step="0.1" value="0"></label>
+        <span class="mono" id="sig-out">σ(0) = 0.5000</span>
+      </div>
+      <div class="chart" id="sig-plot"></div>
+    </div>
+    <div class="ex-actions">
+      <label class="field">σ(0) = <input type="number" id="in-1.2a" step="0.001" value=""></label>
+      <label class="field">σ′(0) = <input type="number" id="in-1.2b" step="0.001" value=""></label>
+      <button class="btn check" data-check="1.2">Comprobar</button>
+      <button class="btn ghost" data-hint="1.2">Pista</button>
+    </div>
+    <div class="fb" data-fb="1.2"></div>
+    <details class="sol" data-sol="1.2"><summary>Respuesta y explicación</summary>
+      <div class="sol-body">σ(0) = <b>0.5</b> y σ′(0) = <b>0.25</b>.<br>
+      ¿Por qué importa? El perceptrón da saltos (0 → 1 de golpe) y su error no dice <i>cuánto</i> falló. La sigmoide es suave: si mueves un peso un poquito, la salida cambia un poquito, y ahí aparece una <b>pendiente</b> que se puede medir. Sin pendiente no hay descenso por gradiente.</div>
+    </details>
+  </article>
+
+  <article class="ex" data-id="1.3">
+    <div class="ex-head">
+      <span class="ex-num">1.3</span>
+      <span class="fase-badge pares">En pares</span>
+      <h3>Una neurona completa, número a número</h3>
+      <span class="chip" data-chip="1.3">pendiente</span>
+    </div>
+    <p class="ex-text">Entrada <code>x = [0.7, −0.3]</code>, pesos <code>w = [0.1, 0.8]</code>, sesgo <code>b = −0.1</code>. Calcula z = w·x + b y luego σ(z). Este es el ejemplo del libro (notebook 1_04).</p>
+    <div class="ex-actions">
+      <label class="field">z = <input type="number" id="in-1.3a" step="0.01" value=""></label>
+      <label class="field">σ(z) = <input type="number" id="in-1.3b" step="0.0001" value=""></label>
+      <button class="btn check" data-check="1.3">Comprobar</button>
+      <button class="btn ghost" data-hint="1.3">Pista</button>
+    </div>
+    <div class="fb" data-fb="1.3"></div>
+    <details class="sol" data-sol="1.3"><summary>Respuesta y explicación</summary>
+      <div class="sol-body">z = 0.1·0.7 + 0.8·(−0.3) + (−0.1) = 0.07 − 0.24 − 0.1 = <b>−0.27</b>.<br>
+      σ(−0.27) = 1/(1+e^0.27) = <b>0.4329</b>. La neurona dice «43 % de que sea la clase 1». Nota el peso de 0.8 sobre una entrada negativa: ese término <b>suma</b> (0.8 × −0.3 = −0.24) y por eso la neurona se queda por debajo de 0.5.</div>
+    </details>
+  </article>
+</section>
+
+<!-- ===================== BLOQUE 2 ===================== -->
+<section id="b2" class="bloque" data-fase="trios">
+  <header class="bloque-head">
+    <div class="bloque-num">2</div>
+    <div>
+      <h2>Bajar la montaña con un número</h2>
+      <p class="sub">Descenso por gradiente · la pendiente como brújula en la niebla</p>
+    </div>
+    <div class="bloque-time"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9 2h6"/></svg><span data-min="b2">30 min</span></div>
+  </header>
+
+  <div class="guia">
+    <div class="guia-fase trios"><b>Fase 3 · En tríos.</b> Se juntan dos mesas y forman grupos de 3 (si sobra una pareja, trabaja como trío de apoyo y al final compara con otro trío). Roles: <b>Teclado</b>, <b>Teoría</b> y <b>Verificador</b>: antes de pulsar Comprobar, el verificador rehace la cuenta en papel o en la calculadora.</div>
+    <div>
+      <h4>Lo que necesitas saber</h4>
+      <ul>
+        <li>Entrenar una red es buscar los pesos que hacen <b>mínimo el error</b>. Es como bajar una montaña con niebla: no ves el fondo, pero sí sientes la <b>pendiente</b> bajo tus pies.</li>
+        <li>La pendiente es la <b>derivada</b> <code>f′(x)</code>: si es positiva, la función sube hacia la derecha, así que hay que ir a la izquierda (y al revés).</li>
+        <li>Regla del descenso por gradiente: <code>x ← x − η·f′(x)</code>. <code>η</code> (tasa de aprendizaje) es el tamaño del paso.</li>
+        <li>η muy chica: llegas, pero lento. η demasiado grande: te pasas del fondo, rebotas o te alejas cada vez más.</li>
+      </ul>
+    </div>
+    <div class="guia-ej">
+      <h4>Ejemplo resuelto: f(x) = x², x₀ = 3, η = 0.25</h4>
+      <p>La derivada de x² es <code>f′(x) = 2x</code>.<br>
+      Paso 1: <code>f′(3) = 6</code> → <code>x₁ = 3 − 0.25·6 = 1.5</code>.<br>
+      Paso 2: <code>f′(1.5) = 3</code> → <code>x₂ = 1.5 − 0.25·3 = 0.75</code>.<br>
+      Cada paso multiplica x por <code>(1 − 2η) = 0.5</code>: se acerca al fondo (x = 0) a la mitad cada vez.</p>
+    </div>
+  </div>
+
+  <article class="ex" data-id="2.1">
+    <div class="ex-head">
+      <span class="ex-num">2.1</span>
+      <span class="fase-badge trios">En tríos</span>
+      <h3>Un paso, a mano</h3>
+      <span class="chip" data-chip="2.1">pendiente</span>
+    </div>
+    <p class="ex-text">Estamos en <code>f(x) = x²</code>, en x = 5. La pendiente ahí es f′(5) = 2·5 = <b>10</b> (sube hacia la derecha, así que hay que bajar). Con <code>η = 0.1</code>, la regla es <code>x ← x − η·f′(x)</code>. ¿Cuál es el nuevo x?</p>
+    <div class="ex-actions">
+      <label class="field">x nuevo = <input type="number" id="in-2.1" step="0.001" value=""></label>
+      <button class="btn check" data-check="2.1">Comprobar</button>
+      <button class="btn ghost" data-hint="2.1">Pista</button>
+    </div>
+    <div class="fb" data-fb="2.1"></div>
+    <details class="sol" data-sol="2.1"><summary>Respuesta y explicación</summary>
+      <div class="sol-body">x = 5 − 0.1·10 = <b>4</b>. Un paso hacia el fondo, del tamaño «η × pendiente».</div>
+    </details>
+  </article>
+
+  <article class="ex" data-id="2.2">
+    <div class="ex-head">
+      <span class="ex-num">2.2</span>
+      <span class="fase-badge trios">En tríos</span>
+      <h3>La cuenta completa</h3>
+      <span class="chip" data-chip="2.2">pendiente</span>
+    </div>
+    <p class="ex-text">Sigue la regla con <code>f(x) = x²</code> y <code>η = 0.1</code> partiendo de x = 5. Escribe los tres valores siguientes:</p>
+    <div class="ex-actions">
+      <label class="field">x₁ = <input type="number" id="in-2.2a" step="0.001" value=""></label>
+      <label class="field">x₂ = <input type="number" id="in-2.2b" step="0.001" value=""></label>
+      <label class="field">x₃ = <input type="number" id="in-2.2c" step="0.001" value=""></label>
+      <button class="btn check" data-check="2.2">Comprobar</button>
+      <button class="btn ghost" data-hint="2.2">Pista</button>
+    </div>
+    <div class="fb" data-fb="2.2"></div>
+    <details class="sol" data-sol="2.2"><summary>Respuesta y explicación</summary>
+      <div class="sol-body">5 → <b>4</b> → <b>3.2</b> → <b>2.56</b> → 2.048 → 1.6384.<br>
+      Cada paso multiplica el error por (1 − 2η) = 0.8. Con η = 0.1 llegas rápido; con η = 0.5 llegas de un salto; con η = 1 el error no baja (rebota entre 5 y −5) y con η &gt; 1 <b>se aleja</b>.</div>
+    </details>
+  </article>
+
+  <article class="ex" data-id="2.3">
+    <div class="ex-head">
+      <span class="ex-num">2.3</span>
+      <span class="fase-badge trios">En tríos</span>
+      <h3>La montaña con niebla (simulador)</h3>
+      <span class="chip" data-chip="2.3">pendiente</span>
+    </div>
+    <p class="ex-text">Mueve <b>η</b> y baja la montaña. Observa la trayectoria roja sobre <code>f(x) = x²</code> y fíjate en qué casos el paso <b>rebota</b> o se <b>aleja</b> del fondo.</p>
+    <div class="widget">
+      <div class="widget-bar">
+        <label class="field">η = <input type="range" id="gd-eta" min="0.01" max="1.2" step="0.01" value="0.1"></label>
+        <span class="mono" id="gd-eta-out">0.10</span>
+        <button class="btn sm" id="gd-run">Bajar</button>
+        <button class="btn ghost sm" id="gd-reset">Reiniciar</button>
+      </div>
+      <div class="grid-2">
+        <div class="chart" id="gd-plot"></div>
+        <div class="readout">
+          <h4>Diagnóstico</h4>
+          <div class="kv">
+            <dt>x actual</dt><dd id="gd-x">5.000</dd>
+            <dt>Paso total</dt><dd id="gd-pasos">0</dd>
+            <dt>f(x)</dt><dd id="gd-f">25.000</dd>
+          </div>
+          <p class="note" id="gd-verdict">Pulsa «Bajar».</p>
+        </div>
+      </div>
+    </div>
+    <div class="ex-actions">
+      <label class="field">La η que <b>se aleja</b> del fondo es η = <input type="number" id="in-2.3" step="0.01" value=""></label>
+      <button class="btn check" data-check="2.3">Comprobar</button>
+      <button class="btn ghost" data-hint="2.3">Pista</button>
+    </div>
+    <div class="fb" data-fb="2.3"></div>
+    <details class="sol" data-sol="2.3"><summary>Respuesta y explicación</summary>
+      <div class="sol-body">Con <code>f(x) = x²</code> el paso se multiplica por (1 − 2η). El punto se aleja del fondo cuando |1 − 2η| &gt; 1, o sea cuando <b>η &gt; 1</b>: con η = 1.05 el error crece y la neurona «explota» (en el notebook aparece <code>nan</code> o <code>overflow in exp</code>). Con η = 0.9 oscila sin alejarse; con η = 1 queda clavada.<br>
+      En una red real las pendientes son mucho más grandes que en este ejemplo, así que las η que sirven son 0.01–0.5. <b>La tasa de aprendizaje es la decisión más importante al entrenar.</b></div>
+    </details>
+  </article>
+
+  <article class="ex" data-id="2.4">
+    <div class="ex-head">
+      <span class="ex-num">2.4</span>
+      <span class="fase-badge trios">En tríos</span>
+      <h3>El ejemplo del libro</h3>
+      <span class="chip" data-chip="2.4">pendiente</span>
+    </div>
+    <p class="ex-text">Ahora <code>f(x) = 2x + x²</code>, cuyo mínimo está en x = −1. Con <code>x₀ = 10</code> y <code>η = 0.2</code>, baja <b>6 pasos</b>. ¿Dónde terminas?</p>
+    <div class="ex-actions">
+      <label class="field">x₆ = <input type="number" id="in-2.4" step="0.001" value=""></label>
+      <button class="btn check" data-check="2.4">Comprobar</button>
+      <button class="btn ghost" data-hint="2.4">Pista</button>
+    </div>
+    <div class="fb" data-fb="2.4"></div>
+    <details class="sol" data-sol="2.4"><summary>Respuesta y explicación</summary>
+      <div class="sol-body">La secuencia es 10 → 6.8 → 4.536 → 3.0216 → 2.058 → 1.367 → <b>−0.48678</b>.<br>
+      La pendiente es f′(x) = 2 + 2x, que se hace 0 justo en x = −1: ahí está el fondo. Al llegar a valores negativos, la pendiente cambia de signo y el paso «empuja» de vuelta hacia el valle, como el péndulo.</div>
+    </details>
+  </article>
+
+  <article class="ex" data-id="2.5">
+    <div class="ex-head">
+      <span class="ex-num">2.5</span>
+      <span class="fase-badge trios">En tríos</span>
+      <h3>La idea que hay que llevarse</h3>
+      <span class="chip" data-chip="2.5">pendiente</span>
+    </div>
+    <p class="ex-text">Pónganse de acuerdo en el trío y elijan <b>una sola respuesta</b>: ¿cuál es la idea central del descenso por gradiente?</p>
+    <div class="opts" data-opts="2.5">
+      <label class="opt"><input type="radio" name="q25" value="a"><span>El error se mide con una fórmula y su pendiente dice hacia dónde mover los pesos para que baje</span></label>
+      <label class="opt"><input type="radio" name="q25" value="b"><span>Cada vez que la red se equivoca, hay que corregir a mano los pesos</span></label>
+      <label class="opt"><input type="radio" name="q25" value="c"><span>La tasa de aprendizaje solo importa en las redes con más de una capa</span></label>
+    </div>
+    <div class="ex-actions">
+      <button class="btn check" data-check="2.5">Comprobar</button>
+      <button class="btn ghost" data-hint="2.5">Pista</button>
+    </div>
+    <div class="fb" data-fb="2.5"></div>
+    <details class="sol" data-sol="2.5"><summary>Respuesta y explicación</summary>
+      <div class="sol-body">La <b>a</b>. El descenso por gradiente mide el error con una fórmula y corrige los pesos solo, en la dirección que lo baja. La b es falsa (poner los pesos a mano era lo de McCulloch-Pitts en 1943; desde el perceptrón la máquina los corrige sola) y la c también (la η importa igual en una sola neurona: es lo que vimos en 2.3).</div>
+    </details>
+  </article>
+</section>
+
+<!-- ===================== BLOQUE 3 ===================== -->
+<section id="b3" class="bloque" data-fase="cuartos">
+  <header class="bloque-head">
+    <div class="bloque-num">3</div>
+    <div>
+      <h2>Tu primera red neuronal, con datos reales</h2>
+      <p class="sub">1 200 dígitos de MNIST (0, 1, 3 y 5) reducidos a 14×14, con 900 para entrenar y 300 de examen</p>
+    </div>
+    <div class="bloque-time"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9 2h6"/></svg><span data-min="b3">45 min</span></div>
+  </header>
+
+  <div class="guia">
+    <div class="guia-fase cuartos"><b>Fase 4 · En grupos de 4.</b> Vuelvan a su mesa original. Usen <b>una sola laptop</b> proyectada o en el centro y las demás para ir mirando la teoría. Roles: <b>Teclado</b>, <b>Teoría</b>, <b>Verificador</b> y <b>Relator</b> (explica en voz alta qué pasó en cada simulador y, al final, se lo cuenta a la clase). Una sola respuesta por grupo.</div>
+    <div>
+      <h4>Lo que necesitas saber</h4>
+      <ul>
+        <li><b>Los datos:</b> cada dígito es una imagen de 14×14 = <b>196 píxeles</b> con valores entre 0 y 1. La red ve esos 196 números como su vector <code>x</code>.</li>
+        <li><b>Entrenar y examinar:</b> la red aprende con 900 imágenes y se evalúa con <b>300 que nunca vio</b>. Lo que importa es el acierto en el examen.</li>
+        <li><b>Época:</b> una pasada completa por las 900 imágenes. El simulador hace varias épocas seguidas.</li>
+        <li><b>Pérdida:</b> número que mide cuánto se equivoca la red. Una neurona que no sabe nada (dice 50/50) empieza en <code>ln 2 = 0.6931</code>; con 4 clases, en <code>ln 4 = 1.3863</code>. Entrenar es hacerla bajar.</li>
+        <li><b>Softmax:</b> con 4 salidas (una por dígito) convierte los 4 valores z en 4 probabilidades que suman 1. La clase con más probabilidad es la respuesta.</li>
+      </ul>
+    </div>
+    <div class="guia-ej">
+      <h4>Ejemplo resuelto: softmax de z = [2, 1, 0, −1]</h4>
+      <p>1) Exponencial de cada uno: <code>e² = 7.389</code>, <code>e¹ = 2.718</code>, <code>e⁰ = 1</code>, <code>e⁻¹ = 0.368</code>.<br>
+      2) Suma: <code>7.389 + 2.718 + 1 + 0.368 = 11.475</code>.<br>
+      3) Divide cada uno por la suma: <code>p = [0.644, 0.237, 0.087, 0.032]</code> (suman 1).<br>
+      La red diría la primera clase con un 64 % de seguridad.</p>
+    </div>
+    <div>
+      <h4>Cómo usar cada simulador</h4>
+      <ol>
+        <li>Lean la consigna del ejercicio en voz alta.</li>
+        <li>Pulsen <b>Entrenar</b> y miren cómo se dibuja la curva.</li>
+        <li>El relator dice qué ve: ¿baja?, ¿se calma?, ¿cuánto acierta en el examen?</li>
+        <li>Respondan y pulsen <b>Comprobar</b>. Si quieren probar otra η, pulsen <b>Reiniciar</b>.</li>
+      </ol>
+    </div>
+  </div>
+
+  <article class="ex" data-id="3.1">
+    <div class="ex-head">
+      <span class="ex-num">3.1</span>
+      <span class="fase-badge cuartos">Grupo de 4</span>
+      <h3>El perceptrón: 0 contra 1</h3>
+      <span class="chip" data-chip="3.1">pendiente</span>
+    </div>
+    <p class="ex-text">Entrena el perceptrón con 900 imágenes reales. Mira la barra de <b>errores por época</b>: cada barra es cuántos dígitos se equivocó en esa vuelta.</p>
+    <div class="widget">
+      <div class="widget-bar">
+        <button class="btn" id="p01-run">Entrenar</button>
+        <button class="btn ghost sm" id="p01-reset">Reiniciar</button>
+        <label class="field">η = <input type="number" id="p01-eta" value="0.1" step="0.1" min="0.01" max="1" style="width:78px"></label>
+        <span class="mono" id="p01-estado">época 0 / 15</span>
+      </div>
+      <div class="grid-2">
+        <div class="chart" id="p01-chart"></div>
+        <div class="readout">
+          <h4>Resultado</h4>
+          <div class="kv">
+            <dt>Errores/época</dt><dd id="p01-errs">—</dd>
+            <dt>Aciertos examen</dt><dd id="p01-acc">—</dd>
+          </div>
+          <div class="digits" id="p01-dig"></div>
+          <p class="note" id="p01-note">Cada recuadro es un dígito del examen con su predicción.</p>
+        </div>
+      </div>
+    </div>
+    <div class="ex-actions">
+      <label class="field">¿En qué época llegó a <b>0 errores</b>? <input type="number" id="in-3.1" step="1" min="0" value=""></label>
+      <button class="btn check" data-check="3.1">Comprobar</button>
+      <button class="btn ghost" data-hint="3.1">Pista</button>
+    </div>
+    <div class="fb" data-fb="3.1"></div>
+    <details class="sol" data-sol="3.1"><summary>Respuesta y explicación</summary>
+      <div class="sol-body">Con estos datos el perceptrón tarda <b>{{P01_EPOCA}}</b> épocas en llegar a 0 errores y saca <b>{{P01_ACC}}</b> en el examen (el curso, con las 60 000 imágenes de MNIST, llega a 99.8 %).<br>
+      Fíjate en la forma de la curva: baja y <b>se queda en 0</b>. Eso es la firma de un problema que el perceptrón sí puede resolver: los datos son linealmente separables.</div>
+    </details>
+  </article>
+
+  <article class="ex" data-id="3.2">
+    <div class="ex-head">
+      <span class="ex-num">3.2</span>
+      <span class="fase-badge cuartos">Grupo de 4</span>
+      <h3>El perceptrón: 3 contra 5 (donde se atasca)</h3>
+      <span class="chip" data-chip="3.2">pendiente</span>
+    </div>
+    <p class="ex-text">Ahora el mismo perceptrón, pero con las mismas reglas y otros datos: 3 contra 5. Observa qué hace la curva de errores.</p>
+    <div class="widget">
+      <div class="widget-bar">
+        <button class="btn" id="p35-run">Entrenar</button>
+        <button class="btn ghost sm" id="p35-reset">Reiniciar</button>
+        <label class="field">η = <input type="number" id="p35-eta" value="0.1" step="0.1" min="0.01" max="1" style="width:78px"></label>
+        <span class="mono" id="p35-estado">época 0 / 15</span>
+      </div>
+      <div class="grid-2">
+        <div class="chart" id="p35-chart"></div>
+        <div class="readout">
+          <h4>Resultado</h4>
+          <div class="kv">
+            <dt>Errores/época</dt><dd id="p35-errs">—</dd>
+            <dt>Aciertos examen</dt><dd id="p35-acc">—</dd>
+          </div>
+          <div class="digits" id="p35-dig"></div>
+        </div>
+      </div>
+    </div>
+    <div class="ex-actions">
+      <button class="btn check" data-check="3.2">Comprobar</button>
+      <button class="btn ghost" data-hint="3.2">Pista</button>
+    </div>
+    <div class="fb" data-fb="3.2"></div>
+    <details class="sol" data-sol="3.2"><summary>Respuesta y explicación</summary>
+      <div class="sol-body">La curva <b>nunca se calma</b>: los errores bajan y vuelven a subir ({{P35_ERRS}}). El perceptrón empuja con la misma fuerza un error mínimo que uno enorme, así que no sabe <i>cuánto</i> se equivocó y da vueltas sin parar.<br>
+      Este es el problema que resuelve la sigmoide + el descenso por gradiente, que es justo lo que viene en 3.3.</div>
+    </details>
+  </article>
+
+  <article class="ex" data-id="3.3">
+    <div class="ex-head">
+      <span class="ex-num">3.3</span>
+      <span class="fase-badge cuartos">Grupo de 4</span>
+      <h3>La neurona que sí se calma: sigmoide + gradiente</h3>
+      <span class="chip" data-chip="3.3">pendiente</span>
+    </div>
+    <p class="ex-text">Misma tarea (3 contra 5), pero la neurona ahora devuelve una probabilidad y se corrige con <b>descenso por gradiente</b>. Mira la curva de <b>pérdida</b>: debería bajar <b>suave</b> hasta un piso y quedarse ahí.</p>
+    <div class="widget">
+      <div class="widget-bar">
+        <button class="btn" id="sg-run">Entrenar</button>
+        <button class="btn ghost sm" id="sg-reset">Reiniciar</button>
+        <label class="field">η = <input type="number" id="sg-eta" value="1" step="0.1" min="0.05" max="3" style="width:78px"></label>
+        <span class="mono" id="sg-estado">época 0 / 120</span>
+      </div>
+      <div class="grid-2">
+        <div class="chart" id="sg-chart"></div>
+        <div class="readout">
+          <h4>Resultado</h4>
+          <div class="kv">
+            <dt>Pérdida inicial</dt><dd id="sg-l0">—</dd>
+            <dt>Pérdida final</dt><dd id="sg-l1">—</dd>
+            <dt>Aciertos examen</dt><dd id="sg-acc">—</dd>
+          </div>
+          <p class="note">La pérdida (entropía cruzada) parte de 0.6931 cuando la red dice «50/50» sin saber nada.</p>
+        </div>
+      </div>
+    </div>
+    <div class="ex-actions">
+      <label class="field">Aciertos en el examen ≈ <input type="number" id="in-3.3" step="1" min="0" max="100" value=""> %</label>
+      <button class="btn check" data-check="3.3">Comprobar</button>
+      <button class="btn ghost" data-hint="3.3">Pista</button>
+    </div>
+    <div class="fb" data-fb="3.3"></div>
+    <details class="sol" data-sol="3.3"><summary>Respuesta y explicación</summary>
+      <div class="sol-body">La pérdida baja de <b>0.6931</b> a menos de 0.2 y el acierto en el examen se queda cerca del <b>{{SG_ACC}}</b> % (el curso, con 11 552 imágenes, llega al 96 %; aquí hay menos datos y por eso baja un poco).<br>
+      Dos diferencias clave frente al perceptrón: (1) la salida es una <b>probabilidad</b>, no un 0/1; (2) el error se mide con una función suave, así que la corrección es <b>proporcional a cuánto falló</b> (por eso la curva no da saltos).</div>
+    </details>
+  </article>
+
+  <article class="ex" data-id="3.4">
+    <div class="ex-head">
+      <span class="ex-num">3.4</span>
+      <span class="fase-badge cuartos">Grupo de 4</span>
+      <h3>Arma tu primera red: cuatro salidas y softmax</h3>
+      <span class="chip" data-chip="3.4">pendiente</span>
+    </div>
+    <p class="ex-text">Ahora sí: una red con <b>4 neuronas de salida</b> (una por clase: 0, 1, 3, 5) y <b>softmax</b>, para que las probabilidades sumen 1. Esta es la primera red "de verdad" del curso.</p>
+    <div class="widget">
+      <div class="widget-bar">
+        <button class="btn" id="sm-run">Entrenar</button>
+        <button class="btn ghost sm" id="sm-reset">Reiniciar</button>
+        <label class="field">η = <input type="number" id="sm-eta" value="1" step="0.5" min="0.1" max="3" style="width:78px"></label>
+        <span class="mono" id="sm-estado">época 0 / 200</span>
+      </div>
+      <div class="grid-2">
+        <div class="chart" id="sm-chart"></div>
+        <div class="readout">
+          <h4>Resultado</h4>
+          <div class="kv">
+            <dt>Pérdida inicial</dt><dd id="sm-l0">—</dd>
+            <dt>Pérdida final</dt><dd id="sm-l1">—</dd>
+            <dt>Aciertos examen</dt><dd id="sm-acc">—</dd>
+          </div>
+          <div id="sm-matrix" style="margin-top:12px"></div>
+        </div>
+      </div>
+      <div class="digits" id="sm-dig"></div>
+    </div>
+    <div class="ex-actions">
+      <label class="field">Aciertos en el examen ≈ <input type="number" id="in-3.4" step="1" min="0" max="100" value=""> %</label>
+      <button class="btn check" data-check="3.4">Comprobar</button>
+      <button class="btn ghost" data-hint="3.4">Pista</button>
+    </div>
+    <div class="fb" data-fb="3.4"></div>
+    <details class="sol" data-sol="3.4"><summary>Respuesta y explicación</summary>
+      <div class="sol-body">La red baja la pérdida de <b>1.3863</b> (= ln 4, cuando las cuatro clases valen lo mismo) hasta cerca de <b>{{SM_LOSS}}</b> y acierta aproximadamente el <b>{{SM_ACC}}</b> % del examen.<br>
+      Mira la <b>matriz de confusión</b>: las filas son la clase real y las columnas la predicción. Los errores se concentran entre 3 y 5 (son parecidos) y entre 0 y 1. <b>Una red también se equivoca, pero ahora sabe cuánto</b>: mira los dígitos con probabilidad repartida entre dos clases.</div>
+    </details>
+  </article>
+
+  <article class="ex" data-id="3.5">
+    <div class="ex-head">
+      <span class="ex-num">3.5</span>
+      <span class="fase-badge cuartos">Grupo de 4</span>
+      <h3>Rompe el entrenamiento a propósito</h3>
+      <span class="chip" data-chip="3.5">pendiente</span>
+    </div>
+    <p class="ex-text">Vuelve a 3.4 y sube <b>η a 3</b>. ¿Qué le pasa a la curva? Después elige la opción que lo explica.</p>
+    <div class="opts" data-opts="3.5">
+      <label class="opt"><input type="radio" name="q35" value="a"><span>La pérdida sube y se dispara: el paso es demasiado grande</span></label>
+      <label class="opt"><input type="radio" name="q35" value="b"><span>La pérdida baja más rápido: es mejor usar la η más grande siempre</span></label>
+      <label class="opt"><input type="radio" name="q35" value="c"><span>No cambia nada: la red ya había aprendido</span></label>
+    </div>
+    <div class="ex-actions">
+      <button class="btn check" data-check="3.5">Comprobar</button>
+      <button class="btn ghost" data-hint="3.5">Pista</button>
+    </div>
+    <div class="fb" data-fb="3.5"></div>
+    <details class="sol" data-sol="3.5"><summary>Respuesta y explicación</summary>
+      <div class="sol-body">La <b>a</b>. Con η = 3 el paso se pasa de largo del fondo, la pérdida sube y los pesos se disparan (en el notebook verías <code>nan</code> o <code>overflow in exp</code>). Una η demasiado grande es la causa número uno de que un entrenamiento «no funcione».</div>
+    </details>
+  </article>
+
+  <article class="ex" data-id="3.6">
+    <div class="ex-head">
+      <span class="ex-num">3.6</span>
+      <span class="fase-badge cuartos">Grupo de 4</span>
+      <h3>¿La red aprende o memoriza?</h3>
+      <span class="chip" data-chip="3.6">pendiente</span>
+    </div>
+    <p class="ex-text">La misma red de 4 salidas, pero con <b>distintas cantidades de imágenes para entrenar</b>. Mira las dos columnas: <b>entrenamiento</b> (las imágenes que la red ya vio) y <b>examen</b> (300 imágenes que nunca vio).</p>
+    <div class="widget">
+      <div class="widget-bar">
+        <label class="field">Imágenes para entrenar
+          <select id="gen-n" style="width:130px">
+            <option value="100">100</option>
+            <option value="300">300</option>
+            <option value="600">600</option>
+            <option value="900" selected>900</option>
+          </select>
+        </label>
+        <button class="btn" id="gen-run">Entrenar</button>
+        <span class="mono" id="gen-estado">—</span>
+      </div>
+      <div class="gen-head"><span></span><span>entrenamiento</span><span>examen</span></div>
+      <div class="gen" id="gen-tabla"></div>
+      <p class="gen-gap" id="gen-gap">Entrena con las cuatro cantidades y mira cómo cambia la diferencia entre las dos columnas.</p>
+    </div>
+    <div class="ex-actions">
+      <label class="field">Con <b>100</b> imágenes, el acierto en el examen es ≈ <input type="number" id="in-3.6" step="0.1" value=""> %</label>
+      <button class="btn check" data-check="3.6">Comprobar</button>
+      <button class="btn ghost" data-hint="3.6">Pista</button>
+    </div>
+    <div class="fb" data-fb="3.6"></div>
+    <details class="sol" data-sol="3.6"><summary>Respuesta y explicación</summary>
+      <div class="sol-body">Con <b>100</b> imágenes: <b>100 %</b> en entrenamiento pero solo <b>89.7 %</b> en el examen → la red <b>memoriza</b> lo que vio. Con <b>900</b>: <b>96.8 %</b> en entrenamiento y <b>95 %</b> en el examen → <b>generaliza</b>.<br>
+      Lo contraintuitivo: con <b>más</b> datos el acierto en entrenamiento <b>baja</b> (de 100 % a 96.8 %) y el del examen <b>sube</b> (de 89.7 % a 95 %). <b>Aprender no es memorizar:</b> una red que se ajusta perfectamente a lo que vio es una red que no sabe lo que no vio. Por eso en el curso el examen usa imágenes que el entrenamiento nunca tocó.</div>
+    </details>
+  </article>
+</section>
+
+<!-- ===================== BLOQUE 4 ===================== -->
+<section id="b4" class="bloque" data-fase="cuartos">
+  <header class="bloque-head">
+    <div class="bloque-num">4</div>
+    <div>
+      <h2>Reto de equipo: el problema que una neurona no puede resolver</h2>
+      <p class="sub">XOR · por qué hace falta una capa oculta</p>
+    </div>
+    <div class="bloque-time"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9 2h6"/></svg><span data-min="b4">35 min</span></div>
+  </header>
+
+  <div class="guia">
+    <div class="guia-fase cuartos"><b>Fase 4 · En grupos de 4.</b> Siguen en su mesa con los mismos roles. Roten: quien fue Teclado en el bloque 3 ahora es Relator.</div>
+    <div>
+      <h4>Lo que necesitas saber</h4>
+      <ul>
+        <li>En el ejercicio 0.4 vieron que <b>ninguna recta separa XOR</b>: una sola neurona solo sabe dibujar rectas.</li>
+        <li>Una <b>capa oculta</b> son varias neuronas entre la entrada y la salida. Cada una dibuja su propia recta, y la neurona de salida las combina: así la frontera puede «doblarse».</li>
+        <li>Hace falta una activación <b>no lineal</b> (aquí tanh). Sin ella, varias capas juntas siguen siendo una sola recta.</li>
+        <li>Para entrenarla, el error de la salida se reparte hacia atrás entre las neuronas ocultas: eso es la <b>retropropagación</b>.</li>
+      </ul>
+    </div>
+    <div class="guia-ej">
+      <h4>Ejemplo resuelto: XOR con dos neuronas ocultas hechas a mano</h4>
+      <p>XOR = «OR, pero no AND». Una neurona oculta hace <b>OR</b> (<code>w = [1, 1]</code>, <code>b = −0.5</code>), otra hace <b>AND</b> (<code>w = [1, 1]</code>, <code>b = −1.5</code>), y la salida calcula <code>OR − AND − 0.5 &gt; 0</code>:</p>
+      <p><code>(0,0)</code>: OR 0, AND 0 → −0.5 → <b>0</b> · <code>(0,1)</code> y <code>(1,0)</code>: OR 1, AND 0 → 0.5 → <b>1</b> · <code>(1,1)</code>: OR 1, AND 1 → −0.5 → <b>0</b>. ¡XOR!</p>
+      <p>En el simulador 4.1 la red encuentra sola unos pesos que hacen lo mismo.</p>
+    </div>
+  </div>
+
+  <article class="ex" data-id="4.1">
+    <div class="ex-head">
+      <span class="ex-num">4.1</span>
+      <span class="fase-badge cuartos">Grupo de 4</span>
+      <h3>Una capa oculta lo resuelve</h3>
+      <span class="chip" data-chip="4.1">pendiente</span>
+    </div>
+    <p class="ex-text">Este es XOR de nuevo, pero ahora con una red de <b>2 → 3 → 1</b>: dos entradas, tres neuronas ocultas con tangente hiperbólica y una salida. Dale al botón y mira cómo la frontera de decisión aprende a «doblar» el espacio.</p>
+    <div class="widget">
+      <div class="widget-bar">
+        <button class="btn" id="xo-run">Entrenar</button>
+        <button class="btn ghost sm" id="xo-reset">Reiniciar</button>
+        <label class="field">η = <input type="number" id="xo-eta" value="1" step="0.5" min="0.1" max="3" style="width:78px"></label>
+        <span class="mono" id="xo-estado">época 0 / 1000</span>
+      </div>
+      <div class="grid-2">
+        <div class="chart" id="xo-plot"></div>
+        <div class="readout">
+          <h4>Resultado</h4>
+          <div class="kv">
+            <dt>Pérdida inicial</dt><dd id="xo-l0">—</dd>
+            <dt>Pérdida final</dt><dd id="xo-l1">—</dd>
+            <dt>Aciertos</dt><dd id="xo-acc">—</dd>
+          </div>
+          <p class="note" id="xo-note"></p>
+        </div>
+      </div>
+    </div>
+    <div class="ex-actions">
+      <label class="field">Aciertos finales = <input type="number" id="in-4.1" step="1" min="0" max="4" value=""> / 4</label>
+      <button class="btn check" data-check="4.1">Comprobar</button>
+      <button class="btn ghost" data-hint="4.1">Pista</button>
+    </div>
+    <div class="fb" data-fb="4.1"></div>
+    <details class="sol" data-sol="4.1"><summary>Respuesta y explicación</summary>
+      <div class="sol-body">La red aprende XOR: la pérdida baja de <b>0.6952</b> a cerca de <b>0.003</b> y termina con <b>4 de 4 aciertos</b>.<br>
+      Lo que hizo posible: las tres neuronas ocultas <b>doblan el espacio</b>. Cada una calcula una recta distinta (w·x + b) y las combina; la suma de tres rectas puede dibujar una frontera con forma de «hueco», que es justo lo que XOR necesita. Ninguna neurona sola puede: el perceptrón solo sabe dibujar rectas.<br>
+      <b>Esta es la diferencia entre una neurona y una red:</b> una capa de transformaciones lineales + una no lineal permite fronteras que no son rectas.</div>
+    </details>
+  </article>
+
+  <article class="ex" data-id="4.2">
+    <div class="ex-head">
+      <span class="ex-num">4.2</span>
+      <span class="fase-badge cuartos">Grupo de 4</span>
+      <h3>La pregunta del equipo</h3>
+      <span class="chip" data-chip="4.2">pendiente</span>
+    </div>
+    <p class="ex-text">Pónganse de acuerdo: ¿qué le hay que <b>añadir</b> a la neurona del perceptrón para que pueda con XOR?</p>
+    <div class="opts" data-opts="4.2">
+      <label class="opt"><input type="radio" name="q42" value="a"><span>Una capa más de neuronas, con una activación que no sea un escalón</span></label>
+      <label class="opt"><input type="radio" name="q42" value="b"><span>Una η más grande</span></label>
+      <label class="opt"><input type="radio" name="q42" value="c"><span>Más ejemplos de entrenamiento</span></label>
+      <label class="opt"><input type="radio" name="q42" value="d"><span>Un umbral más pequeño</span></label>
+    </div>
+    <div class="ex-actions">
+      <button class="btn check" data-check="4.2">Comprobar</button>
+      <button class="btn ghost" data-hint="4.2">Pista</button>
+    </div>
+    <div class="fb" data-fb="4.2"></div>
+    <details class="sol" data-sol="4.2"><summary>Respuesta y explicación</summary>
+      <div class="sol-body">La <b>a</b>. Con más ejemplos el perceptrón seguiría dando vueltas (0.4 y 3.2 lo demuestran); con otra η tampoco; con otro umbral tampoco. Lo que hace falta es <b>componer varias transformaciones</b>: la capa oculta calcula una combinación de rectas y la activación no lineal permite que la frontera final sea curva. Por eso el perceptrón de una sola capa se quedó en 1969 y las redes con capas ocultas lo resolvieron.</div>
+    </details>
+  </article>
+
+  <article class="ex" data-id="4.3">
+    <div class="ex-head">
+      <span class="ex-num">4.3</span>
+      <span class="fase-badge cuartos">Grupo de 4</span>
+      <h3>El puente a Python</h3>
+      <span class="chip" data-chip="4.3">pendiente</span>
+    </div>
+    <p class="ex-text">Esto que hicieron en la página es <b>exactamente</b> el algoritmo del notebook. Escribe estas cuatro líneas en Python (en el notebook de la clase) y comprueba que dan lo mismo:</p>
+    <div class="code"><span class="c"># una neurona con sigmoide, una época de descenso por gradiente</span>
+<span class="k">def</span> <span class="n">sigmoide</span>(z): <span class="k">return</span> <span class="n">1</span> / (<span class="n">1</span> + np.<span class="n">exp</span>(-z))
+
+z  = X @ w + b            <span class="c"># suma ponderada</span>
+p  = sigmoide(z)          <span class="c"># probabilidad</span>
+grad_w = X.T @ (p - y) / <span class="n">len</span>(X)   <span class="c"># (lo que dijo - lo correcto) x entrada</span>
+w -= eta * grad_w; b -= eta * (p - y).<span class="n">mean</span>()</div>
+    <p class="ex-text" style="margin-bottom:8px">La línea de la pendiente se llama <code>grad_w</code>. ¿Qué multiplica a <code>(p − y)</code>?</p>
+    <label class="field" for="in-4.3" style="display:block;margin-bottom:6px">Escriban aquí la respuesta del grupo (una o dos frases)</label>
+    <textarea id="in-4.3" placeholder="Ejemplo: multiplica a la entrada X..."></textarea>
+    <div class="ex-actions">
+      <button class="btn check" data-check="4.3">Guardar en la tarjeta</button>
+    </div>
+    <div class="fb" data-fb="4.3"></div>
+    <details class="sol" data-sol="4.3"><summary>Respuesta y explicación</summary>
+      <div class="sol-body">Multiplica a la <b>entrada X</b>: <code>grad_w = X.T @ (p − y) / len(X)</code>. Es «(lo que dijo − lo correcto) × entrada», igual que la regla de Rosenblatt pero con la diferencia <b>continua</b> en vez de un −1/0/+1.<br>
+      Y ojo con <code>/ len(X)</code>: sin dividir, la pendiente se multiplica por el número de ejemplos y el entrenamiento explota. Es el error número uno del notebook.</div>
+    </details>
+  </article>
+</section>
+
+<!-- ===================== REPASO FINAL ===================== -->
+<section id="ex" class="bloque" data-fase="cuartos">
+  <header class="bloque-head">
+    <div class="bloque-num">5</div>
+    <div>
+      <h2>Repaso final: ¿qué te llevas?</h2>
+      <p class="sub">Preguntas mezcladas de todo el tema · sin nota · cada respuesta trae su explicación</p>
+    </div>
+    <div class="bloque-time"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9 2h6"/></svg><span data-min="ex">15 min</span></div>
+  </header>
+
+  <div class="guia">
+    <div class="guia-fase cuartos"><b>En grupos de 4.</b> Cada uno responde en su propia laptop. Antes de pulsar Comprobar, digan su respuesta en voz alta en la mesa; si no coinciden, discútanlo un minuto. No cuenta para nota: sirve para ver qué hay que repasar. Si fallas, lee la explicación y vuelve al bloque que corresponde.</div>
+  </div>
+
+  <div class="qbox" id="quiz-box">
+    <div class="qhead">
+      <div class="qmeta">
+        <span class="qnum" id="q-num">Pregunta 1 de 12</span>
+        <span id="q-score" class="mono">0 correctas</span>
+      </div>
+      <div class="qmeta">
+        <select id="q-cant" title="Cuantas preguntas" style="width:132px">
+          <option value="12">12 preguntas</option>
+          <option value="20">20 preguntas</option>
+          <option value="32">32 (todas)</option>
+        </select>
+        <button class="btn sm" id="q-start">Empezar</button>
+        <button class="btn ghost sm" id="q-restart">Reiniciar</button>
+      </div>
+    </div>
+    <div id="q-body">
+      <p class="qtext" id="q-text">Pulsa «Empezar». Las preguntas salen mezcladas de todo el tema: perceptrón, sigmoide, descenso por gradiente y red.</p>
+      <div id="q-inputs"></div>
+      <div class="ex-actions">
+        <button class="btn" id="q-next" hidden>Siguiente pregunta</button>
+      </div>
+    </div>
+    <div class="qres" id="q-result" hidden></div>
+  </div>
+</section>
+
+<!-- ===================== TARJETA DE EQUIPO ===================== -->
+<section id="equipo" class="bloque">
+  <header class="bloque-head">
+    <div class="bloque-num">6</div>
+    <div>
+      <h2>Tarjeta de equipo</h2>
+      <p class="sub">El resumen de lo que hizo el equipo: se copia al final de la clase</p>
+    </div>
+  </header>
+
+  <div class="card-team">
+    <div class="grid-2 rev">
+      <div>
+        <label class="field" style="display:block">Nombre del equipo
+          <input type="text" id="team-name" placeholder="Ej: Grupo 3 — Las sinápticas" style="margin-top:6px">
+        </label>
+        <div class="ex-actions" style="margin-top:12px">
+          <label class="field">Tamaño del grupo
+            <select id="team-size" style="width:140px">
+              <option value="1">1 — individual</option>
+              <option value="2">2 — en pares</option>
+              <option value="3">3 — en tríos</option>
+              <option value="4" selected>4 — grupo de 4</option>
+            </select>
+          </label>
+        </div>
+        <div id="team-miembros"></div>
+        <div class="readout" id="team-roles" style="margin-top:10px"></div>
+        <div class="grid-stats">
+          <div class="stat"><div class="v" id="t-prog">0 %</div><div class="l">Ejercicios resueltos</div></div>
+          <div class="stat"><div class="v" id="t-aciertos">0 / 0</div><div class="l">Repaso final</div></div>
+          <div class="stat"><div class="v" id="t-timer">00:00</div><div class="l">Cronómetro del bloque</div></div>
+          <div class="stat"><div class="v" id="t-tiempo">—</div><div class="l">Bloque con cronómetro</div></div>
+        </div>
+        <div class="fb" data-fb="equipo"></div>
+        <div class="ex-actions">
+          <button class="btn" id="team-copy">Copiar el resumen</button>
+          <button class="btn ghost" id="team-print">Imprimir</button>
+          <button class="btn ghost" id="team-reset">Reiniciar progreso</button>
+        </div>
+      </div>
+      <div>
+        <h4 style="font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin:0 0 8px">Respuesta abierta (4.3)</h4>
+        <div class="readout" id="t-abierta" style="min-height:88px">Sin respuesta guardada todavía.</div>
+        <h4 style="font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin:16px 0 8px">Actividad del equipo</h4>
+        <div class="readout" id="t-log" style="min-height:88px">—</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <h4>Clase práctica guiada</h4>
+        <p>Curso de <strong>Introducción a las Redes Neuronales</strong>. Clase práctica: la página explica, muestra un ejemplo y acompaña cada ejercicio, de la primera neurona a la primera red.</p>
+      </div>
+      <div>
+        <h4>De dónde salen los datos</h4>
+        <ul>
+          <li><a href="https://github.com/datahuba/curso-redes-neuronales" target="_blank" rel="noopener">Repositorio del curso</a></li>
+          <li><a href="https://jivg.org" target="_blank" rel="noopener">Curso original · Dr. J. Irving Vasquez</a></li>
+          <li><a href="https://irvingvasquez.github.io/libro_redes_neuronales/" target="_blank" rel="noopener">Libro: Redes Neuronales</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Cómo se usa</h4>
+        <ul>
+          <li>Se avanza de solo a pares, tríos y grupos de 4; cada bloque explica cómo reagruparse y qué rol tiene cada uno.</li>
+          <li>El progreso se guarda solo en este navegador (en la computadora, no sube a ningún servidor).</li>
+          <li>La página funciona <strong>sin internet</strong>: los datos van dentro del archivo.</li>
+        </ul>
+      </div>
+    </div>
+    <p>Las marcas y el material del curso original están bajo licencia CC BY-NC 4.0. Los dígitos son del conjunto MNIST.</p>
+  </div>
+</footer>
+
+<script>
+"use strict";
+/*__DATOS__*/
+
+/* ===================== utilidades ===================== */
+const $  = (s, r) => (r || document).querySelector(s);
+const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
+const num = (id) => { const e = document.getElementById(id); const v = e ? parseFloat(e.value) : NaN; return isNaN(v) ? null : v; };
+const near = (a, b, tol) => a !== null && Math.abs(a - b) <= (tol === undefined ? 0.005 : tol);
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const fx = (v, d) => (v === null || v === undefined || isNaN(v)) ? "—" : Number(v).toFixed(d === undefined ? 4 : d);
+const svgNS = "http://www.w3.org/2000/svg";
+function S(tag, attrs, parent) {
+  const e = document.createElementNS(svgNS, tag);
+  for (const k in attrs) if (attrs[k] !== null && attrs[k] !== undefined) e.setAttribute(k, attrs[k]);
+  if (parent) parent.appendChild(e);
+  return e;
+}
+function svgBox(w, h) { const s = S("svg", { viewBox: `0 0 ${w} ${h}`, preserveAspectRatio: "xMidYMid meet" }); return s; }
+
+/* ===================== almacenamiento ===================== */
+const KEY = "lab_tema3_v1";
+let ST = { done: {}, log: [], quiz: null, team: "", abierta: "", tiempo: "", fase: "solo", miembros: [], tamano: "2" };
+function cargar() {
+  try { const raw = localStorage.getItem(KEY); if (raw) ST = Object.assign(ST, JSON.parse(raw)); } catch (e) { /* modo privado: sigue igual */ }
+}
+function guardar() { try { localStorage.setItem(KEY, JSON.stringify(ST)); } catch (e) { } }
+
+/* ===================== progreso ===================== */
+function totalEjercicios() { return $$(".ex").length; }
+function resueltos() { return Object.keys(ST.done).filter(k => ST.done[k]).length; }
+function pintarProgreso() {
+  const t = totalEjercicios(), r = resueltos();
+  const pct = t ? Math.round(r / t * 100) : 0;
+  const bar = $("#progBar"), txt = $("#progTxt");
+  if (bar) bar.style.width = pct + "%";
+  if (txt) txt.textContent = r + " / " + t;
+  const tp = $("#t-prog"); if (tp) tp.textContent = pct + " %";
+  // marca los bloques completos en la navegación
+  $$(".nav a").forEach(a => {
+    const id = a.getAttribute("href").replace("#", "");
+    const exs = $$(`.ex[data-id]`).filter(e => e.closest(".bloque") && e.closest(".bloque").id === id);
+    const todos = exs.length && exs.every(e => ST.done[e.dataset.id]);
+    a.classList.toggle("done", !!todos);
+  });
+}
+/* Las explicaciones quedan abiertas solo para los ejercicios ya resueltos.
+   Se usa al recargar y al salir del modo docente. */
+function sincronizarDetalles() {
+  $$(".ex[data-id]").forEach(ex => {
+    const d = $(".sol", ex);
+    if (d) d.open = !!ST.done[ex.dataset.id];
+  });
+}
+function registrarLog(txt) {
+  ST.log = ST.log.filter(x => x.split(" · ")[0] !== txt.split(" · ")[0]);
+  ST.log.unshift(txt); ST.log = ST.log.slice(0, 7); guardar(); pintarLog();
+}
+function pintarLog() {
+  const el = $("#t-log"); if (!el) return;
+  el.innerHTML = ST.log.length ? ST.log.map(x => `<div style="margin-bottom:4px">· ${x}</div>`).join("") : "—";
+}
+
+/* ===================== feedback ===================== */
+function feedback(id, ok, msg, nivel) {
+  const fb = $(`[data-fb="${id}"]`);
+  if (!fb) return;
+  fb.className = "fb show " + (nivel || (ok ? "good" : "bad"));
+  fb.innerHTML = msg;
+}
+function marcar(id, ok) {
+  const yaResuelto = !!ST.done[id];
+  if (ok) { ST.done[id] = true; guardar(); pintarProgreso(); }
+  const chip = $(`[data-chip="${id}"]`);
+  const ex = $(`.ex[data-id="${id}"]`);
+  if (chip) {
+    if (ok) { chip.textContent = "correcto"; chip.className = "chip ok"; }
+    else if (yaResuelto) { chip.textContent = "correcto"; chip.className = "chip ok"; }
+    else { chip.textContent = "inténtalo otra vez"; chip.className = "chip no"; }
+  }
+  if (ex) ex.classList.toggle("ok", !!ST.done[id]);
+  if (ok) { const d = $(`[data-sol="${id}"]`); if (d) d.open = true; }
+}
+
+/* ===================== gráficos ===================== */
+function ejeY(g, x0, x1, y0, y1, ticks, fmt, min, max) {
+  const span = (max - min) || 1;
+  ticks.forEach(t => {
+    const y = y1 - (t - min) / span * (y1 - y0);
+    S("line", { x1: x0, y1: y, x2: x1, y2: y, stroke: "#e7e5e0", "stroke-width": 1 }, g);
+    S("text", { x: x0 - 7, y: y + 4, "text-anchor": "end", "font-size": 10.5, fill: "#7c7a72", "font-family": "Outfit, sans-serif" }, g)
+      .textContent = fmt ? fmt(t) : t;
+  });
+}
+function lineChart(el, ys, opts) {
+  opts = opts || {};
+  el.innerHTML = "";
+  const W = 560, H = opts.h || 240, P = { t: 14, r: 14, b: 30, l: 46 };
+  const svg = svgBox(W, H); el.appendChild(svg);
+  if (!ys.length) return;
+  let min = opts.min !== undefined ? opts.min : Math.min.apply(null, ys);
+  let max = opts.max !== undefined ? opts.max : Math.max.apply(null, ys);
+  if (opts.min === undefined) min = Math.min(min, 0);
+  if (max === min) max = min + 1;
+  const pad = (max - min) * 0.08; if (opts.min === undefined) min -= pad; if (opts.max === undefined) max += pad;
+  const x0 = P.l, x1 = W - P.r, y0 = P.t, y1 = H - P.b;
+  const px = i => x0 + (ys.length === 1 ? 0 : i / (ys.length - 1) * (x1 - x0));
+  const py = v => y1 - (v - min) / ((max - min) || 1) * (y1 - y0);
+  const nt = 4, yt = [];
+  for (let i = 0; i <= nt; i++) yt.push(min + (max - min) * i / nt);
+  ejeY(svg, x0, x1, y0, y1, yt, v => (Math.abs(v) >= 100 ? v.toFixed(0) : v.toFixed(2)), min, max);
+  S("line", { x1: x0, y1: y1, x2: x1, y2: y1, stroke: "#d9d6d0", "stroke-width": 1.2 }, svg);
+  if (opts.ymax !== undefined) {
+    const yy = py(opts.ymax);
+    S("line", { x1: x0, y1: yy, x2: x1, y2: yy, stroke: "#f59e0b", "stroke-width": 1.2, "stroke-dasharray": "5 4" }, svg);
+  }
+  const d = ys.map((v, i) => `${i ? "L" : "M"}${px(i).toFixed(2)},${py(v).toFixed(2)}`).join(" ");
+  S("path", { d: d, fill: "none", stroke: opts.color || "#10b981", "stroke-width": 2.2, "stroke-linejoin": "round", "stroke-linecap": "round" }, svg);
+  const n = ys.length;
+  for (let i = 0; i < n; i += Math.max(1, Math.floor(n / 40))) {
+    S("circle", { cx: px(i), cy: py(ys[i]), r: 2.6, fill: opts.color || "#10b981" }, svg);
+  }
+  S("circle", { cx: px(n - 1), cy: py(ys[n - 1]), r: 4.2, fill: opts.color || "#10b981", stroke: "#fff", "stroke-width": 1.6 }, svg);
+  S("text", { x: x0, y: H - 9, "font-size": 10.5, fill: "#7c7a72", "font-family": "Outfit, sans-serif" }, svg).textContent = opts.x0 || "época 1";
+  S("text", { x: x1, y: H - 9, "text-anchor": "end", "font-size": 10.5, fill: "#7c7a72", "font-family": "Outfit, sans-serif" }, svg).textContent = opts.x1 || "época " + n;
+  if (opts.ylab) S("text", { x: 10, y: 14, "font-size": 10.5, fill: "#7c7a72", "font-family": "Outfit, sans-serif" }, svg).textContent = opts.ylab;
+}
+function barChart(el, vals, opts) {
+  opts = opts || {};
+  el.innerHTML = "";
+  const W = 560, H = opts.h || 240, P = { t: 14, r: 14, b: 30, l: 46 };
+  const svg = svgBox(W, H); el.appendChild(svg);
+  if (!vals.length) return;
+  const max = Math.max.apply(null, vals) || 1;
+  const x0 = P.l, x1 = W - P.r, y0 = P.t, y1 = H - P.b;
+  const yt = [0, max / 2, max]; ejeY(svg, x0, x1, y0, y1, yt, v => v.toFixed(0), 0, max);
+  S("line", { x1: x0, y1: y1, x2: x1, y2: y1, stroke: "#d9d6d0", "stroke-width": 1.2 }, svg);
+  const w = (x1 - x0) / vals.length;
+  vals.forEach((v, i) => {
+    const h = (v / max) * (y1 - y0);
+    const c = opts.colorOf ? opts.colorOf(i, v) : (opts.color || "#10b981");
+    S("rect", { x: x0 + i * w + 1.5, y: y1 - h, width: Math.max(2, w - 3), height: Math.max(v > 0 ? 2 : 0, h), rx: 2.5, fill: c }, svg);
+    if (opts.nums && i % opts.nums === 0) {
+      S("text", { x: x0 + i * w + w / 2, y: y1 - h - 5, "text-anchor": "middle", "font-size": 9.5, fill: "#3a4256", "font-family": "JetBrains Mono, monospace" }, svg).textContent = v;
+    }
+  });
+  S("text", { x: x0, y: H - 9, "font-size": 10.5, fill: "#7c7a72", "font-family": "Outfit, sans-serif" }, svg).textContent = opts.x0 || "época 1";
+  S("text", { x: x1, y: H - 9, "text-anchor": "end", "font-size": 10.5, fill: "#7c7a72", "font-family": "Outfit, sans-serif" }, svg).textContent = opts.x1 || "época " + vals.length;
+  if (opts.ylab) S("text", { x: 10, y: 14, "font-size": 10.5, fill: "#7c7a72", "font-family": "Outfit, sans-serif" }, svg).textContent = opts.ylab;
+}
+/* ===================== datos reales (MNIST embebido) ===================== */
+const DIM = 14, D = DIM * DIM, NTRAIN = 900;
+let XDAT = null, YDAT = null;
+function decodificar() {
+  const n = LAB_DATA.n;
+  XDAT = new Float64Array(n * D);   // float64: los numeros deben coincidir con la referencia de Python
+  const h = LAB_DATA.hex;
+  for (let i = 0; i < XDAT.length; i++) XDAT[i] = parseInt(h.charAt(i), 16) / 15;
+  YDAT = new Int8Array(n);
+  for (let i = 0; i < n; i++) YDAT[i] = parseInt(LAB_DATA.y.charAt(i), 10);
+}
+const clases = () => LAB_DATA.clases;
+
+/* ===================== matemáticas ===================== */
+const sigmoide = z => 1 / (1 + Math.exp(-clamp(z, -500, 500)));
+function softmaxZ(z) {
+  let mx = -Infinity; for (let i = 0; i < z.length; i++) if (z[i] > mx) mx = z[i];
+  let s = 0; const e = [];
+  for (let i = 0; i < z.length; i++) { const v = Math.exp(z[i] - mx); e.push(v); s += v; }
+  return e.map(v => v / s);
+}
+
+/* generador congruencial lineal: idéntico al usado en la referencia Python */
+function LCG(seed) {
+  let s = seed >>> 0;
+  return {
+    next: function () { s = (Math.imul(s, 1664525) + 1013904223) >>> 0; return s / 4294967296; },
+    mat: function (r, c, a) {
+      const M = new Float64Array(r * c);
+      for (let i = 0; i < r * c; i++) M[i] = (this.next() * 2 - 1) * a;
+      return M;
+    }
+  };
+}
+
+/* ===================== tareas ===================== */
+/* Convencion del curso (notebooks P2 y P3): y = 1 si es la clase B (la segunda),
+   y = 0 si es la clase A (la primera). */
+function tarea(clasesWanted) {
+  const idx = [], tgt = [];
+  for (let i = 0; i < NTRAIN; i++) {
+    if (clasesWanted.indexOf(YDAT[i]) >= 0) { idx.push(i); tgt.push(YDAT[i] === clasesWanted[1] ? 1 : 0); }
+  }
+  return { idx: idx, tgt: tgt, A: clasesWanted[0], B: clasesWanted[1] };
+}
+function tareaMulticlase(K, n) {
+  const idx = [], tgt = [];
+  const lim = n || NTRAIN;
+  for (let i = 0; i < lim; i++) { idx.push(i); tgt.push(clases().indexOf(YDAT[i])); }
+  return { idx: idx, tgt: tgt, K: K };
+}
+function examenDe(clasesWanted) {
+  const out = [];
+  for (let i = NTRAIN; i < YDAT.length; i++) {
+    if (!clasesWanted || clasesWanted.indexOf(YDAT[i]) >= 0) out.push({ i: i, y: YDAT[i] });
+  }
+  return out;
+}
+
+/* ===================== perceptrón (Rosenblatt) ===================== */
+function perceptron(ts, eta, ep, alEpoca) {
+  const w = new Float64Array(D); let b = 0; const errs = [];
+  for (let e = 0; e < ep; e++) {
+    let err = 0;
+    for (let i = 0; i < ts.idx.length; i++) {
+      const idx = ts.idx[i], off = idx * D;
+      let z = b;
+      for (let k = 0; k < D; k++) z += w[k] * XDAT[off + k];
+      const yhat = z > 0 ? 1 : 0;
+      const er = ts.tgt[i] - yhat;
+      if (er !== 0) {
+        err++;
+        const s = eta * er;
+        for (let k = 0; k < D; k++) w[k] += s * XDAT[off + k];
+        b += s;
+      }
+    }
+    errs.push(err);
+    if (alEpoca) alEpoca(e + 1, errs, w, b);
+  }
+  return { w: w, b: b, errs: errs };
+}
+function predecirPerceptron(w, b, idx) {
+  const off = idx * D; let z = b;
+  for (let k = 0; k < D; k++) z += w[k] * XDAT[off + k];
+  return { z: z, y: z > 0 ? 1 : 0 };
+}
+
+/* ===================== neurona sigmoide + descenso por gradiente ===================== */
+function sigmGD(ts, eta, ep, alEpoca) {
+  const w = new Float64Array(D); let b = 0; const loss = [];
+  const n = ts.idx.length;
+  for (let e = 0; e < ep; e++) {
+    const gw = new Float64Array(D); let gb = 0, l = 0;
+    for (let i = 0; i < n; i++) {
+      const idx = ts.idx[i], off = idx * D, t = ts.tgt[i];
+      let z = b;
+      for (let k = 0; k < D; k++) z += w[k] * XDAT[off + k];
+      const p = sigmoide(z);
+      l += -(t * Math.log(p + 1e-12) + (1 - t) * Math.log(1 - p + 1e-12));
+      const er = p - t;
+      for (let k = 0; k < D; k++) gw[k] += XDAT[off + k] * er;
+      gb += er;
+    }
+    loss.push(l / n);
+    for (let k = 0; k < D; k++) w[k] -= eta * gw[k] / n;
+    b -= eta * gb / n;
+    if (alEpoca) alEpoca(e + 1, loss, w, b);
+  }
+  return { w: w, b: b, loss: loss };
+}
+
+/* ===================== red de varias salidas (softmax) ===================== */
+function softmaxRed(ts, eta, ep, alEpoca) {
+  const K = ts.K, n = ts.idx.length;
+  const W = new Float64Array(D * K), B = new Float64Array(K), loss = [];
+  for (let e = 0; e < ep; e++) {
+    const G = new Float64Array(D * K), Gb = new Float64Array(K);
+    let l = 0;
+    for (let i = 0; i < n; i++) {
+      const idx = ts.idx[i], off = idx * D, t = ts.tgt[i];
+      const z = new Float64Array(K);
+      for (let c = 0; c < K; c++) { let s = B[c]; for (let k = 0; k < D; k++) s += XDAT[off + k] * W[k * K + c]; z[c] = s; }
+      const p = softmaxZ(Array.from(z));
+      l += -Math.log(p[t] + 1e-12);
+      for (let c = 0; c < K; c++) {
+        const g = (p[c] - (c === t ? 1 : 0)) / n;
+        Gb[c] += g;
+        for (let k = 0; k < D; k++) G[k * K + c] += XDAT[off + k] * g;
+      }
+    }
+    loss.push(l / n);
+    for (let k = 0; k < D * K; k++) W[k] -= eta * G[k];
+    for (let c = 0; c < K; c++) B[c] -= eta * Gb[c];
+    if (alEpoca) alEpoca(e + 1, loss);
+  }
+  return { W: W, B: B, loss: loss };
+}
+function predecirSoftmax(W, B, idx, K) {
+  const off = idx * D, z = [];
+  for (let c = 0; c < K; c++) { let s = B[c]; for (let k = 0; k < D; k++) s += XDAT[off + k] * W[k * K + c]; z.push(s); }
+  return softmaxZ(z);
+}
+
+/* ===================== red con capa oculta (reto XOR) ===================== */
+const XOR_X = [[0, 0], [0, 1], [1, 0], [1, 1]], XOR_Y = [0, 1, 1, 0];
+function xorRed(H, eta, ep, alEpoca) {
+  const g = LCG(20261125);
+  const W1 = g.mat(2, H, Math.sqrt(1 / 2)), b1 = new Float64Array(H);
+  const W2 = g.mat(H, 1, Math.sqrt(1 / H)), b2 = new Float64Array(1);
+  const loss = [];
+  for (let e = 0; e < ep; e++) {
+    const G1 = new Float64Array(2 * H), Gb1 = new Float64Array(H);
+    const G2 = new Float64Array(H), Gb2 = new Float64Array(1);
+    let l = 0;
+    for (let i = 0; i < 4; i++) {
+      const x = XOR_X[i], t = XOR_Y[i];
+      const Z1 = new Float64Array(H), A1 = new Float64Array(H);
+      for (let h = 0; h < H; h++) {
+        Z1[h] = x[0] * W1[h] + x[1] * W1[H + h] + b1[h];
+        A1[h] = Math.tanh(Z1[h]);
+      }
+      let z = b2[0];
+      for (let h = 0; h < H; h++) z += A1[h] * W2[h];
+      const p = sigmoide(z);
+      l += -(t * Math.log(p + 1e-12) + (1 - t) * Math.log(1 - p + 1e-12));
+      const e2 = p - t;
+      for (let h = 0; h < H; h++) { const d = e2 * W2[h] * (1 - A1[h] * A1[h]) / 4; G1[h] += x[0] * d; G1[H + h] += x[1] * d; Gb1[h] += d; G2[h] += A1[h] * e2 / 4; }
+      Gb2[0] += e2 / 4;
+    }
+    loss.push(l / 4);
+    for (let h = 0; h < H; h++) { W1[h] -= eta * G1[h]; W1[H + h] -= eta * G1[H + h]; b1[h] -= eta * Gb1[h]; W2[h] -= eta * G2[h]; }
+    b2[0] -= eta * Gb2[0];
+    if (alEpoca) alEpoca(e + 1, loss);
+  }
+  return { W1: W1, b1: b1, W2: W2, b2: b2, loss: loss, H: H };
+}
+function xorSalida(p, x) {
+  const H = p.H, a = [];
+  for (let h = 0; h < H; h++) a.push(Math.tanh(x[0] * p.W1[h] + x[1] * p.W1[H + h] + p.b1[h]));
+  let z = p.b2[0];
+  for (let h = 0; h < H; h++) z += a[h] * p.W2[h];
+  return sigmoide(z);
+}
+
+/* ===================== utilidades de dibujo ===================== */
+function digitos(el, items) {
+  el.innerHTML = "";
+  items.forEach(it => {
+    const div = document.createElement("div");
+    div.className = "dig" + (it.ok === true ? " ok" : it.ok === false ? " no" : "");
+    const c = document.createElement("canvas");
+    c.width = 56; c.height = 56;
+    const ctx = c.getContext("2d");
+    const off = it.idx * D;
+    for (let r = 0; r < DIM; r++) for (let cc = 0; cc < DIM; cc++) {
+      const v = XDAT[off + r * DIM + cc];
+      const g = Math.round(255 - v * 255);
+      ctx.fillStyle = "rgb(" + g + "," + g + "," + g + ")";
+      ctx.fillRect(cc * 4, r * 4, 4.35, 4.35);
+    }
+    div.appendChild(c);
+    const s = document.createElement("span");
+    s.innerHTML = "real <b>" + it.real + "</b><br>pred <b>" + it.pred + "</b>" + (it.extra ? "<br>" + it.extra : "");
+    div.appendChild(s);
+    el.appendChild(div);
+  });
+}
+function matrizConfusion(el, real, pred, K) {
+  const M = [];
+  for (let a = 0; a < K; a++) { M.push([]); for (let b = 0; b < K; b++) M[a].push(0); }
+  for (let i = 0; i < real.length; i++) M[real[i]][pred[i]]++;
+  let h = "<table class='matrix'><tr><th></th>";
+  for (let c = 0; c < K; c++) h += "<th>" + clases()[c] + "</th>";
+  h += "</tr>";
+  for (let a = 0; a < K; a++) {
+    h += "<tr><th>" + clases()[a] + "</th>";
+    for (let b = 0; b < K; b++) {
+      const cls = a === b ? (M[a][b] ? "diag" : "") : (M[a][b] ? "off" : "");
+      h += "<td class='" + cls + "'>" + M[a][b] + "</td>";
+    }
+    h += "</tr>";
+  }
+  h += "</table>";
+  el.innerHTML = h;
+}
+/* ===================== fases de trabajo (1 → 2 → 3 → 4) ===================== */
+const FASES = {
+  solo: { pill: "SOLO", texto: "<b>Cada uno por su lado.</b> Lee, mira el ejemplo y resuelve. Anota tus respuestas: en el bloque 1 las comparas con tu pareja." },
+  pares: { pill: "EN PARES", texto: "<b>De dos.</b> Uno al teclado y otro que lee la teoría. Comparen sus respuestas; si no coinciden, gana la que se pueda justificar con la fórmula." },
+  trios: { pill: "EN TRÍOS", texto: "<b>De tres.</b> Teclado, teoría y verificador. El verificador contrasta la respuesta con la teoría y avisa si no cuadra. Las decisiones se toman por consenso." },
+  cuartos: { pill: "GRUPO DE 4", texto: "<b>De cuatro.</b> Teclado, teoría, verificador y relator (explica al resto y controla el tiempo). El grupo entrega <b>una sola respuesta</b>." }
+};
+const faseActual = () => FASES[ST.fase] ? ST.fase : "solo";
+function pintarFase() {
+  const f = FASES[faseActual()];
+  const pill = $("#fase-pill"), txt = $("#fase-texto");
+  if (pill) pill.textContent = f.pill;
+  if (txt) txt.innerHTML = f.texto;
+  $$("#fases button").forEach(b => b.classList.toggle("on", b.getAttribute("data-fase") === faseActual()));
+}
+function ponerFase(f) { if (!FASES[f]) return; ST.fase = f; guardar(); pintarFase(); }
+
+/* ===================== bloque 3.6 · aprende o memoriza ===================== */
+function pintarGen() {
+  const cont = $("#gen-tabla"); if (!cont) return;
+  const res = EST.gen || {};
+  let h = "";
+  [100, 300, 600, 900].forEach(function (n) {
+    const r = res[n];
+    h += "<div class='gen-row'><div class='gen-n'>" + n + " img</div>";
+    h += "<div class='gen-bar tren'><i style='width:" + (r ? r.tr : 0) + "%'></i><span>" + (r ? r.tr.toFixed(1) + " %" : "—") + "</span></div>";
+    h += "<div class='gen-bar exa'><i style='width:" + (r ? r.ex : 0) + "%'></i><span>" + (r ? r.ex.toFixed(1) + " %" : "—") + "</span></div></div>";
+  });
+  cont.innerHTML = h;
+  const r100 = res[100], r900 = res[900];
+  const gap = $("#gen-gap");
+  if (gap) {
+    if (r100 && r900) {
+      gap.innerHTML = "Con <b>100</b> imágenes la diferencia entre entrenamiento y examen es de <b>" + (r100.tr - r100.ex).toFixed(1) + " puntos</b>; con <b>900</b> es de <b>" + (r900.tr - r900.ex).toFixed(1) + " puntos</b>. " +
+        "Fíjate: con más datos el acierto en entrenamiento <b>baja</b> y el del examen <b>sube</b>.";
+    } else {
+      gap.textContent = "Entrena con las cuatro cantidades y mira cómo cambia la diferencia entre las dos columnas.";
+    }
+  }
+}
+function correrGen() {
+  const n = parseInt($("#gen-n").value, 10);
+  $("#gen-estado").textContent = "entrenando…";
+  setTimeout(function () {
+    const ts = tareaMulticlase(4, n);
+    const res = softmaxRed(ts, 1, 200);
+    let acTr = 0;
+    for (let i = 0; i < ts.idx.length; i++) {
+      const p = predecirSoftmax(res.W, res.B, ts.idx[i], 4);
+      let c = 0; for (let j = 1; j < 4; j++) if (p[j] > p[c]) c = j;
+      if (c === ts.tgt[i]) acTr++;
+    }
+    const ex = examenDe(null);
+    let acEx = 0;
+    ex.forEach(function (s) {
+      const p = predecirSoftmax(res.W, res.B, s.i, 4);
+      let c = 0; for (let j = 1; j < 4; j++) if (p[j] > p[c]) c = j;
+      if (c === clases().indexOf(s.y)) acEx++;
+    });
+    EST.gen = EST.gen || {};
+    EST.gen[n] = { tr: 100 * acTr / ts.idx.length, ex: 100 * acEx / ex.length };
+    pintarGen();
+    $("#gen-estado").textContent = n + " imágenes · entrenado";
+  }, 40);
+}
+
+/* ===================== generalización de la tarjeta ===================== */
+const ROLES = {
+  1: ["Individual: cada uno con su tarea, sin hablar."],
+  2: ["Teclado — opera la página y anota la respuesta.", "Teoría — lee la explicación y la fórmula antes de responder."],
+  3: ["Teclado — opera la página.", "Teoría — lee la explicación y la fórmula.", "Verificador — contrasta la respuesta con la teoría y avisa si no cuadra."],
+  4: ["Teclado — opera la página.", "Teoría — lee la explicación y la fórmula.", "Verificador — contrasta la respuesta con la teoría.", "Relator — explica al resto, controla el tiempo y entrega una sola respuesta."]
+};
+function pintarMiembros() {
+  const n = parseInt(($("#team-size") || {}).value || 2, 10);
+  const cont = $("#team-miembros");
+  if (cont) {
+    let h = "<div style='margin:10px 0 6px;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em'>Integrantes</div>";
+    for (let i = 0; i < n; i++) {
+      h += "<input type='text' id='team-m" + i + "' placeholder='Integrante " + (i + 1) + "' style='margin-bottom:6px'>";
+    }
+    cont.innerHTML = h;
+    for (let i = 0; i < n; i++) {
+      const e = document.getElementById("team-m" + i);
+      if (e) {
+        e.value = (ST.miembros && ST.miembros[i]) || "";
+        e.addEventListener("input", function () { ST.miembros = ST.miembros || []; ST.miembros[i] = this.value; guardar(); });
+      }
+    }
+  }
+  const rol = $("#team-roles");
+  if (rol) rol.innerHTML = (ROLES[n] || []).map(function (r, i) { return "<div style='margin-bottom:3px'>· " + r + "</div>"; }).join("");
+}
+
+/* ===================== estado de los widgets ===================== */
+const EST = { and: null, xor: { bien: 0, tocado: false }, p01: null, p35: null, sg: null, sm: null, xo: null };
+function revelar(el, vals, kind, opts, fin) {
+  let i = 0;
+  const paso = () => {
+    if (i >= vals.length) { if (fin) fin(); return; }
+    const sub = vals.slice(0, i + 1);
+    if (kind === "bar") barChart(el, sub, opts);
+    else lineChart(el, sub, opts);
+    i++; setTimeout(paso, kind === "bar" ? 95 : (vals.length > 60 ? 8 : 22));
+  };
+  paso();
+}
+
+/* ---------- 0.2 · compuerta AND ---------- */
+function pintarAnd() {
+  const w1 = parseFloat($("#and-w1").value), w2 = parseFloat($("#and-w2").value), b = parseFloat($("#and-b").value);
+  const filas = [[0, 0], [0, 1], [1, 0], [1, 1]]; let h = "<tr><th>x₁</th><th>x₂</th><th>z</th><th>salida</th></tr>";
+  let bien = 0; const res = [];
+  filas.forEach(f => {
+    const z = w1 * f[0] + w2 * f[1] + b, y = z > 0 ? 1 : 0;
+    const ok = (f[0] === 1 && f[1] === 1) ? (y === 1) : (y === 0);
+    if (ok) bien++;
+    res.push({ z: z, y: y, ok: ok });
+    h += "<tr><td>" + f[0] + "</td><td>" + f[1] + "</td><td>" + z.toFixed(2) + "</td><td class='" + (ok ? "diag" : "off") + "'>" + y + "</td></tr>";
+  });
+  $("#and-table").innerHTML = h;
+  $("#and-z").textContent = (w1 + w2 + b).toFixed(2);
+  $("#and-out").textContent = (w1 + w2 + b) > 0 ? "1" : "0";
+  EST.and = { bien: bien, res: res };
+}
+["and-w1", "and-w2", "and-b"].forEach(id => { const e = document.getElementById(id); if (e) e.addEventListener("input", pintarAnd); });
+
+/* ---------- 0.4 · rectángulo XOR ---------- */
+function pintarXor(tocado) {
+  const el = $("#xor-plot"); el.innerHTML = "";
+  const W = 330, H = 330, P = 42;
+  const svg = svgBox(W, H); el.appendChild(svg);
+  const ang = parseFloat($("#xor-ang").value), pos = parseFloat($("#xor-pos").value);
+  const th = ang * Math.PI / 180, nx = Math.cos(th), ny = Math.sin(th);
+  const px = x => P + x * (W - 2 * P), py = y => H - P - y * (H - 2 * P);
+  S("rect", { x: P, y: P, width: W - 2 * P, height: H - 2 * P, fill: "#fbfbfa", stroke: "#e7e5e0" }, svg);
+  S("text", { x: px(0.5), y: H - P + 22, "text-anchor": "middle", "font-size": 11, fill: "#7c7a72", "font-family": "Outfit, sans-serif" }, svg).textContent = "x₁";
+  S("text", { x: P - 28, y: py(0.5), "text-anchor": "middle", "font-size": 11, fill: "#7c7a72", "font-family": "Outfit, sans-serif" }, svg).textContent = "x₂";
+  // recta: n·x = pos
+  const d = [nx, ny];
+  let a = [-ny, nx], b2 = [ny, -nx];
+  const p1 = [pos * d[0] + 4 * a[0], pos * d[1] + 4 * a[1]];
+  const p2 = [pos * d[0] - 4 * a[0], pos * d[1] - 4 * a[1]];
+  S("line", { x1: px(p1[0]), y1: py(p1[1]), x2: px(p2[0]), y2: py(p2[1]), stroke: "#14171e", "stroke-width": 2.2, "stroke-linecap": "round" }, svg);
+  const pts = [{ x: 0, y: 0, c: 0 }, { x: 0, y: 1, c: 1 }, { x: 1, y: 0, c: 1 }, { x: 1, y: 1, c: 0 }];
+  let bien = 0; let kv = "";
+  pts.forEach(p => {
+    const z = nx * p.x + ny * p.y - pos, pred = z > 0 ? 1 : 0;
+    const ok = pred === p.c; if (ok) bien++;
+    S("circle", { cx: px(p.x), cy: py(p.y), r: 13, fill: p.c ? "rgba(16,185,129,.16)" : "rgba(244,63,94,.16)", stroke: p.c ? "#10b981" : "#f43f5e", "stroke-width": 2.4 }, svg);
+    S("text", { x: px(p.x), y: py(p.y) + 4.5, "text-anchor": "middle", "font-size": 13, "font-weight": 600, fill: p.c ? "#047857" : "#be123c", "font-family": "Outfit, sans-serif" }, svg).textContent = p.c;
+    kv += "<dt>(" + p.x + ", " + p.y + ")</dt><dd" + (ok ? " style='color:#047857'" : " style='color:#be123c'") + ">" + pred + (ok ? " ✓" : " ✗") + "</dd>";
+  });
+  $("#xor-kv").innerHTML = kv;
+  $("#xor-note").innerHTML = "Aciertos: <b>" + bien + " de 4</b>. ¿Puedes llegar a 4?";
+  EST.xor = { bien: bien, tocado: !!EST.xor.tocado || !!tocado };
+}
+
+/* ---------- 1.1 · tabla de activaciones ---------- */
+function pintarTablaAct() {
+  const hs = [-3, -1, 0, 1, 3];
+  let h = "<tr><th>h</th><th>lineal</th><th>sigmoide</th><th>tanh</th><th>ReLU</th><th>σ′(h)</th></tr>";
+  hs.forEach(v => {
+    const s = sigmoide(v);
+    // los huecos del ejercicio (σ en −1, 0, 1 y σ′ en 0) se muestran con «?»
+    const q = "<td style='color:var(--accent);font-weight:700'>?</td>";
+    const celS = (v >= -1 && v <= 1) ? q : "<td>" + s.toFixed(4) + "</td>";
+    const celD = v === 0 ? q : "<td>" + (s * (1 - s)).toFixed(4) + "</td>";
+    h += "<tr><td>" + v + "</td><td>" + v.toFixed(4) + "</td>" + celS + "<td>" + Math.tanh(v).toFixed(4) + "</td><td>" + Math.max(0, v) + "</td>" + celD + "</tr>";
+  });
+  $("#act-table").innerHTML = h;
+}
+
+/* ---------- 1.2 · sigmoide ---------- */
+function pintarSigmoide() {
+  const el = $("#sig-plot"); el.innerHTML = "";
+  const W = 560, H = 250, L = 40, R = 16, T = 16, B = 30;
+  const svg = svgBox(W, H); el.appendChild(svg);
+  const x0 = L, x1 = W - R, y0 = T, y1 = H - B;
+  const px = z => x0 + (z + 8) / 16 * (x1 - x0);
+  const py = v => y1 - v * (y1 - y0);
+  [0, 0.25, 0.5, 0.75, 1].forEach(v => {
+    S("line", { x1: x0, y1: py(v), x2: x1, y2: py(v), stroke: "#e7e5e0", "stroke-width": 1 }, svg);
+    S("text", { x: x0 - 7, y: py(v) + 4, "text-anchor": "end", "font-size": 10.5, fill: "#7c7a72", "font-family": "Outfit, sans-serif" }, svg).textContent = v;
+  });
+  [-8, -4, 0, 4, 8].forEach(z => {
+    S("text", { x: px(z), y: H - 9, "text-anchor": "middle", "font-size": 10.5, fill: "#7c7a72", "font-family": "Outfit, sans-serif" }, svg).textContent = z;
+  });
+  let d1 = "", d2 = "";
+  for (let i = 0; i <= 200; i++) {
+    const z = -8 + i * 0.08, s = sigmoide(z);
+    d1 += (i ? "L" : "M") + px(z).toFixed(2) + "," + py(s).toFixed(2);
+    d2 += (i ? "L" : "M") + px(z).toFixed(2) + "," + py(s * (1 - s) / 0.25).toFixed(2);
+  }
+  S("path", { d: d2, fill: "none", stroke: "#f59e0b", "stroke-width": 1.6, "stroke-dasharray": "6 4" }, svg);
+  S("path", { d: d1, fill: "none", stroke: "#10b981", "stroke-width": 2.6 }, svg);
+  const z = parseFloat($("#sig-z").value), s = sigmoide(z);
+  S("line", { x1: px(z), y1: y0, x2: px(z), y2: y1, stroke: "#c9c6bf", "stroke-width": 1, "stroke-dasharray": "3 3" }, svg);
+  S("circle", { cx: px(z), cy: py(s), r: 5.5, fill: "#10b981", stroke: "#fff", "stroke-width": 2 }, svg);
+  S("text", { x: 10, y: 13, "font-size": 11, fill: "#10b981", "font-family": "Outfit, sans-serif" }, svg).textContent = "σ(z)";
+  S("text", { x: 62, y: 13, "font-size": 11, fill: "#f59e0b", "font-family": "Outfit, sans-serif" }, svg).textContent = "σ′(z) escalada ×0,25";
+  $("#sig-out").textContent = "σ(" + z.toFixed(1) + ") = " + s.toFixed(4) + "   ·   σ′ = " + (s * (1 - s)).toFixed(4);
+}
+
+/* ---------- 2.3 · montaña 1D ---------- */
+function pintarGd() {
+  const el = $("#gd-plot"); el.innerHTML = "";
+  const W = 560, H = 250, L = 40, R = 16, T = 16, B = 30;
+  const svg = svgBox(W, H); el.appendChild(svg);
+  const x0 = L, x1 = W - R, y0 = T, y1 = H - B;
+  const px = x => x0 + (x + 6) / 12 * (x1 - x0);
+  const py = v => y1 - (v / 36) * (y1 - y0);
+  [0, 9, 18, 27, 36].forEach(v => {
+    S("line", { x1: x0, y1: py(v), x2: x1, y2: py(v), stroke: "#e7e5e0", "stroke-width": 1 }, svg);
+    S("text", { x: x0 - 7, y: py(v) + 4, "text-anchor": "end", "font-size": 10.5, fill: "#7c7a72", "font-family": "Outfit, sans-serif" }, svg).textContent = v;
+  });
+  [-6, -3, 0, 3, 6].forEach(v => S("text", { x: px(v), y: H - 9, "text-anchor": "middle", "font-size": 10.5, fill: "#7c7a72", "font-family": "Outfit, sans-serif" }, svg).textContent = v);
+  let d = "";
+  for (let i = 0; i <= 200; i++) { const x = -6 + i * 0.06; d += (i ? "L" : "M") + px(x).toFixed(2) + "," + py(x * x).toFixed(2); }
+  S("path", { d: d, fill: "none", stroke: "#c9c6bf", "stroke-width": 2 }, svg);
+  const camino = EST.gdCamino || [];
+  if (camino.length > 1) {
+    let dd = "";
+    camino.forEach((x, i) => { dd += (i ? "L" : "M") + px(x).toFixed(2) + "," + py(x * x).toFixed(2); });
+    S("path", { d: dd, fill: "none", stroke: "#f59e0b", "stroke-width": 2.2, "stroke-dasharray": "5 4" }, svg);
+    camino.forEach((x, i) => { if (i % 3 === 0 || i === camino.length - 1) S("circle", { cx: px(x), cy: py(x * x), r: 3.4, fill: "#f59e0b" }, svg); });
+  }
+  if (camino.length) {
+    const x = camino[camino.length - 1];
+    S("circle", { cx: px(x), cy: py(x * x), r: 6, fill: "#14171e", stroke: "#fff", "stroke-width": 2 }, svg);
+    S("text", { x: px(x), y: py(x * x) - 12, "text-anchor": "middle", "font-size": 11, fill: "#14171e", "font-family": "JetBrains Mono, monospace" }, svg).textContent = x.toFixed(2);
+  }
+  S("text", { x: 10, y: 13, "font-size": 11, fill: "#7c7a72", "font-family": "Outfit, sans-serif" }, svg).textContent = "f(x) = x²";
+}
+
+/* ---------- 2.3 · acción de bajar ---------- */
+function bajarMontana() {
+  const eta = parseFloat($("#gd-eta").value);
+  $("#gd-eta-out").textContent = eta.toFixed(2);
+  let x = 5; const camino = [x];
+  for (let i = 0; i < 30; i++) { x = x - eta * (2 * x); camino.push(x); }
+  EST.gdCamino = camino;
+  pintarGd();
+  const fin = camino[camino.length - 1];
+  const grew = Math.abs(fin) > Math.abs(camino[0]);
+  let cambios = 0;
+  for (let i = 2; i < camino.length; i++) if (Math.sign(camino[i]) !== Math.sign(camino[i - 1])) cambios++;
+  const veredicto = grew ? "<b style='color:#be123c'>Se aleja del fondo (diverge)</b>: el paso es demasiado grande."
+    : (cambios > 3 ? "<b style='color:#92400e'>Oscila</b>: da vueltas alrededor del fondo sin alejarse."
+      : "<b style='color:#047857'>Converge</b>: baja suave hasta el fondo y se queda ahí.");
+  $("#gd-x").textContent = fin.toFixed(3);
+  $("#gd-pasos").textContent = "30";
+  $("#gd-f").textContent = (fin * fin).toFixed(3);
+  $("#gd-verdict").innerHTML = veredicto;
+  EST.gd = { eta: eta, fin: fin, crecio: grew };
+}
+/* ===================== 3.1 · perceptrón 0 vs 1 ===================== */
+function correrP01() {
+  const eta = parseFloat($("#p01-eta").value) || 0.1;
+  const ts = tarea([0, 1]);
+  $("#p01-estado").textContent = "entrenando…";
+  $("#p01-chart").innerHTML = "";
+  setTimeout(function () {
+    const res = perceptron(ts, eta, 15);
+    const ex = examenDe([0, 1]);
+    let ok = 0; const mal = [];
+    ex.forEach(function (s) {
+      const p = predecirPerceptron(res.w, res.b, s.i);
+      const pred = p.y === 1 ? 1 : 0, real = s.y === 1 ? 1 : 0;
+      if (pred === real) ok++; else mal.push({ idx: s.i, real: s.y, pred: pred });
+    });
+    const acc = ok / ex.length;
+    const conv = res.errs.findIndex(e => e === 0) + 1;
+    EST.p01 = { res: res, acc: acc, converge: conv };
+    $("#p01-estado").textContent = "época 15 / 15 · listo";
+    $("#p01-errs").textContent = res.errs.join(", ");
+    $("#p01-acc").textContent = (acc * 100).toFixed(1) + " %";
+    $("#p01-note").innerHTML = "Errores por época. Si la curva llega a <b>0 y se queda</b>, el perceptrón resolvió el problema.";
+    revelar($("#p01-chart"), res.errs, "bar", { ylab: "errores por época", colorOf: function (i, v) { return v === 0 ? "#10b981" : "#f59e0b"; } });
+    const items = [];
+    const vista = ex.slice(0, 4);
+    vista.forEach(function (s) {
+      const p = predecirPerceptron(res.w, res.b, s.i);
+      const pred = p.y === 1 ? 1 : 0, real = s.y === 1 ? 1 : 0;
+      items.push({ idx: s.i, real: s.y, pred: pred, ok: pred === real });
+    });
+    mal.filter(function (m) { return vista.every(function (s) { return s.i !== m.idx; }); }).slice(0, 2).forEach(function (m) { items.push({ idx: m.idx, real: m.real, pred: m.pred, ok: false }); });
+    digitos($("#p01-dig"), items);
+    registrarLog("3.1 perceptrón 0 vs 1 · " + (acc * 100).toFixed(1) + "% en el examen");
+  }, 40);
+}
+
+/* ===================== 3.2 · perceptrón 3 vs 5 ===================== */
+function correrP35() {
+  const eta = parseFloat($("#p35-eta").value) || 0.1;
+  const ts = tarea([3, 5]);
+  $("#p35-estado").textContent = "entrenando…";
+  $("#p35-chart").innerHTML = "";
+  setTimeout(function () {
+    const res = perceptron(ts, eta, 15);
+    const ex = examenDe([3, 5]);
+    let ok = 0; const mal = [];
+    ex.forEach(function (s) {
+      const p = predecirPerceptron(res.w, res.b, s.i);
+      const pred = p.y === 1 ? 5 : 3, real = s.y;
+      if (pred === real) ok++; else mal.push({ idx: s.i, real: s.y, pred: pred });
+    });
+    const acc = ok / ex.length;
+    EST.p35 = { res: res, acc: acc };
+    $("#p35-estado").textContent = "época 15 / 15 · listo";
+    $("#p35-errs").textContent = res.errs.join(", ");
+    $("#p35-acc").textContent = (acc * 100).toFixed(1) + " %";
+    revelar($("#p35-chart"), res.errs, "bar", { ylab: "errores por época", colorOf: function (i, v) { return "#f43f5e"; } });
+    const items = [];
+    const vista = ex.slice(0, 4);
+    vista.forEach(function (s) {
+      const p = predecirPerceptron(res.w, res.b, s.i);
+      const pred = p.y === 1 ? 5 : 3;
+      items.push({ idx: s.i, real: s.y, pred: pred, ok: pred === s.y });
+    });
+    mal.filter(function (m) { return vista.every(function (s) { return s.i !== m.idx; }); }).slice(0, 2).forEach(function (m) { items.push({ idx: m.idx, real: m.real, pred: m.pred, ok: false }); });
+    digitos($("#p35-dig"), items);
+    registrarLog("3.2 perceptrón 3 vs 5 · " + (acc * 100).toFixed(1) + "% · errores " + res.errs.slice(0, 6).join(","));
+  }, 40);
+}
+
+/* ===================== 3.3 · sigmoide + gradiente ===================== */
+function correrSg() {
+  const eta = parseFloat($("#sg-eta").value) || 1;
+  const ts = tarea([3, 5]);
+  $("#sg-estado").textContent = "entrenando…";
+  $("#sg-chart").innerHTML = "";
+  setTimeout(function () {
+    const res = sigmGD(ts, eta, 120);
+    const ex = examenDe([3, 5]);
+    let ok = 0;
+    ex.forEach(function (s) {
+      const off = s.i * D; let z = res.b;
+      for (let k = 0; k < D; k++) z += res.w[k] * XDAT[off + k];
+      const pred = sigmoide(z) > 0.5 ? 5 : 3;
+      if (pred === s.y) ok++;
+    });
+    const acc = ok / ex.length;
+    EST.sg = { res: res, acc: acc };
+    $("#sg-estado").textContent = "época 120 / 120 · listo";
+    $("#sg-l0").textContent = fx(res.loss[0]);
+    $("#sg-l1").textContent = fx(res.loss[res.loss.length - 1]);
+    $("#sg-acc").textContent = (acc * 100).toFixed(1) + " %";
+    revelar($("#sg-chart"), res.loss, "line", { ylab: "pérdida (entropía cruzada)", color: "#10b981", min: 0, max: Math.max(0.8, res.loss[0]), x0: "época 1", x1: "época 120" });
+    registrarLog("3.3 sigmoide 3 vs 5 · pérdida " + res.loss[0].toFixed(4) + " → " + res.loss[res.loss.length - 1].toFixed(4) + " · " + (acc * 100).toFixed(1) + "%");
+  }, 40);
+}
+
+/* ===================== 3.4 · red softmax de 4 salidas ===================== */
+function correrSm() {
+  const eta = parseFloat($("#sm-eta").value) || 1;
+  const ts = tareaMulticlase(4);
+  $("#sm-estado").textContent = "entrenando…";
+  $("#sm-chart").innerHTML = "";
+  setTimeout(function () {
+    const res = softmaxRed(ts, eta, 200);
+    const ex = examenDe(null);
+    const real = [], pred = [], items = [];
+    let ok = 0;
+    ex.forEach(function (s) {
+      const p = predecirSoftmax(res.W, res.B, s.i, 4);
+      let c = 0; for (let j = 1; j < 4; j++) if (p[j] > p[c]) c = j;
+      const r = clases().indexOf(s.y);
+      real.push(r); pred.push(c);
+      if (r === c) ok++;
+      if (items.length < 8) items.push({ idx: s.i, real: s.y, pred: clases()[c], ok: r === c, extra: Math.round(p[c] * 100) + "%" });
+    });
+    const acc = ok / ex.length;
+    EST.sm = { res: res, acc: acc, real: real, pred: pred };
+    $("#sm-estado").textContent = "época 200 / 200 · listo";
+    $("#sm-l0").textContent = fx(res.loss[0]);
+    $("#sm-l1").textContent = fx(res.loss[res.loss.length - 1]);
+    $("#sm-acc").textContent = (acc * 100).toFixed(1) + " %";
+    matrizConfusion($("#sm-matrix"), real, pred, 4);
+    digitos($("#sm-dig"), items);
+    revelar($("#sm-chart"), res.loss, "line", { ylab: "pérdida (entropía cruzada)", color: "#10b981", min: 0, max: Math.max(1.5, res.loss[0]), x0: "época 1", x1: "época 200" });
+    registrarLog("3.4 red softmax 4 clases · " + (acc * 100).toFixed(1) + "% en el examen");
+  }, 40);
+}
+
+/* ===================== 4.1 · red con capa oculta (XOR) ===================== */
+function pintarFronteraXor(p) {
+  const el = $("#xo-plot"); el.innerHTML = "";
+  const W = 330, H = 330, P = 30;
+  const svg = svgBox(W, H); el.appendChild(svg);
+  const D0 = -0.15, D1 = 1.15, SP = D1 - D0;
+  const px = x => P + (x - D0) / SP * (W - 2 * P), py = y => H - P - (y - D0) / SP * (H - 2 * P);
+  const N = 40, cw = (W - 2 * P) / N;
+  for (let i = 0; i < N; i++) for (let j = 0; j < N; j++) {
+    const x = D0 + (i + 0.5) / N * SP, y = D0 + (j + 0.5) / N * SP;
+    const s = xorSalida(p, [x, y]);
+    const conf = Math.abs(s - 0.5) * 2;
+    S("rect", {
+      x: P + i * cw, y: H - P - (j + 1) * cw, width: cw + 0.4, height: cw + 0.4,
+      fill: s > 0.5 ? "rgba(16,185,129," + (0.06 + 0.34 * conf).toFixed(3) + ")" : "rgba(244,63,94," + (0.06 + 0.34 * conf).toFixed(3) + ")"
+    }, svg);
+  }
+  S("rect", { x: P, y: P, width: W - 2 * P, height: H - 2 * P, fill: "none", stroke: "#e7e5e0" }, svg);
+  const pts = [{ x: 0, y: 0, c: 0 }, { x: 0, y: 1, c: 1 }, { x: 1, y: 0, c: 1 }, { x: 1, y: 1, c: 0 }];
+  pts.forEach(function (q) {
+    const s = xorSalida(p, [q.x, q.y]);
+    const pred = s > 0.5 ? 1 : 0, ok = pred === q.c;
+    S("circle", { cx: px(q.x), cy: py(q.y), r: 12, fill: ok ? "rgba(20,23,30,.9)" : "#f43f5e", stroke: "#fff", "stroke-width": 2.4 }, svg);
+    S("text", { x: px(q.x), y: py(q.y) + 4.5, "text-anchor": "middle", "font-size": 12.5, "font-weight": 600, fill: "#fff", "font-family": "Outfit, sans-serif" }, svg).textContent = q.c;
+  });
+  S("text", { x: 12, y: 18, "font-size": 11, fill: "#7c7a72", "font-family": "Outfit, sans-serif" }, svg).textContent = "zona que la red cree 1";
+}
+function correrXo() {
+  const eta = parseFloat($("#xo-eta").value) || 1;
+  $("#xo-estado").textContent = "entrenando…";
+  setTimeout(function () {
+    const res = xorRed(3, eta, 1000);
+    let ok = 0;
+    XOR_X.forEach(function (x, i) { const s = xorSalida(res, x); if ((s > 0.5 ? 1 : 0) === XOR_Y[i]) ok++; });
+    EST.xo = { res: res, acc: ok };
+    $("#xo-estado").textContent = "época 1000 / 1000 · listo";
+    $("#xo-l0").textContent = fx(res.loss[0]);
+    $("#xo-l1").textContent = fx(res.loss[res.loss.length - 1]);
+    $("#xo-acc").textContent = ok + " / 4";
+    $("#xo-note").innerHTML = ok === 4
+      ? "<b style='color:#047857'>¡Resuelto!</b> La frontera ya no es una recta: son tres rectas combinadas."
+      : "Todavía no: mira cómo la frontera (las áreas de color) va cogiendo forma.";
+    pintarFronteraXor(res);
+    registrarLog("4.1 XOR con capa oculta · " + ok + "/4 aciertos · pérdida " + res.loss[res.loss.length - 1].toFixed(4));
+  }, 40);
+}
+/* ===================== pistas ===================== */
+const HINTS = {
+  "0.1": "Prueba cada θ posible (1, 2, 3): ¿con cuántas entradas encendidas se activa la neurona en cada caso?",
+  "0.2": "Prueba w₁ = 1 y w₂ = 1. Con las dos entradas a 1 la suma es 2: el sesgo debe dejar pasar solo ese caso (entre −2 y −1).",
+  "0.3": "w ← w + η(y − ŷ)·x. La neurona dijo 0 y la respuesta correcta era 1, así que y − ŷ = +1. Solo se mueven los pesos donde x = 1.",
+  "0.4": "Prueba la recta que pasa entre (0,0) y (1,1). Después mira dónde quedan (0,1) y (1,0).",
+  "1.1": "Sigue los 3 pasos del ejemplo σ(2) con z = −1, 0 y 1 (recuerda que e⁰ = 1). Para la derivada: σ′(z) = σ(z)·(1 − σ(z)).",
+  "1.2": "La curva pasa por (0, 0.5) y la derivada es máxima justo ahí, en z = 0.",
+  "1.3": "z = 0.1·0.7 + 0.8·(−0.3) + (−0.1). Ojo: 0.8·(−0.3) es negativo.",
+  "2.1": "x ← x − η·f′(x) = 5 − 0.1·10.",
+  "2.2": "Cada paso multiplica x por (1 − 2η) = 0.8. De 5 sale 4; sigue igual con 4.",
+  "2.3": "Con f(x) = x² el error se multiplica por (1 − 2η). Se aleja cuando |1 − 2η| > 1, o sea cuando η > 1.",
+  "2.4": "La pendiente es f′(x) = 2 + 2x. Aplica la regla 6 veces seguidas, sin redondear.",
+  "2.5": "Pregúntense: ¿alguien tiene que calcular el ajuste de los pesos a mano?",
+  "3.1": "Mira la barra que llega a 0: ¿en qué número de época ocurre?",
+  "3.2": "Compara las dos curvas: en 3.1 la de errores llegó a 0 y se quedó. ¿Qué pasa aquí?",
+  "3.3": "El examen son 163 imágenes de 3 y 5. Mira el porcentaje que te da la página.",
+  "3.4": "El examen tiene 300 imágenes. El porcentaje sale en el panel de la derecha.",
+  "3.5": "Piensa en la montaña del bloque 2 cuando η era demasiado grande.",
+  "3.6": "Entrena con 100 imágenes y mira las dos barras de esa fila: la verde es el entrenamiento y la naranja el examen.",
+  "4.1": "Deja que termine el entrenamiento: 1000 épocas se hacen enseguida.",
+  "4.2": "¿Qué puede hacer una capa de neuronas que una sola neurona no puede?",
+  "4.3": "La fórmula es grad_w = X.T @ (p − y) / len(X)."
+};
+
+/* ===================== correcciones ===================== */
+const opSel = name => { const e = $("input[name='" + name + "']:checked"); return e ? e.value : null; };
+function numCheck(id, expected, tol) {
+  const v = num(id);
+  if (v === null) return { ok: false, msg: "Falta el número." };
+  if (near(v, expected, tol)) return { ok: true, msg: "Correcto." };
+  return { ok: false, msg: "No es ese valor (escribiste " + v + ")." };
+}
+const CHECKS = {
+  "0.1": () => {
+    const v = num("in-0.1");
+    if (v === null) return { ok: false, msg: "Escribe un número." };
+    if (v === 2) return { ok: true, msg: "Correcto: <b>θ = 2</b>. Con 2 encendidas ya se activa; con 1 sería OR y con 3 sería AND." };
+    return { ok: false, msg: "No es ese. «Al menos 2 de 3» significa que con <b>dos</b> entradas encendidas ya debe activarse." };
+  },
+  "0.2": () => {
+    if (!EST.and) return { ok: false, msg: "Mueve los deslizadores." };
+    if (EST.and.bien === 4) return { ok: true, msg: "¡Esa neurona ya es una compuerta AND! Fíjate en que muchos valores distintos sirven: lo que importa es el <b>signo</b> de z en cada fila." };
+    return { ok: false, msg: "Ahora mismo acierta " + EST.and.bien + " de 4 filas. Necesitas que (1,1) dé 1 y las otras tres den 0." };
+  },
+  "0.3": () => {
+    const a = num("in-0.3a"), b = num("in-0.3b"), c = num("in-0.3c"), d = num("in-0.3d");
+    if (a === null || b === null || c === null || d === null) return { ok: false, msg: "Completa los cuatro huecos." };
+    const ok = near(a, 0.1, 1e-6) && near(b, 0, 1e-6) && near(c, 0.1, 1e-6) && near(d, 0.1, 1e-6);
+    if (ok) return { ok: true, msg: "Correcto: <b>w = [0.1, 0, 0.1]</b> y <b>b = 0.1</b>. Solo se movieron los pesos de los píxeles encendidos (x₁ y x₃)." };
+    const partes = [];
+    if (!near(a, 0.1, 1e-6)) partes.push("w₁");
+    if (!near(b, 0, 1e-6)) partes.push("w₂");
+    if (!near(c, 0.1, 1e-6)) partes.push("w₃");
+    if (!near(d, 0.1, 1e-6)) partes.push("b");
+    return { ok: false, msg: "Revisa " + partes.join(", ") + ". Recuerda: el error es y − ŷ = +1 y solo cambian los pesos donde x = 1." };
+  },
+  "0.4": () => {
+    if (!EST.xor) return { ok: false, msg: "Mueve la recta primero." };
+    if (!EST.xor.tocado) return { ok: false, msg: "Todavía no moviste la recta. Arrástrala y prueba: la idea es descubrir que <b>ninguna</b> recta separa las dos clases." };
+    if (EST.xor.bien >= 3) return { ok: true, msg: "¡Has llegado al máximo posible: <b>3 de 4</b>! Fíjate que siempre falla uno. <b>XOR no es linealmente separable</b>: ninguna recta puede con los cuatro. Por eso el perceptrón se atasca." };
+    return { ok: false, msg: "Aciertas " + EST.xor.bien + " de 4. Prueba otras rectas: el máximo posible son 3. Si llegas a 3, ya has descubierto el problema." };
+  },
+  "1.1": () => {
+    const a = num("in-1.1a"), b = num("in-1.1b"), c = num("in-1.1c"), d = num("in-1.1d");
+    if (a === null || b === null || c === null || d === null) return { ok: false, msg: "Completa los cuatro huecos." };
+    const fallos = [];
+    if (!near(a, 0.2689, 0.002)) fallos.push("σ(−1)");
+    if (!near(b, 0.5, 0.002)) fallos.push("σ(0)");
+    if (!near(c, 0.7311, 0.002)) fallos.push("σ(1)");
+    if (!near(d, 0.25, 0.002)) fallos.push("σ′(0)");
+    if (!fallos.length) return { ok: true, msg: "Correcto. <b>σ′(0) = 0.25</b>: la derivada es máxima en z = 0, donde la neurona es la más sensible a sus pesos." };
+    return { ok: false, msg: "Revisa " + fallos.join(", ") + ". Sigue los pasos del ejemplo resuelto σ(2) con 4 decimales." };
+  },
+  "1.2": () => {
+    const a = num("in-1.2a"), b = num("in-1.2b");
+    if (a === null || b === null) return { ok: false, msg: "Completa los dos huecos." };
+    if (near(a, 0.5, 0.002) && near(b, 0.25, 0.002)) return { ok: true, msg: "Correcto: <b>σ(0) = 0.5</b> y <b>σ′(0) = 0.25</b>. La curva pasa por (0, 0.5) y la derivada es máxima ahí." };
+    return { ok: false, msg: "La curva pasa por (0, 0.5). La derivada es σ′(z) = σ(z)(1 − σ(z)), máxima en z = 0." };
+  },
+  "1.3": () => {
+    const a = num("in-1.3a"), b = num("in-1.3b");
+    if (a === null || b === null) return { ok: false, msg: "Completa los dos huecos." };
+    const okZ = near(a, -0.27, 0.005), okS = near(b, 0.4329, 0.001);
+    if (okZ && okS) return { ok: true, msg: "Correcto: <b>z = −0.27</b> y <b>σ(z) = 0.4329</b>. La neurona dice «43 % de que sea la clase 1»." };
+    if (!okZ) return { ok: false, msg: "z no está bien. Recuerda: 0.8·(−0.3) = −0.24, así que ese término <b>suma negativo</b>." };
+    return { ok: false, msg: "z está bien (−0.27) pero la sigmoide no: σ(−0.27) = 0.4329." };
+  },
+  "2.1": () => {
+    const r = numCheck("in-2.1", 4, 0.01);
+    return r.ok ? { ok: true, msg: "Correcto: <b>x = 5 − 0.1·10 = 4</b>. Un paso hacia el fondo." }
+      : { ok: false, msg: r.msg + " Recuerda: x ← x − η·f′(x) = 5 − 0.1·10." };
+  },
+  "2.2": () => {
+    const a = num("in-2.2a"), b = num("in-2.2b"), c = num("in-2.2c");
+    if (a === null || b === null || c === null) return { ok: false, msg: "Completa los tres huecos." };
+    const f = [];
+    if (!near(a, 4, 0.01)) f.push("x₁");
+    if (!near(b, 3.2, 0.01)) f.push("x₂");
+    if (!near(c, 2.56, 0.01)) f.push("x₃");
+    if (!f.length) return { ok: true, msg: "Correcto: 5 → <b>4</b> → <b>3.2</b> → <b>2.56</b>. Cada paso multiplica el error por 0.8." };
+    return { ok: false, msg: "Revisa " + f.join(", ") + ". Cada paso usa el x anterior: x ← x − 0.1·2x." };
+  },
+  "2.3": () => {
+    const v = num("in-2.3");
+    if (v === null) return { ok: false, msg: "Escribe el valor de η." };
+    if (v > 1.0) return { ok: true, msg: "Correcto: con <b>η = " + v + "</b> el error se multiplica por (1 − 2η) y su valor absoluto crece: la pendiente se aleja del fondo. (Con η = 1 el error no cambia: la neurona da vueltas clavada.)" };
+    return { ok: false, msg: "Ese valor no diverge. Con f(x) = x² el error se multiplica por (1 − 2η): se aleja solo cuando η > 1. Prueba en el simulador con 0.9 (oscila) y con 1.05 (se aleja)." };
+  },
+  "2.4": () => {
+    const r = numCheck("in-2.4", -0.48678, 0.005);
+    return r.ok ? { ok: true, msg: "Correcto: <b>x₆ = −0.48678</b>. El mínimo de f(x) = 2x + x² está en x = −1, y el descenso se queda orbitando cerca." }
+      : { ok: false, msg: r.msg + " La pendiente es f′(x) = 2 + 2x; aplícala 6 veces desde x₀ = 10." };
+  },
+  "2.5": () => {
+    const v = opSel("q25");
+    if (!v) return { ok: false, msg: "Elijan una opción." };
+    return v === "a" ? { ok: true, msg: "Correcto. El error se <b>mide</b> con una fórmula y los pesos se corrigen solos, en la dirección que lo baja." }
+      : { ok: false, msg: "No. Piensa: en el descenso por gradiente nadie corrige los pesos a mano, y la η importa incluso con una sola neurona (lo vieron en 2.3)." };
+  },
+  "3.1": () => {
+    if (!EST.p01) return { ok: false, msg: "Primero dale a <b>Entrenar</b>." };
+    const v = num("in-3.1");
+    if (v === null) return { ok: false, msg: "Escribe en qué época llegó a 0 errores." };
+    const c = EST.p01.converge;
+    if (Math.abs(v - c) <= 1) return { ok: true, msg: "Correcto: llegó a 0 errores en la <b>época " + c + "</b> y se quedó ahí. Eso es la firma de un problema que el perceptrón sí puede resolver." };
+    return { ok: false, msg: "Con estos datos llegó a 0 errores en la época " + c + ". Mira la barra: la primera que toca 0." };
+  },
+  "3.2": () => {
+    if (!EST.p35) return { ok: false, msg: "Primero dale a <b>Entrenar</b>." };
+    const e = EST.p35.res.errs;
+    return { ok: true, msg: "Esto es lo que tienes que ver: los errores <b>bajan y vuelven a subir</b> (" + e.slice(0, 6).join(", ") + "…). El perceptrón empuja con la misma fuerza un error mínimo que uno enorme, así que <b>nunca se calma</b>. Es el problema que resuelve la sigmoide." };
+  },
+  "3.3": () => {
+    if (!EST.sg) return { ok: false, msg: "Primero dale a <b>Entrenar</b>." };
+    const v = num("in-3.3");
+    if (v === null) return { ok: false, msg: "Escribe el porcentaje que te dio la página." };
+    const real = EST.sg.acc * 100;
+    if (Math.abs(v - real) <= 3) return { ok: true, msg: "Correcto: " + real.toFixed(1) + " %. La curva baja <b>suave</b> hasta un piso y se queda: eso es la diferencia con el perceptrón." };
+    return { ok: false, msg: "La página dio " + real.toFixed(1) + " %. ¿Lo copiaste bien? (el curso, con 11 552 imágenes, llega al 96 %)." };
+  },
+  "3.4": () => {
+    if (!EST.sm) return { ok: false, msg: "Primero dale a <b>Entrenar</b>." };
+    const v = num("in-3.4");
+    if (v === null) return { ok: false, msg: "Escribe el porcentaje que te dio la página." };
+    const real = EST.sm.acc * 100;
+    if (Math.abs(v - real) <= 3) return { ok: true, msg: "Correcto: " + real.toFixed(1) + " %. Esta es tu <b>primera red</b>: cuatro salidas, softmax, y una pérdida que baja de 1.3863 a menos de 0.2." };
+    return { ok: false, msg: "La página dio " + real.toFixed(1) + " %. Mira el panel de la derecha." };
+  },
+  "3.5": () => {
+    const v = opSel("q35");
+    if (!v) return { ok: false, msg: "Elijan una opción." };
+    return v === "a" ? { ok: true, msg: "Correcto: la pérdida sube y los pesos se disparan. Es la causa número uno de que un entrenamiento «no funcione»." }
+      : { ok: false, msg: "No. Vuelve a 3.4 con η = 3 y mira la curva: si la pérdida sube, es que el paso se pasa de largo." };
+  },
+  "3.6": () => {
+    if (!EST.gen || !EST.gen[100]) return { ok: false, msg: "Primero entrena la red con <b>100</b> imágenes (ejercicio 3.6)." };
+    const v = num("in-3.6");
+    if (v === null) return { ok: false, msg: "Escribe el porcentaje." };
+    const real = EST.gen[100].ex;
+    if (Math.abs(v - real) <= 1.5) return { ok: true, msg: "Correcto: " + real.toFixed(1) + " % en el examen (y " + EST.gen[100].tr.toFixed(1) + " % en el entrenamiento). La diferencia es de " + (EST.gen[100].tr - real).toFixed(1) + " puntos: <b>la red está memorizando</b>." };
+    return { ok: false, msg: "La página midió " + real.toFixed(1) + " %. Mira la barra naranja de la fila de 100 imágenes." };
+  },
+  "4.1": () => {
+    if (!EST.xo) return { ok: false, msg: "Primero dale a <b>Entrenar</b>." };
+    const v = num("in-4.1");
+    if (v === null) return { ok: false, msg: "Escribe cuántos aciertos." };
+    if (EST.xo.acc === 4 && v === 4) return { ok: true, msg: "¡4 de 4! <b>XOR resuelto.</b> Las tres neuronas ocultas dibujan tres rectas que, combinadas, forman una frontera con «hueco»." };
+    return { ok: false, msg: "La red lleva " + EST.xo.acc + " de 4. Si no llega, sube las épocas: el entrenamiento son 1000 pasos." };
+  },
+  "4.2": () => {
+    const v = opSel("q42");
+    if (!v) return { ok: false, msg: "Elijan una opción." };
+    return v === "a" ? { ok: true, msg: "Correcto: <b>una capa oculta</b> con una activación suave. Ni más ejemplos, ni otra η, ni otro umbral lo consiguen: hace falta <b>componer transformaciones</b>." }
+      : { ok: false, msg: "Piensa en 3.2: el perceptrón con 3 vs 5 da vueltas por muchos datos que le des. ¿Qué le falta entonces?" };
+  },
+  "4.3": () => {
+    const t = ((document.getElementById("in-4.3") || {}).value || "").trim();
+    if (t.length < 3) return { ok: false, msg: "Escriban la respuesta del grupo (una o dos frases)." };
+    ST.abierta = t; guardar(); pintarTarjeta();
+    return { ok: true, msg: "Guardado en la tarjeta de equipo. Revisen que en Python multiplica a <b>X</b> (la entrada) y que se divide por <b>len(X)</b>." };
+  }
+};
+
+/* ===================== motor de ejercicios ===================== */
+function comprobar(id) {
+  const fn = CHECKS[id];
+  if (!fn) return;
+  const res = fn();
+  const ya = !!ST.done[id];
+  let msg = res.msg;
+  const intentoReal = !/^(Primero|Falta|Escribe|Completa|Mueve|Elijan|Todavía)/.test(res.msg);
+  if (!res.ok && !ya && intentoReal) {
+    ST.intentos = ST.intentos || {};
+    ST.intentos[id] = (ST.intentos[id] || 0) + 1; guardar();
+    if (HINTS[id] && msg.indexOf(HINTS[id].slice(0, 20)) < 0) msg += "<br><span style='opacity:.9'><b>Pista para seguir:</b> " + HINTS[id] + "</span>";
+    msg += ST.intentos[id] >= INTENTOS_PARA_VER
+      ? "<br><span style='opacity:.9'>🔓 Ya puedes abrir <b>la respuesta y explicación</b> de abajo.</span>"
+      : "<br><span style='opacity:.9'>Inténtalo una vez más: después se desbloquea la explicación.</span>";
+    pintarCandado(id);
+  } else if (!res.ok && ya) {
+    msg = "<b>Ya lo habías acertado</b>: vuelve a la explicación de abajo. " + msg;
+  }
+  feedback(id, res.ok, msg, (res.ok || ya) ? "good" : "bad");
+  marcar(id, res.ok);
+  pintarCandado(id);
+  if (res.ok) registrarLog("Ejercicio " + id + " ✓");
+}
+/* La explicación queda bloqueada hasta acertar o fallar INTENTOS_PARA_VER veces:
+   primero se piensa, después se mira. */
+const INTENTOS_PARA_VER = 2;
+const desbloqueada = id => !!ST.done[id] || ((ST.intentos || {})[id] || 0) >= INTENTOS_PARA_VER;
+function pintarCandado(id) {
+  const d = $(`[data-sol="${id}"]`); if (!d) return;
+  const s = $("summary", d), libre = desbloqueada(id);
+  d.classList.toggle("bloqueada", !libre);
+  s.textContent = libre ? "Respuesta y explicación" : "🔒 Respuesta y explicación (se abre al acertar o tras 2 intentos)";
+  if (!libre) d.open = false;
+}
+function pedirPista(id) {
+  const h = HINTS[id];
+  if (!h) return;
+  const ya = !!ST.done[id];
+  feedback(id, false, (ya ? "<b>Ya lo habías acertado</b>. " : "") + "<b>Pista:</b> " + h, ya ? "good" : "info");
+}
+document.addEventListener("click", function (e) {
+  const sm = e.target.closest("details.sol > summary");
+  if (sm) {
+    const id = sm.parentElement.getAttribute("data-sol");
+    if (!desbloqueada(id)) {
+      e.preventDefault();
+      feedback(id, false, "🔒 Primero inténtalo: escribe tu respuesta y pulsa <b>Comprobar</b>. Si te trabas, pulsa <b>Pista</b>. La explicación se abre al acertar o después de 2 intentos.", "info");
+    }
+    return;
+  }
+  const b = e.target.closest("[data-check]");
+  if (b) { comprobar(b.getAttribute("data-check")); return; }
+  const h = e.target.closest("[data-hint]");
+  if (h) { pedirPista(h.getAttribute("data-hint")); }
+});
+/* ===================== autoevaluación ===================== */
+const PREGUNTAS = [
+  { t: "num", q: "Una neurona de McCulloch-Pitts con 3 entradas debe activarse con «al menos 2 de 3». ¿Qué umbral θ necesita?", a: 2, tol: 0.001, e: "θ = 2: con dos entradas encendidas ya supera el umbral." },
+  { t: "num", q: "Con w = [1, 1] y b = −1.5, ¿cuánto vale z = w·x + b cuando x = [1, 1]?", a: 0.5, tol: 0.001, e: "1 + 1 − 1.5 = 0.5 > 0, así que la salida es 1." },
+  { t: "num", q: "¿Cuál es σ(0)?", a: 0.5, tol: 0.002, e: "σ(0) = 1/(1+e⁰) = 0.5." },
+  { t: "num", q: "¿Cuál es σ′(0), la derivada de la sigmoide en el origen?", a: 0.25, tol: 0.002, e: "σ′(z) = σ(z)(1−σ(z)); en z = 0 vale 0.5·0.5 = 0.25." },
+  { t: "num", q: "¿Cuánto vale σ(−1)?", a: 0.2689, tol: 0.003, e: "1/(1+e) ≈ 0.2689." },
+  { t: "num", q: "Para w = [0.1, 0.8], x = [0.7, −0.3] y b = −0.1, ¿cuánto vale z = w·x + b?", a: -0.27, tol: 0.005, e: "0.07 − 0.24 − 0.1 = −0.27." },
+  { t: "num", q: "¿Y σ(z) de esa misma neurona (con 4 decimales)?", a: 0.4329, tol: 0.001, e: "σ(−0.27) ≈ 0.4329: «43 % de seguridad»." },
+  { t: "num", q: "En f(x) = x²: empezando en x = 5, con η = 0.1: ¿a qué x llegas en un paso?", a: 4, tol: 0.01, e: "5 − 0.1·10 = 4." },
+  { t: "num", q: "La secuencia es 5, 4, … con f(x) = x² y η = 0.1. ¿Cuál es el siguiente valor?", a: 3.2, tol: 0.01, e: "4 − 0.1·8 = 3.2." },
+  { t: "num", q: "Una neurona que dice «50/50» sin saber nada: ¿qué pérdida tiene?", a: 0.6931, tol: 0.005, e: "ln 2 = 0.6931: es la entropía cruzada máxima para una neurona binaria." },
+  { t: "num", q: "Una red de 4 clases equiprobables: ¿qué pérdida tiene al empezar?", a: 1.3863, tol: 0.01, e: "ln 4 = 1.3863." },
+  { t: "num", q: "¿En qué punto está el mínimo de f(x) = 2x + x²?", a: -1, tol: 0.05, e: "f′(x) = 2 + 2x = 0 → x = −1." },
+  { t: "num", q: "Partiendo de x₀ = 10 con η = 0.2 en f(x) = 2x + x², ¿en qué x estás tras 6 pasos?", a: -0.48678, tol: 0.01, e: "La secuencia es 10 → 6.8 → 4.536 → 3.0216 → 2.058 → 1.367 → −0.48678." },
+  { t: "num", q: "En f(x) = x², ¿a partir de qué η el paso se aleja del fondo?", a: 1, tol: 0.35, e: "El error se multiplica por (1 − 2η): se aleja cuando |1 − 2η| > 1, o sea η > 1." },
+  { t: "num", q: "Regla de Rosenblatt: x = [1, 0, 1], η = 0.1, error = +1. ¿Cuánto vale w₁ después del paso?", a: 0.1, tol: 0.005, e: "w₁ = 0 + 0.1·1·1 = 0.1." },
+  { t: "num", q: "En ese mismo paso de Rosenblatt, ¿cuánto vale w₂ (la entrada x₂ es 0)?", a: 0, tol: 0.005, e: "0: solo cambian los pesos de los píxeles encendidos." },
+  { t: "num", q: "¿Cuántas neuronas ocultas tiene la red del reto XOR?", a: 3, tol: 0, e: "La red es 2 → 3 → 1." },
+  { t: "num", q: "Si en softmax una clase tiene 0.62, ¿cuánto suman las otras tres?", a: 0.38, tol: 0.005, e: "Las probabilidades de softmax suman siempre 1." },
+  { t: "num", q: "¿Cuántas imágenes usa la red del laboratorio para entrenar?", a: 900, tol: 0, e: "900 para entrenar y 300 de examen (1200 en total)." },
+  { t: "num", q: "¿Cuántas imágenes tiene el examen?", a: 300, tol: 0, e: "300 imágenes que la red nunca vio." },
+  { t: "op", q: "¿Por qué el perceptrón no puede aprender XOR?", o: ["Porque le faltan datos de entrenamiento", "Porque no hay ninguna recta que separe las dos clases", "Porque la tasa de aprendizaje es muy pequeña", "Porque necesita pesos negativos"], a: 1, e: "XOR no es linealmente separable: es el motivo de las redes multicapa (Minsky y Papert, 1969)." },
+  { t: "op", q: "¿Qué aporta la sigmoide frente al escalón del perceptrón?", o: ["Convierte la salida en una probabilidad y hace la función suave", "Reduce el número de pesos", "Permite usar entradas binarias", "Hace el entrenamiento más rápido"], a: 0, e: "Al ser suave, se puede medir la pendiente y corregir poco a poco." },
+  { t: "op", q: "Durante el entrenamiento, si η es demasiado grande…", o: ["la pérdida sube y el entrenamiento diverge", "la pérdida baja más rápido", "la red se queda igual", "el error se hace siempre 0"], a: 0, e: "El paso se pasa de largo del fondo: es la causa número uno de un entrenamiento que «no funciona»." },
+  { t: "op", q: "En grad_w = X.T @ (p − y) / len(X), ¿qué multiplica a (p − y)?", o: ["la entrada X", "la tasa de aprendizaje", "el número de ejemplos", "la etiqueta verdadera"], a: 0, e: "Es «(lo que dijo − lo correcto) × entrada», igual que Rosenblatt pero con un error continuo." },
+  { t: "op", q: "¿Qué hace falta para que una red resuelva XOR?", o: ["Una capa oculta con una activación no lineal", "Una η más grande", "Más ejemplos de entrenamiento", "Un umbral más pequeño"], a: 0, e: "Las neuronas ocultas combinan rectas y pueden dibujar fronteras curvas." },
+  { t: "op", q: "En softmax, las probabilidades de todas las clases…", o: ["suman 1", "son todas iguales", "dependen solo de la clase más probable", "pueden pasar de 1"], a: 0, e: "Por eso se pueden leer directamente como probabilidades." },
+  { t: "op", q: "¿Qué le pasa al perceptrón con 3 contra 5?", o: ["Aprende bien y se calma", "Aprende pero nunca se calma: el error no baja de forma estable", "No aprende nada en absoluto", "Da siempre la misma respuesta"], a: 1, e: "Su regla no sabe cuánto se equivocó, así que los errores oscilan." },
+  { t: "op", q: "Cuando una red «sabe cuándo duda», es decir…", o: ["reparte la probabilidad entre dos clases y su error es grande", "devuelve siempre la clase mayoritaria", "se para de entrenar", "reduce el número de pesos"], a: 0, e: "Ahí es donde el error es informativo: el (p − y) grande." },
+  { t: "op", q: "La regla de aprendizaje del perceptrón, w ← w + η(y − ŷ)·x…", o: ["solo mueve los pesos de las entradas encendidas cuando hay error", "cambia todos los pesos en cada ejemplo", "solo funciona con entradas binarias", "necesita un learning rate constante"], a: 0, e: "Si acierta, el error es 0 y no cambia nada." },
+  { t: "op", q: "La regla de Rosenblatt y la regla del gradiente se parecen en que…", o: ["las dos empujan los pesos en la dirección que reduce el error", "las dos usan la misma fórmula", "las dos necesitan una capa oculta", "las dos convergen siempre"], a: 0, e: "La diferencia es que el gradiente sabe «cuánto» se falló." }
+];
+const Q = { lista: [], i: 0, sel: [], aciertos: 0, t: null, resto: 600, activo: false, };
+function mezclar(a) {
+  for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); const x = a[i]; a[i] = a[j]; a[j] = x; }
+  return a;
+}
+function pintarPregunta() {
+  const p = Q.lista[Q.i]; if (!p) return;
+  $("#q-num").textContent = "Pregunta " + (Q.i + 1) + " de " + Q.lista.length;
+  $("#q-text").textContent = p.q;
+  const box = $("#q-inputs"); box.innerHTML = "";
+  if (p.t === "num") {
+    const d = document.createElement("div");
+    d.innerHTML = "<label class='field'>Respuesta = <input type='number' id='q-in' step='0.0001' style='width:140px'></label>";
+    box.appendChild(d);
+  } else {
+    const d = document.createElement("div"); d.className = "opts";
+    p.o.forEach(function (txt, i) {
+      const l = document.createElement("label"); l.className = "opt";
+      l.innerHTML = "<input type='radio' name='qop' value='" + i + "'><span>" + txt + "</span>";
+      d.appendChild(l);
+    });
+    box.appendChild(d);
+  }
+  $("#q-next").textContent = "Comprobar";
+  $("#q-next").hidden = false;
+  $("#q-result").hidden = true;
+}
+function calificar() {
+  const p = Q.lista[Q.i]; const box = $("#q-inputs");
+  let ok = false, resp = "";
+  if (p.t === "num") {
+    const v = num("q-in"); resp = v === null ? "—" : v;
+    ok = v !== null && near(v, p.a, p.tol === undefined ? 0.005 : p.tol);
+    Q.sel[Q.i] = resp;
+    const n = document.getElementById("q-in"); if (n) n.disabled = true;
+  } else {
+    const e = $("input[name='qop']:checked"); resp = e ? p.o[parseInt(e.value, 10)] : "—";
+    ok = !!e && parseInt(e.value, 10) === p.a;
+    Q.sel[Q.i] = resp;
+    $$("#q-inputs input[name='qop']").forEach(function (r) { r.disabled = true; });
+  }
+  if (ok) Q.aciertos++;
+  $$("#q-inputs .opt").forEach(function (o) { o.classList.add("locked"); });
+  const fb = document.createElement("div");
+  fb.className = "fb show " + (ok ? "good" : "bad");
+  fb.innerHTML = (ok ? "✓ Correcto. " : "✗ No. ") + "<b>Explicación:</b> " + p.e + "<br><span style='opacity:.75'>Tu respuesta: " + resp + "</span>";
+  box.appendChild(fb);
+  $("#q-score").textContent = Q.aciertos + " correctas";
+  $("#q-next").textContent = "Siguiente pregunta";
+}
+function siguiente() {
+  if (Q.i + 1 >= Q.lista.length) { terminarQuiz(); return; }
+  Q.i++; pintarPregunta();
+}
+function terminarQuiz() {
+  Q.activo = false;
+  const nota = Math.round(Q.aciertos / Q.lista.length * 100);
+  ST.quiz = { aciertos: Q.aciertos, total: Q.lista.length, nota: nota };
+  guardar(); pintarTarjeta();
+  const r = $("#q-result"); r.hidden = false;
+  r.innerHTML = "<h3 style='font-size:19px;margin-bottom:6px'>Tu repaso: " + Q.aciertos + " de " + Q.lista.length + " (" + nota + " %)</h3>"
+    + "<p style='color:var(--ink2);margin-bottom:12px'>" + (nota >= 80 ? "Muy bien: te llevas el tema." : nota >= 60 ? "Vas por buen camino. Mira abajo qué preguntas fallaste y vuelve a ese bloque." : "Vuelve a los bloques donde fallaste, relee el ejemplo resuelto y repite el repaso.") + "</p>"
+    + "<table class='resp'><tr><th>Pregunta</th><th>Tu respuesta</th><th>Respuesta correcta</th></tr>"
+    + Q.lista.map(function (p, i) { return "<tr><td>" + p.q + "</td><td>" + (Q.sel[i] || "—") + "</td><td>" + (p.t === "num" ? p.a : p.o[p.a]) + "</td></tr>"; }).join("")
+    + "</table>";
+  $("#q-next").hidden = true;
+  registrarLog("Repaso final · " + Q.aciertos + "/" + Q.lista.length + " (" + nota + "%)");
+}
+function iniciarQuiz() {
+  const cant = parseInt(($("#q-cant") || {}).value || 12, 10);
+  Q.lista = mezclar(PREGUNTAS.slice()).slice(0, cant);
+  Q.i = 0; Q.aciertos = 0; Q.sel = []; Q.activo = true;
+  $("#q-score").textContent = "0 correctas";
+  $("#q-start").textContent = "Empezar de nuevo";
+  pintarPregunta();
+}
+
+/* ===================== tarjeta de equipo ===================== */
+function pintarTarjeta() {
+  const t = totalEjercicios(), r = resueltos();
+  const p = $("#t-prog"); if (p) p.textContent = (t ? Math.round(r / t * 100) : 0) + " %";
+  const a = $("#t-aciertos"); if (a) a.textContent = ST.quiz ? (ST.quiz.aciertos + " / " + ST.quiz.total) : "0 / 0";
+  const tm = $("#t-tiempo"); if (tm) tm.textContent = ST.tiempo || "—";
+  const ab = $("#t-abierta"); if (ab) ab.innerHTML = ST.abierta ? ST.abierta : "Sin respuesta guardada todavía.";
+  const nm = $("#team-name"); if (nm && ST.team) nm.value = ST.team;
+}
+
+function modal(titulo, cuerpo, acciones) {
+  const m = document.createElement("div"); m.className = "modal";
+  m.innerHTML = "<div class='sheet'><h3>" + titulo + "</h3>" + cuerpo + "<div class='row'></div>";
+  const row = $(".row", m);
+  (acciones || []).forEach(function (a) {
+    const b = document.createElement("button");
+    b.className = "btn " + (a.ghost ? "ghost" : ""); b.textContent = a.txt;
+    b.onclick = a.fn; row.appendChild(b);
+  });
+  m.addEventListener("click", function (e) { if (e.target === m) m.remove(); });
+  document.body.appendChild(m);
+  return m;
+}
+function cerrarModal() { $$(".modal").forEach(function (m) { m.remove(); }); }
+/* ===================== cronómetro ===================== */
+let TMR = { seg: 0, t: null, nombre: "" };
+function cronometro() {
+  const bloques = [["b0", "Bloque 0 · La neurona", 35], ["b1", "Bloque 1 · La sigmoide", 30], ["b2", "Bloque 2 · El descenso", 30], ["b3", "Bloque 3 · Tu primera red", 45], ["b4", "Bloque 4 · Reto XOR", 35], ["ex", "Repaso final", 15]];
+  let html = "<p>Elige el bloque y ponle cronómetro. El tiempo del último bloque se guarda en la tarjeta de equipo.</p>";
+  html += "<div style='display:flex;flex-direction:column;gap:6px'>";
+  bloques.forEach(function (b) {
+    html += "<label class='opt' style='cursor:pointer'><input type='radio' name='blq' value='" + b[0] + "|" + b[1] + "|" + b[2] + "'><span><b>" + b[1] + "</b> · " + b[2] + " min</span></label>";
+  });
+  html += "</div>";
+  const m = modal("Cronómetro", html, [
+    { txt: "Cerrar", ghost: true, fn: cerrarModal },
+    { txt: "Arrancar / reiniciar", fn: function () {
+        const s = $("input[name='blq']:checked");
+        if (!s) return;
+        const p = s.value.split("|");
+        clearInterval(TMR.t); TMR.seg = p[2] * 60; TMR.nombre = p[1];
+        TMR.t = setInterval(function () {
+          TMR.seg--;
+          const mm = Math.floor(TMR.seg / 60), ss = TMR.seg % 60;
+          const e = $("#t-timer"); if (e) e.textContent = (mm < 10 ? "0" : "") + mm + ":" + (ss < 10 ? "0" : "") + ss;
+          if (TMR.seg <= 0) { clearInterval(TMR.t); ST.tiempo = TMR.nombre + " (tiempo agotado)"; guardar(); pintarTarjeta(); }
+        }, 1000);
+        ST.tiempo = TMR.nombre; guardar(); pintarTarjeta(); cerrarModal();
+      } }
+  ]);
+  m.addEventListener("input", function (e) {
+    if (e.target.name === "blq") {
+      const p = e.target.value.split("|");
+      clearInterval(TMR.t); TMR.seg = p[2] * 60; TMR.nombre = p[1];
+      const lbl = $("#t-timer"); if (lbl) lbl.textContent = Math.floor(p[2]) + ":00";
+    }
+  });
+}
+
+/* ===================== navegación ===================== */
+function scrollspy() {
+  const links = $$(".nav a");
+  const ids = links.map(function (a) { return a.getAttribute("href").replace("#", ""); });
+  let act = ids[0];
+  ids.forEach(function (id) {
+    const s = document.getElementById(id);
+    if (s && s.getBoundingClientRect().top <= 140) act = id;
+  });
+  links.forEach(function (a) { a.classList.toggle("on", a.getAttribute("href").replace("#", "") === act); });
+  // la fase de trabajo la marca el bloque en pantalla: solo → pares → tríos → grupo de 4
+  const sec = document.getElementById(act), f = sec && sec.getAttribute("data-fase");
+  if (f && f !== ST.fase) ponerFase(f);
+}
+
+/* ===================== arranque ===================== */
+function init() {
+  cargar();
+  decodificar();
+  pintarAnd(); pintarXor(); pintarTablaAct(); pintarSigmoide(); pintarGd();
+  $("#gd-eta-out").textContent = parseFloat($("#gd-eta").value).toFixed(2);
+  $("#sig-z").addEventListener("input", pintarSigmoide);
+  $("#xor-ang").addEventListener("input", function () { pintarXor(true); });
+  $("#xor-pos").addEventListener("input", function () { pintarXor(true); });
+  $("#gd-eta").addEventListener("input", function () { $("#gd-eta-out").textContent = parseFloat(this.value).toFixed(2); });
+  $("#gd-run").addEventListener("click", bajarMontana);
+  $("#gd-reset").addEventListener("click", function () { EST.gdCamino = []; pintarGd(); $("#gd-x").textContent = "5.000"; $("#gd-pasos").textContent = "0"; $("#gd-f").textContent = "25.000"; $("#gd-verdict").textContent = "Pulsa «Bajar»."; });
+  $("#p01-run").addEventListener("click", correrP01);
+  $("#p01-reset").addEventListener("click", function () { EST.p01 = null; $("#p01-chart").innerHTML = ""; $("#p01-errs").textContent = "—"; $("#p01-acc").textContent = "—"; $("#p01-dig").innerHTML = ""; $("#p01-estado").textContent = "época 0 / 15"; });
+  $("#p35-run").addEventListener("click", correrP35);
+  $("#p35-reset").addEventListener("click", function () { EST.p35 = null; $("#p35-chart").innerHTML = ""; $("#p35-errs").textContent = "—"; $("#p35-acc").textContent = "—"; $("#p35-dig").innerHTML = ""; $("#p35-estado").textContent = "época 0 / 15"; });
+  $("#sg-run").addEventListener("click", correrSg);
+  $("#sg-reset").addEventListener("click", function () { EST.sg = null; $("#sg-chart").innerHTML = ""; $("#sg-l0").textContent = "—"; $("#sg-l1").textContent = "—"; $("#sg-acc").textContent = "—"; $("#sg-estado").textContent = "época 0 / 120"; });
+  $("#sm-run").addEventListener("click", correrSm);
+  $("#sm-reset").addEventListener("click", function () { EST.sm = null; $("#sm-chart").innerHTML = ""; $("#sm-l0").textContent = "—"; $("#sm-l1").textContent = "—"; $("#sm-acc").textContent = "—"; $("#sm-matrix").innerHTML = ""; $("#sm-dig").innerHTML = ""; $("#sm-estado").textContent = "época 0 / 200"; });
+  $("#xo-run").addEventListener("click", correrXo);
+  $("#xo-reset").addEventListener("click", function () { EST.xo = null; $("#xo-plot").innerHTML = ""; $("#xo-l0").textContent = "—"; $("#xo-l1").textContent = "—"; $("#xo-acc").textContent = "—"; $("#xo-note").textContent = ""; $("#xo-estado").textContent = "época 0 / 1000"; });
+  $("#q-start").addEventListener("click", iniciarQuiz);
+  $("#q-restart").addEventListener("click", function () { Q.activo = false; Q.i = 0; Q.aciertos = 0; $("#q-result").hidden = true; $("#q-inputs").innerHTML = ""; $("#q-next").hidden = true; $("#q-score").textContent = "0 correctas"; $("#q-start").textContent = "Empezar"; });
+  $("#q-next").addEventListener("click", function () {
+    if ($("#q-next").textContent === "Comprobar") calificar(); else siguiente();
+  });
+  $("#btnTimer").addEventListener("click", cronometro);
+  $("#gen-run").addEventListener("click", correrGen);
+  $("#team-size").addEventListener("change", function () { ST.tamano = this.value; guardar(); pintarMiembros(); });
+  $("#btnDescargar").addEventListener("click", function () {
+    const doc = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
+    const blob = new Blob([doc], { type: "text/html;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = "LABORATORIO_TEMA3.html";
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
+    registrarLog("Pagina descargada para trabajar sin internet");
+  });
+  $("#team-name").addEventListener("input", function () { ST.team = this.value; guardar(); pintarTarjeta(); });
+  $("#team-copy").addEventListener("click", function () {
+    const n = parseInt(($("#team-size") || {}).value || 2, 10);
+    const gente = (ST.miembros || []).filter(Boolean);
+    const txt = "Equipo: " + (ST.team || "sin nombre")
+      + "\nGrupo de " + n + " (" + FASES[Object.keys(FASES)[n - 1]].pill.toLowerCase() + ")"
+      + (gente.length ? "\nIntegrantes: " + gente.join(", ") : "")
+      + "\nEjercicios resueltos: " + resueltos() + "/" + totalEjercicios()
+      + "\nRepaso final: " + (ST.quiz ? ST.quiz.aciertos + "/" + ST.quiz.total + " (" + ST.quiz.nota + " %)" : "sin hacer")
+      + "\nBloque con cronómetro: " + (ST.tiempo || "—")
+      + "\nRespuesta abierta: " + (ST.abierta || "—")
+      + "\nActividad: " + (ST.log.length ? ST.log.join(" | ") : "—");
+    const ta = document.createElement("textarea"); ta.value = txt; document.body.appendChild(ta); ta.select();
+    try { document.execCommand("copy"); feedback("equipo", true, "Resumen copiado al portapapeles. Pégalo en el chat o en el documento del equipo."); } catch (e) { }
+    ta.remove();
+  });
+  $("#team-print").addEventListener("click", function () { window.print(); });
+  $("#team-reset").addEventListener("click", function () {
+    modal("Reiniciar el progreso", "<p>Se borran los ejercicios resueltos, el repaso final y la respuesta abierta de esta computadora. ¿Continuar?</p>", [
+      { txt: "Cancelar", ghost: true, fn: cerrarModal },
+      { txt: "Sí, reiniciar", fn: function () {
+          ST = { done: {}, log: [], quiz: null, team: "", abierta: "", tiempo: "" };
+          guardar(); pintarProgreso(); pintarTarjeta(); pintarLog(); cerrarModal();
+          $$(".chip[data-chip]").forEach(function (c) { c.textContent = "pendiente"; c.className = "chip"; });
+          $$(".ex").forEach(function (e) { e.classList.remove("ok"); });
+          $$("details.sol").forEach(function (d) { pintarCandado(d.getAttribute("data-sol")); });
+        } }
+    ]);
+  });
+  window.addEventListener("scroll", scrollspy, { passive: true });
+  // restaurar el estado visual de lo que ya se habia resuelto
+  Object.keys(ST.done).forEach(function (id) { if (ST.done[id]) marcar(id, true); });
+  $$("details.sol").forEach(function (d) { pintarCandado(d.getAttribute("data-sol")); });
+  if (ST.tamano) $("#team-size").value = ST.tamano;
+  pintarMiembros(); pintarGen(); pintarFase();
+  pintarProgreso(); pintarTarjeta(); pintarLog(); scrollspy();
+}
+document.addEventListener("DOMContentLoaded", init);
+</script>
+</body>
+</html>

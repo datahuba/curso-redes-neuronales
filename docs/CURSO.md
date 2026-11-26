@@ -36,6 +36,7 @@ pip install -r requirements.txt
 | 4. Redes multicapa y retropropagación (clase 5) | [Guía clase 5](GUIA_PASO_A_PASO_CLASE5.md), [practica_05.py](practica_05.py), [guías de notebooks](guias_notebooks/README.md) | `03-fundamentos/06-redes-neuronales-multicapa`, `04-aprendizaje/04-retropropagacion` | `1_09_red_multicapa_ejercicio`, `1_10_retropropagacion_base`, `1_11_retropropagacion_completo`  |
 | 5. Optimización práctica (clase 6) | [Guía clase 6](GUIA_PASO_A_PASO_CLASE6.md), [practica_06.py](practica_06.py), [guías de notebooks](guias_notebooks/README.md) | `02-preliminares/08-optimizacion` | `22_opt_momentum`, `23_opt_lr_decay` (nuevo: el original está vacío) |
 | 6. Puente a redes profundas: convolución (clase 7) | [Guía clase 7](GUIA_PASO_A_PASO_CLASE7.md), [practica_07.py](practica_07.py), [guías de notebooks](guias_notebooks/README.md) | — | `3_1_capa_convolucional`, `3_2_entrenar_capa_conv` |
+| **Práctica en el aula (tema 3)** | Clase práctica guiada: `lab/LABORATORIO_TEMA3.html` (en línea en https://lab.datahuba.com) | — | — |
 | Resúmenes | — | `03-fundamentos/07-acordeon…`, `04-aprendizaje/05-acordeon…` | — |
 
 Las guías, diapositivas (PDF y PowerPoint) y PDFs de cada clase están en [`entregables/`](../entregables/). Cada notebook tiene además su propia guía paso a paso en [`guias_notebooks/`](guias_notebooks/README.md).
