@@ -2790,13 +2790,12 @@ async function revisarVersion() {
     const e = (await fetch("./", { method: "HEAD", cache: "no-store" })).headers.get("ETag");
     if (!e) return;
     if (!ETAG_INICIAL) { ETAG_INICIAL = e; return; }
-    if (e !== ETAG_INICIAL && !$("#aviso-version")) {
-      const d = document.createElement("div");
-      d.id = "aviso-version";
-      d.style.cssText = "position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:60;background:#14171e;color:#fff;padding:12px 16px;border-radius:12px;display:flex;gap:12px;align-items:center;box-shadow:0 8px 24px rgba(0,0,0,.25);font-size:14px;max-width:calc(100vw - 32px)";
-      d.innerHTML = "<span>Hay una versión nueva de la página. Tu avance no se pierde.</span><button class='btn sm'>Recargar</button>";
-      d.querySelector("button").onclick = function () { location.reload(); };
-      document.body.appendChild(d);
+    // versión nueva: se recarga sola (lo escrito y lo resuelto se guardan, no se pierde nada).
+    // Espera a que no esté escribiendo ni en medio del repaso; si no, lo intenta en la próxima vuelta (12 s).
+    const ocupado = Q.activo || (document.activeElement && /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName) && !document.hidden);
+    if (e !== ETAG_INICIAL && !ocupado) {
+      try { sessionStorage.setItem("lab_actualizada", "1"); } catch (err) { }
+      location.reload();
     }
   } catch (err) { }
 }
@@ -2818,6 +2817,17 @@ function aplicarGrupo() {
     feedback(id, true, textoPorGrupo(quien), "good");
     registrarLog("Ejercicio " + id + " ✓ (lo resolvió " + quien + ")");
   });
+}
+function avisoActualizada() {
+  let fue = false;
+  try { fue = sessionStorage.getItem("lab_actualizada") === "1"; sessionStorage.removeItem("lab_actualizada"); } catch (e) { }
+  if (!fue) return;
+  const d = document.createElement("div");
+  d.id = "aviso-version";
+  d.style.cssText = "position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:60;background:#14171e;color:#fff;padding:10px 16px;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.25);font-size:14px;max-width:calc(100vw - 32px)";
+  d.textContent = "✓ Página actualizada. Tu avance sigue aquí.";
+  document.body.appendChild(d);
+  setTimeout(function () { d.remove(); }, 4000);
 }
 async function refrescarSala() {
   if (EN_LINEA) revisarVersion();
@@ -3179,6 +3189,7 @@ function init() {
   restaurarCampos();
   vigilarExtensiones();
   vigilarPanelLateral();
+  avisoActualizada();
   if (ST.tamano) $("#team-size").value = ST.tamano;
   pintarMiembros(); pintarGen(); pintarFase(); iniciarRegistro();
   pintarProgreso(); pintarTarjeta(); pintarLog(); scrollspy();
