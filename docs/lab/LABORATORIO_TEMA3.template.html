@@ -2771,7 +2771,25 @@ function pintarSala() {
   cont.innerHTML = h;
   pintarFase(); pintarDocente();
 }
+/* aviso de versión nueva: si la página publicada cambia (ETag de nginx), se ofrece recargar */
+let ETAG_INICIAL = null;
+async function revisarVersion() {
+  try {
+    const e = (await fetch("./", { method: "HEAD", cache: "no-store" })).headers.get("ETag");
+    if (!e) return;
+    if (!ETAG_INICIAL) { ETAG_INICIAL = e; return; }
+    if (e !== ETAG_INICIAL && !$("#aviso-version")) {
+      const d = document.createElement("div");
+      d.id = "aviso-version";
+      d.style.cssText = "position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:60;background:#14171e;color:#fff;padding:12px 16px;border-radius:12px;display:flex;gap:12px;align-items:center;box-shadow:0 8px 24px rgba(0,0,0,.25);font-size:14px;max-width:calc(100vw - 32px)";
+      d.innerHTML = "<span>Hay una versión nueva de la página. Tu avance no se pierde.</span><button class='btn sm'>Recargar</button>";
+      d.querySelector("button").onclick = function () { location.reload(); };
+      document.body.appendChild(d);
+    }
+  } catch (err) { }
+}
 async function refrescarSala() {
+  if (EN_LINEA) revisarVersion();
   if (!EN_LINEA) return pintarSala();
   try { SALA_DATOS = await api("sala?sala=" + encodeURIComponent(SALA)); pintarSala(); }
   catch (e) { $("#reg-estado").textContent = "No se pudo cargar la lista (" + e.message + "). Puedes seguir con los ejercicios."; }
