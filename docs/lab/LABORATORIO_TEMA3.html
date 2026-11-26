@@ -360,6 +360,7 @@ body.examen .nav a:not([href="#ex"]){display:none}
 .guia-ej{border-left:3px solid var(--accent,#10b981); padding:4px 0 4px 14px}
 .guia-ej code,.guia code{font-family:"JetBrains Mono",ui-monospace,monospace; font-size:.92em}
 .guia-ayuda{font-size:13px; color:var(--muted)}
+.guia[hidden]{display:none}
 details.sol.bloqueada > summary{color:var(--muted); cursor:not-allowed}
 
 @media (max-width:860px){
@@ -422,6 +423,7 @@ details.sol.bloqueada > summary{color:var(--muted); cursor:not-allowed}
     <a href="#b4"><span class="n">4</span> Reto XOR</a>
     <a href="#ex"><span class="n">5</span> Repaso final</a>
     <a href="#equipo"><span class="n">6</span> Tarjeta de equipo</a>
+    <a href="#uso"><span class="n">?</span> Guía de uso</a>
   </div>
   <div class="wrap fase-line">
     <span class="fase-pill" id="fase-pill">SOLO</span>
@@ -440,6 +442,35 @@ details.sol.bloqueada > summary{color:var(--muted); cursor:not-allowed}
       <p class="sub">No es un examen: es una clase práctica. La página te explica, te muestra un ejemplo y después lo haces tú.</p>
     </div>
   </header>
+
+  <div class="guia" id="registro">
+    <div>
+      <h4>Paso 1 · Regístrate con tu nombre</h4>
+      <p>Con la lista de la clase, la página arma tus grupos de 2, de 3 y de 4. Cuando el docente los arme, aquí verás con quién te toca en cada fase.</p>
+      <div class="ex-actions" style="margin-top:8px">
+        <label class="field">Tu nombre <input type="text" id="reg-nombre" maxlength="40" autocomplete="name" placeholder="Nombre y apellido" style="width:240px"></label>
+        <button class="btn" id="reg-btn">Registrarme</button>
+      </div>
+      <div class="fb" id="reg-fb"></div>
+    </div>
+    <div class="readout" id="reg-estado">Cargando la lista de la clase…</div>
+    <div id="reg-grupos"></div>
+  </div>
+
+  <div class="guia" id="panel-docente" hidden>
+    <div>
+      <h4>Panel del docente</h4>
+      <p>Cuando estén todos registrados, pulsa <b>Armar grupos</b>. Se arman grupos de 2, 3 y 4, mezclados distinto en cada tamaño y lo más parejos posible (7 alumnos → un grupo de 4 y uno de 3; 3 alumnos → un grupo de 3). Quien llegue tarde entra solo al grupo más chico.</p>
+      <div class="ex-actions" style="margin-top:8px">
+        <label class="field">Clave <input type="password" id="doc-clave" style="width:140px" autocomplete="off"></label>
+        <button class="btn" id="doc-armar">Armar grupos</button>
+        <button class="btn ghost" id="doc-reiniciar">Vaciar la lista</button>
+      </div>
+      <div class="fb" id="doc-fb"></div>
+    </div>
+    <div id="doc-lista"></div>
+  </div>
+
   <div class="guia">
     <div>
       <h4>El camino de hoy: de una neurona a una red, y de trabajar solo a trabajar en equipo</h4>
@@ -1348,6 +1379,69 @@ w -= eta * grad_w; b -= eta * (p - y).<span class="n">mean</span>()</div>
   </div>
 </section>
 
+<!-- ===================== GUÍA DE USO ===================== -->
+<section id="uso" class="bloque">
+  <header class="bloque-head">
+    <div class="bloque-num">?</div>
+    <div>
+      <h2>Guía de uso de la página</h2>
+      <p class="sub">Todo lo que hace esta página y cómo usarlo, de principio a fin</p>
+    </div>
+  </header>
+  <div class="guia">
+    <div>
+      <h4>1 · Antes de empezar</h4>
+      <ul>
+        <li><b>Regístrate</b> arriba, en «Cómo funciona», con tu nombre. Lo haces una sola vez; si te equivocaste, escribe el nombre bien y pulsa «Cambiar mi nombre».</li>
+        <li>Cuando el docente arme los grupos, en ese mismo recuadro verás <b>con quién te toca</b> en pares, en tríos y en grupo de 4. Los grupos son parejos: si no alcanza para grupos completos, alguno queda de un integrante menos (por ejemplo, 7 personas → un grupo de 4 y uno de 3).</li>
+        <li>La línea de color bajo el menú dice <b>en qué fase estás</b> (Solo, En pares, En tríos, Grupo de 4) y <b>quiénes son tus compañeros</b> en esa fase. Cambia sola al bajar de bloque.</li>
+      </ul>
+    </div>
+    <div>
+      <h4>2 · Cómo se trabaja cada bloque</h4>
+      <ol>
+        <li>Lee el recuadro del inicio del bloque: <b>cómo reagruparse</b>, <b>lo que necesitas saber</b> y el <b>ejemplo resuelto</b>.</li>
+        <li>Haz los ejercicios en orden. Escribe tu respuesta y pulsa <b>Comprobar</b>.</li>
+        <li>Si fallas, la página te dice qué revisar y te da una <b>pista</b>. También puedes pulsar <b>Pista</b> cuando quieras.</li>
+        <li><b>Respuesta y explicación</b> tiene candado 🔒: se abre al acertar o después de 2 intentos. Primero se piensa, después se mira.</li>
+        <li>El chip de la derecha de cada ejercicio pasa de «pendiente» a «correcto». La barra «Avance del equipo» (arriba) cuenta los resueltos.</li>
+      </ol>
+    </div>
+    <div>
+      <h4>3 · Los simuladores (bloques 0, 2, 3 y 4)</h4>
+      <ul>
+        <li><b>Deslizadores</b> (compuerta AND, recta de XOR, sigmoide, η de la montaña): muévelos y mira cómo cambia todo al instante.</li>
+        <li><b>Entrenar</b>: entrena una red de verdad con dígitos reales de MNIST dentro de tu navegador. Espera a que termine la curva antes de responder.</li>
+        <li><b>Reiniciar</b>: vuelve a empezar, por ejemplo para probar otra η.</li>
+        <li>La «η» es la tasa de aprendizaje: el tamaño del paso. Prueben valores chicos y grandes y comparen.</li>
+      </ul>
+    </div>
+    <div>
+      <h4>4 · Al final</h4>
+      <ul>
+        <li><b>Repaso final</b>: elige 12, 20 o 32 preguntas. No hay nota ni cronómetro; cada respuesta trae su explicación.</li>
+        <li><b>Tarjeta de equipo</b>: pongan el nombre del equipo y los integrantes, y pulsen <b>Copiar el resumen</b> para pegarlo donde indique el docente. <b>Imprimir</b> la guarda en papel o PDF.</li>
+      </ul>
+    </div>
+    <div>
+      <h4>5 · Botones de arriba</h4>
+      <ul>
+        <li><b>Descargar</b>: guarda la página en tu compu. Funciona sin internet (todos los ejercicios y simuladores), pero sin registro ni grupos.</li>
+        <li><b>Cronómetro</b>: cuenta atrás del bloque, para no pasarse de tiempo.</li>
+        <li>Tu progreso se guarda <b>solo en este navegador</b>. Si cambias de computadora, empiezas de cero: regístrate de nuevo y avisa al docente para que quite tu nombre anterior.</li>
+      </ul>
+    </div>
+    <div>
+      <h4>6 · Para el docente</h4>
+      <ul>
+        <li>Abre la página con <code>?docente</code> al final del enlace (por ejemplo <code>lab.datahuba.com/?docente</code>). Aparece el <b>panel del docente</b> bajo el registro.</li>
+        <li>Escribe la clave y pulsa <b>Armar grupos</b> cuando estén todos registrados. Puedes volver a mezclarlos, quitar a alguien de la lista (×) o vaciarla para otra clase.</li>
+        <li>Para dos clases distintas a la vez, usa una sala por clase: <code>?sala=lunes</code> para los alumnos y <code>?sala=lunes&amp;docente</code> para ti.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
 </main>
 
 <footer class="foot">
@@ -1408,7 +1502,7 @@ function svgBox(w, h) { const s = S("svg", { viewBox: `0 0 ${w} ${h}`, preserveA
 
 /* ===================== almacenamiento ===================== */
 const KEY = "lab_tema3_v1";
-let ST = { done: {}, log: [], quiz: null, team: "", abierta: "", tiempo: "", fase: "solo", miembros: [], tamano: "2" };
+let ST = { done: {}, log: [], quiz: null, team: "", abierta: "", tiempo: "", fase: "solo", miembros: [], tamano: "4", yo: null };
 function cargar() {
   try { const raw = localStorage.getItem(KEY); if (raw) ST = Object.assign(ST, JSON.parse(raw)); } catch (e) { /* modo privado: sigue igual */ }
 }
@@ -1774,7 +1868,7 @@ function pintarFase() {
   const f = FASES[faseActual()];
   const pill = $("#fase-pill"), txt = $("#fase-texto");
   if (pill) pill.textContent = f.pill;
-  if (txt) txt.innerHTML = f.texto;
+  if (txt) txt.innerHTML = f.texto + textoMiGrupo(faseActual());
   $$("#fases button").forEach(b => b.classList.toggle("on", b.getAttribute("data-fase") === faseActual()));
 }
 function ponerFase(f) { if (!FASES[f]) return; ST.fase = f; guardar(); pintarFase(); }
@@ -2617,6 +2711,119 @@ function scrollspy() {
   if (f && f !== ST.fase) ponerFase(f);
 }
 
+/* ===================== registro y grupos (servidor /api/) ===================== */
+const PARAMS = (function () { try { return new URLSearchParams(location.search); } catch (e) { return new Map(); } })();
+const SALA = (PARAMS.get("sala") || "general").toLowerCase().replace(/[^a-z0-9-]/g, "").slice(0, 30) || "general";
+const EN_LINEA = /^https?:$/.test(location.protocol);
+const TAM_FASE = { pares: "2", trios: "3", cuartos: "4" };
+const NOMBRE_TAM = { "2": "En pares", "3": "En tríos", "4": "Grupo de 4" };
+let SALA_DATOS = null;
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+async function api(ruta, cuerpo) {
+  const r = await fetch("api/" + ruta, cuerpo ? { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(Object.assign({ sala: SALA }, cuerpo)) } : { cache: "no-store" });
+  const j = await r.json().catch(function () { return {}; });
+  if (!r.ok) throw new Error(j.error || "Error del servidor (" + r.status + ")");
+  return j;
+}
+function miGrupo(k) {
+  if (!SALA_DATOS || !SALA_DATOS.grupos || !ST.yo) return null;
+  const gs = SALA_DATOS.grupos[k] || [];
+  for (let i = 0; i < gs.length; i++) if (gs[i].some(function (a) { return a.id === ST.yo.id; })) return { n: i + 1, gente: gs[i] };
+  return null;
+}
+function textoMiGrupo(fase) {
+  const g = miGrupo(TAM_FASE[fase]);
+  if (!g) return "";
+  const otros = g.gente.filter(function (a) { return a.id !== ST.yo.id; }).map(function (a) { return esc(a.nombre); });
+  return " <b style='margin-left:6px'>Tu grupo " + g.n + ":</b> " + (otros.length ? otros.join(", ") : "trabajas solo");
+}
+function pintarSala() {
+  const est = $("#reg-estado"), cont = $("#reg-grupos");
+  if (!EN_LINEA) { est.textContent = "El registro funciona solo en línea (lab.datahuba.com). En la copia descargada puedes hacer todos los ejercicios."; return; }
+  if (!SALA_DATOS) return;
+  const al = SALA_DATOS.alumnos;
+  const yo = ST.yo && al.some(function (a) { return a.id === ST.yo.id; });
+  if (ST.yo && !yo) { ST.yo = null; guardar(); }
+  est.innerHTML = (yo ? "✓ Registrado como <b>" + esc(ST.yo.nombre) + "</b>. " : "") + "En la clase hay <b>" + al.length + "</b> registrado" + (al.length === 1 ? "" : "s") + ": "
+    + (al.length ? al.map(function (a) { return esc(a.nombre); }).join(", ") : "todavía nadie") + "."
+    + (SALA_DATOS.grupos ? "" : "<br>Los grupos aparecen aquí cuando el docente los arme.");
+  if (yo) { $("#reg-btn").textContent = "Cambiar mi nombre"; if (!$("#reg-nombre").value) $("#reg-nombre").value = ST.yo.nombre; }
+  let h = "";
+  if (SALA_DATOS.grupos && yo) {
+    h = "<div class='grid-stats'>" + ["2", "3", "4"].map(function (k) {
+      const g = miGrupo(k);
+      const otros = g ? g.gente.filter(function (a) { return a.id !== ST.yo.id; }).map(function (a) { return esc(a.nombre); }) : [];
+      return "<div class='stat'><div class='l'>" + NOMBRE_TAM[k] + (g ? " · grupo " + g.n : "") + "</div><div style='font-size:14px;margin-top:4px'>"
+        + (g ? (otros.length ? "Con " + otros.join(", ") : "Trabajas solo") : "—") + "</div></div>";
+    }).join("") + "</div>";
+  }
+  cont.innerHTML = h;
+  pintarFase(); pintarDocente();
+}
+async function refrescarSala() {
+  if (!EN_LINEA) return pintarSala();
+  try { SALA_DATOS = await api("sala?sala=" + encodeURIComponent(SALA)); pintarSala(); }
+  catch (e) { $("#reg-estado").textContent = "No se pudo cargar la lista (" + e.message + "). Puedes seguir con los ejercicios."; }
+}
+async function registrarme() {
+  const nombre = ($("#reg-nombre").value || "").trim();
+  const fb = $("#reg-fb");
+  if (!EN_LINEA) { fb.className = "fb show info"; fb.textContent = "El registro funciona solo en lab.datahuba.com."; return; }
+  if (nombre.length < 2) { fb.className = "fb show bad"; fb.textContent = "Escribe tu nombre (al menos 2 letras)."; return; }
+  try {
+    const r = await api("registro", { nombre: nombre, id: ST.yo ? ST.yo.id : "" });
+    ST.yo = { id: r.id, nombre: nombre }; guardar();
+    SALA_DATOS = r; pintarSala();
+    fb.className = "fb show good"; fb.innerHTML = "Listo, <b>" + esc(nombre) + "</b>. Ahora empieza el bloque 0: trabajas <b>solo</b>.";
+    if (!ST.miembros || !ST.miembros[0]) { ST.miembros = [nombre]; guardar(); pintarMiembros(); }
+  } catch (e) { fb.className = "fb show bad"; fb.textContent = e.message; }
+}
+/* panel del docente: solo con ?docente en el enlace; la clave la valida el servidor */
+function pintarDocente() {
+  const p = $("#panel-docente"); if (!p || p.hidden || !SALA_DATOS) return;
+  const d = SALA_DATOS;
+  let h = "<p><b>" + d.alumnos.length + "</b> registrados" + (SALA !== "general" ? " en la sala <b>" + esc(SALA) + "</b>" : "") + (d.armado ? " · grupos armados" : " · grupos sin armar") + ".</p>";
+  if (d.grupos) {
+    h += ["2", "3", "4"].map(function (k) {
+      return "<h4 style='margin-top:12px'>" + NOMBRE_TAM[k] + "</h4><ol>" + d.grupos[k].map(function (g) {
+        return "<li>" + g.map(function (a) { return esc(a.nombre); }).join(", ") + " <span style='color:var(--muted)'>(" + g.length + ")</span></li>";
+      }).join("") + "</ol>";
+    }).join("");
+  }
+  if (d.alumnos.length) {
+    h += "<h4 style='margin-top:12px'>Registrados</h4><p>" + d.alumnos.map(function (a) {
+      return esc(a.nombre) + " <button class='btn ghost sm' data-quitar='" + esc(a.id) + "' title='Quitar de la lista'>×</button>";
+    }).join(" · ") + "</p>";
+  }
+  $("#doc-lista").innerHTML = h;
+}
+async function accionDocente(ruta, extra) {
+  const fb = $("#doc-fb");
+  const clave = ($("#doc-clave").value || "").trim();
+  try { sessionStorage.setItem("lab_clave", clave); } catch (e) { }
+  try {
+    SALA_DATOS = await api(ruta, Object.assign({ clave: clave }, extra || {}));
+    pintarSala();
+    fb.className = "fb show good"; fb.textContent = ruta === "armar" ? "Grupos armados. Los alumnos los ven en su pantalla en unos segundos." : "Hecho.";
+  } catch (e) { fb.className = "fb show bad"; fb.textContent = e.message; }
+}
+function iniciarRegistro() {
+  $("#reg-btn").addEventListener("click", registrarme);
+  $("#reg-nombre").addEventListener("keydown", function (e) { if (e.key === "Enter") registrarme(); });
+  if (PARAMS.has("docente")) {
+    $("#panel-docente").hidden = false;
+    try { $("#doc-clave").value = sessionStorage.getItem("lab_clave") || ""; } catch (e) { }
+    $("#doc-armar").addEventListener("click", function () {
+      if (SALA_DATOS && SALA_DATOS.grupos && !confirm("Ya hay grupos armados. ¿Volver a mezclarlos?")) return;
+      accionDocente("armar");
+    });
+    $("#doc-reiniciar").addEventListener("click", function () { if (confirm("Se borra la lista de registrados y los grupos. ¿Seguir?")) accionDocente("reiniciar"); });
+    $("#doc-lista").addEventListener("click", function (e) { const b = e.target.closest("[data-quitar]"); if (b) accionDocente("quitar", { id: b.getAttribute("data-quitar") }); });
+  }
+  refrescarSala();
+  if (EN_LINEA) setInterval(function () { if (!document.hidden) refrescarSala(); }, 12000);
+}
+
 /* ===================== arranque ===================== */
 function init() {
   cargar();
@@ -2678,7 +2885,7 @@ function init() {
     modal("Reiniciar el progreso", "<p>Se borran los ejercicios resueltos, el repaso final y la respuesta abierta de esta computadora. ¿Continuar?</p>", [
       { txt: "Cancelar", ghost: true, fn: cerrarModal },
       { txt: "Sí, reiniciar", fn: function () {
-          ST = { done: {}, log: [], quiz: null, team: "", abierta: "", tiempo: "" };
+          ST = { done: {}, log: [], quiz: null, team: "", abierta: "", tiempo: "", yo: ST.yo, tamano: "4" };
           guardar(); pintarProgreso(); pintarTarjeta(); pintarLog(); cerrarModal();
           $$(".chip[data-chip]").forEach(function (c) { c.textContent = "pendiente"; c.className = "chip"; });
           $$(".ex").forEach(function (e) { e.classList.remove("ok"); });
@@ -2691,7 +2898,7 @@ function init() {
   Object.keys(ST.done).forEach(function (id) { if (ST.done[id]) marcar(id, true); });
   $$("details.sol").forEach(function (d) { pintarCandado(d.getAttribute("data-sol")); });
   if (ST.tamano) $("#team-size").value = ST.tamano;
-  pintarMiembros(); pintarGen(); pintarFase();
+  pintarMiembros(); pintarGen(); pintarFase(); iniciarRegistro();
   pintarProgreso(); pintarTarjeta(); pintarLog(); scrollspy();
 }
 document.addEventListener("DOMContentLoaded", init);
